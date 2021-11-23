@@ -1,9 +1,10 @@
-"""
-Convert Surface level Era 5 Data to an unprocessed dataset.
+"""Convert Surface level Era 5 Data to an unprocessed Zarr dataset.
 
 Example:
     ```
-    python src/reanalysis-to-zarr.py gs://anthromet-external-era5/reanalysis.zarr gs://$BUCKET/cache/ \
+    python src/single-levels-to-zarr.py gs://anthromet-external-era5/single-level-reanalysis.zarr gs://$BUCKET/cache/ \
+     --start 1979-01-01 \
+     --end 2021-07-01 \
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
@@ -89,13 +90,14 @@ def run(parsed_args: argparse.Namespace, other_args: t.List[str]):
 if __name__ == "__main__":
     logging.getLogger('pangeo_forge_recipes').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-    parser = argparse.ArgumentParser(description='Convert Era 5 Model Level dataset to Zarr')
+    parser = argparse.ArgumentParser(description='Convert Era 5 Single Level dataset to Zarr')
 
     parser.add_argument('output', type=str, help='Path to output Zarr in Cloud bucket.')
     parser.add_argument('temp', type=str, help='Path to cloud bucket for temporary data cache.')
     parser.add_argument('-s', '--start', default='2020-01-01', help='Start date, iso format string.')
     parser.add_argument('-e', '--end', default='2020-02-01', help='End date, iso format string.')
-    parser.add_argument('-c', '--chunks', default=['cape', 'cisst', 'sfc', 'tcol', 'soil'],
+    parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
+                        default=['cape', 'cisst', 'sfc', 'tcol', 'soil'],
                         help='Chunks of variables to merge together.')
 
     run(*parser.parse_known_args())
