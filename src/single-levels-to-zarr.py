@@ -16,6 +16,7 @@ Example:
      --job_name reanalysis-to-zarr
     ```
 """
+import itertools
 import argparse
 import datetime
 import logging
@@ -29,6 +30,8 @@ import pandas as pd
 from pangeo_forge_recipes.patterns import ConcatDim, FilePattern, MergeDim
 from pangeo_forge_recipes.recipes import XarrayZarrRecipe
 from pangeo_forge_recipes.storage import FSSpecTarget, MetadataTarget
+
+PROGRESS = itertools.cycle(''.join([c * 10 for c in '|/–-\\']))
 
 
 def normalize_path(path: str) -> str:
@@ -67,6 +70,23 @@ def run(parsed_args: argparse.Namespace, other_args: t.List[str]):
 
     fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
 
+    if parsed_args.find_missing:
+        print('Finding missing data...')
+        data_is_missing = False
+
+        for _, path in pattern.items():
+            print(next(PROGRESS), end='\r')
+            if not fs.exists(path):
+                data_is_missing = True
+                print(path)
+
+        if data_is_missing:
+            print('Found missing data.')
+        else:
+            print('No missing data found.')
+
+        return
+
     output_path = normalize_path(parsed_args.output)
     temp_path = normalize_path(parsed_args.temp)
 
@@ -94,6 +114,8 @@ if __name__ == "__main__":
 
     parser.add_argument('output', type=str, help='Path to output Zarr in Cloud bucket.')
     parser.add_argument('temp', type=str, help='Path to cloud bucket for temporary data cache.')
+    parser.add_argument('--find-missing', action='store_true', default=False,
+                        help='Print all paths to missing input data.')
     parser.add_argument('-s', '--start', default='2020-01-01', help='Start date, iso format string.')
     parser.add_argument('-e', '--end', default='2020-02-01', help='End date, iso format string.')
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
