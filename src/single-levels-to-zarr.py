@@ -42,6 +42,15 @@ def normalize_path(path: str) -> str:
 def run(parsed_args: argparse.Namespace, other_args: t.List[str]):
     def make_path(time: datetime.datetime, chunk: str) -> str:
         """Make path to Era5 data from timestamp and variable."""
+
+        # Handle chunks that have been manually split into one-variable files.
+        if '_' in chunk:
+            chunk_, level, var = chunk.split('_')
+            return (
+                f"gs://external-data-ai-for-weather/ERA5GRIB/HRES/split/Month/"
+                f"{time.year:04d}/{time.year:04d}{time.month:02d}_hres_{chunk_}.grb2_{level}_{var}.grib"
+            )
+
         return (
             f"gs://external-data-ai-for-weather/ERA5GRIB/HRES/Month/"
             f"{time.year:04d}/{time.year:04d}{time.month:02d}_hres_{chunk}.grb2"
@@ -119,7 +128,23 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--start', default='2020-01-01', help='Start date, iso format string.')
     parser.add_argument('-e', '--end', default='2020-02-01', help='End date, iso format string.')
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
-                        default=['cape', 'cisst', 'sfc', 'tcol', 'soil'],
+                        default=[
+                            'cape', 'cisst', 'sfc', 'tcol',
+                            # the 'soil' chunk split by variable
+                            'soil_depthBelowLandLayer_istl1',
+                            'soil_depthBelowLandLayer_istl2',
+                            'soil_depthBelowLandLayer_istl3',
+                            'soil_depthBelowLandLayer_istl4',
+                            'soil_depthBelowLandLayer_stl1',
+                            'soil_depthBelowLandLayer_stl2',
+                            'soil_depthBelowLandLayer_stl3',
+                            'soil_depthBelowLandLayer_stl4',
+                            'soil_depthBelowLandLayer_swvl1',
+                            'soil_depthBelowLandLayer_swvl2',
+                            'soil_depthBelowLandLayer_swvl3',
+                            'soil_depthBelowLandLayer_swvl4',
+                            'soil_surface_tsn',
+                        ],
                         help='Chunks of variables to merge together.')
 
     run(*parser.parse_known_args())
