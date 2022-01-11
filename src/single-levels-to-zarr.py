@@ -2,7 +2,7 @@
 
 Example:
     ```
-    python src/single-levels-to-zarr.py gs://anthromet-external-era5/single-level-reanalysis.zarr gs://$BUCKET/cache/ \
+    python src/single-levels-to-zarr.py gs://anthromet-external-era5/single-level-reanalysis.zarr gs://$BUCKET/cache1/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --runner DataflowRunner \
@@ -11,7 +11,8 @@ Example:
      --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
      --experiment=use_runner_v2 \
-     --disk_size_gb 125 \
+     --disk_size_gb 50 \
+     --machine_type n2-highmem-2 \
      --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
      --job_name reanalysis-to-zarr
     ```
@@ -105,9 +106,10 @@ def run(parsed_args: argparse.Namespace, other_args: t.List[str]):
     recipe = XarrayZarrRecipe(pattern,
                               target=target,
                               target_chunks={'time': 1},
-                              subset_inputs={"time": 4},
+                              subset_inputs={'time': 4},
                               copy_input_to_local_file=True,
                               cache_inputs=False,
+                              lock_timeout=120,  # seconds until lock times out.
                               metadata_cache=metadata_target,
                               consolidate_zarr=True,
                               xarray_open_kwargs=xarray_kwargs)
@@ -117,7 +119,7 @@ def run(parsed_args: argparse.Namespace, other_args: t.List[str]):
 
 
 if __name__ == "__main__":
-    logging.getLogger('pangeo_forge_recipes').setLevel(logging.INFO)
+    logging.getLogger('pangeo_forge_recipes').setLevel(logging.DEBUG)
     logging.getLogger().setLevel(logging.INFO)
     parser = argparse.ArgumentParser(description='Convert Era 5 Single Level dataset to Zarr')
 
