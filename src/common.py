@@ -40,15 +40,10 @@ def normalize_path(path: str) -> str:
     return f'{parsed_output.netloc}{parsed_output.path}'
 
 
-def run(make_path: t.Callable[..., str], parsed_args: argparse.Namespace, other_args: t.List[str]):
+def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
+        parsed_args: argparse.Namespace, other_args: t.List[str]):
     """Perform the Zarr conversion pipeline with Pangeo Forge Recipes."""
 
-    date_range = [
-        ts.to_pydatetime()
-        for ts in pd.date_range(start=parsed_args.start,
-                                end=parsed_args.end,
-                                freq="MS").to_list()
-    ]
     date_dim = ConcatDim("time", date_range)
     chunks_dim = MergeDim("chunk", parsed_args.chunks)
     pattern = FilePattern(make_path, date_dim, chunks_dim)

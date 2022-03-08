@@ -20,6 +20,8 @@ Example:
 import datetime
 import logging
 
+import pandas as pd
+
 from src.common import run, parse_args
 
 if __name__ == "__main__":
@@ -42,6 +44,7 @@ if __name__ == "__main__":
             f"{time.year:04d}/{time.year:04d}{time.month:02d}_hres_{chunk}.grb2"
         )
 
+
     default_chunks = [
         'cape', 'cisst', 'sfc', 'tcol',
         # the 'soil' chunk split by variable
@@ -60,4 +63,13 @@ if __name__ == "__main__":
         'soil_surface_tsn',
     ]
 
-    run(make_path, *parse_args('Convert Era 5 Single Level data to Zarr', default_chunks))
+    parsed_args, unknown_args = parse_args('Convert Era 5 Single Level data to Zarr', default_chunks)
+
+    date_range = [
+        ts.to_pydatetime()
+        for ts in pd.date_range(start=parsed_args.start,
+                                end=parsed_args.end,
+                                freq="MS").to_list()
+    ]
+
+    run(make_path, date_range, parsed_args, unknown_args)
