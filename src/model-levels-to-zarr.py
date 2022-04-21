@@ -10,21 +10,39 @@ Example:
      --find-missing
     ```
 
-    Perform the conversion...
+    Perform the conversion for the moisture dataset...
     ```
-    python src/model-levels-to-zarr.py gs://anthromet-external-era5/model-level-reanalysis.zarr gs://$BUCKET/ml-cache/ \
+    python src/model-levels-to-zarr.py gs://anthromet-external-era5/model-level-moisture.zarr gs://$BUCKET/ml-moist-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
+     --chunks o3q qrqs \
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
      --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
      --experiment=use_runner_v2 \
-     --disk_size_gb 50 \
-     --machine_type n2-highmem-2 \
+     --disk_size_gb 3600 \
+     --machine_type m1-ultramem-40 \
      --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
-     --job_name model-levels-to-zarr
+     --job_name model-level-moisture-to-zarr
+    ```
+    Perform the conversion for the wind dataset...
+    ```
+    python src/model-levels-to-zarr.py gs://anthromet-external-era5/model-level-wind.zarr gs://$BUCKET/ml-wind-cache1/ \
+     --start 1979-01-01 \
+     --end 2021-07-01 \
+     --chunks dve tw \
+     --runner DataflowRunner \
+     --project $PROJECT \
+     --region $REGION \
+     --temp_location "gs://$BUCKET/tmp/" \
+     --setup_file ./setup.py \
+     --experiment=use_runner_v2 \
+     --disk_size_gb 3600 \
+     --machine_type m1-ultramem-40 \
+     --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
+     --job_name model-level-wind-to-zarr
     ```
 """
 import datetime
