@@ -11,22 +11,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from setuptools import setup, find_packages
-
-setup(
-    name='era5-to-zarr',
-    packaging=find_packages('src'),
-    author='Anthromets',
-    author_email='anthromets-ecmwf@google.com',
-    description="Scripts to convert Alphabet's copy of Era 5 to Zarr.",
-    platforms=['darwin', 'linux'],
-    python_requires='>=3.7, <3.9',
-    install_requires=[
-        'apache_beam[gcp]',
-        'pangeo-forge-recipes==0.8.3',
-        'pandas',
-        'gcsfs',
-        'cfgrib',
-    ],
-    tests_require=['pytest'],
-)
+from .common import run, parse_args

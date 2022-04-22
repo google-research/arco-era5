@@ -1,36 +1,29 @@
-"""Convert Surface level Era 5 Data to an unprocessed Zarr dataset.
-
-Example:
-    ```
-    python src/single-levels-to-zarr.py gs://anthromet-external-era5/single-level-reanalysis.zarr gs://$BUCKET/cache1/ \
-     --start 1979-01-01 \
-     --end 2021-07-01 \
-     --runner DataflowRunner \
-     --project $PROJECT \
-     --region $REGION \
-     --temp_location "gs://$BUCKET/tmp/" \
-     --setup_file ./setup.py \
-     --experiment=use_runner_v2 \
-     --disk_size_gb 50 \
-     --machine_type n2-highmem-2 \
-     --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
-     --job_name reanalysis-to-zarr
-    ```
-"""
-import itertools
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Common Pangeo-Forge Recipe definition for converting ERA5 datasets to Zarr."""
 import argparse
 import datetime
-import logging
+import itertools
 import os
 import typing as t
 from urllib import parse
 
 import apache_beam as beam
 import gcsfs
-import pandas as pd
 from pangeo_forge_recipes.patterns import ConcatDim, FilePattern, MergeDim
 from pangeo_forge_recipes.recipes import XarrayZarrRecipe
-from pangeo_forge_recipes.storage import FSSpecTarget, MetadataTarget
+from pangeo_forge_recipes.storage import FSSpecTarget, MetadataTarget, StorageConfig
 
 PROGRESS = itertools.cycle(''.join([c * 10 for c in '|/–-\\']))
 
@@ -75,23 +68,23 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
             print('Found missing data.')
         else:
             print('No missing data found.')
-
         return
 
     output_path = normalize_path(parsed_args.output)
     temp_path = normalize_path(parsed_args.temp)
 
-    metadata_target = MetadataTarget(fs, f'{temp_path}meta/')
-    target = FSSpecTarget(fs, output_path)
+    storage_config = StorageConfig(
+        target=FSSpecTarget(fs, output_path),
+        metadata=MetadataTarget(fs, f'{temp_path}meta/')
+    )
 
     recipe = XarrayZarrRecipe(pattern,
-                              target=target,
+                              storage_config=storage_config,
                               target_chunks={'time': 1},
                               subset_inputs={'time': 4},
                               copy_input_to_local_file=True,
                               cache_inputs=False,
                               lock_timeout=120,  # seconds until lock times out.
-                              metadata_cache=metadata_target,
                               consolidate_zarr=True,
                               xarray_open_kwargs=xarray_kwargs)
 
