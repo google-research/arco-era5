@@ -27,6 +27,7 @@ setup(
         'pandas',
         'gcsfs',
         'cfgrib',
+        'google-weather-tools>=0.3',
     ],
     tests_require=['pytest'],
 )
