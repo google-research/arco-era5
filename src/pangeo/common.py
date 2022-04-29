@@ -39,7 +39,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
 
     date_dim = ConcatDim("time", date_range)
     chunks_dim = MergeDim("chunk", parsed_args.chunks)
-    pattern = FilePattern(make_path, date_dim, chunks_dim)
+    pattern = FilePattern(make_path, date_dim, chunks_dim, file_type='grib')
 
     # remove 'indexpath' experimental feature; it breaks the pipeline
     # see https://github.com/ecmwf/cfgrib#grib-index-file

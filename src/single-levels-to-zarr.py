@@ -23,7 +23,7 @@ Examples:
      --find-missing
     ```
 
-    Perform the conversion...
+    Perform the conversion for the reanalysis dataset...
     ```
     python src/single-levels-to-zarr.py gs://anthromet-external-era5/single-level-reanalysis.zarr gs://$BUCKET/cache1/ \
      --start 1979-01-01 \
@@ -38,6 +38,27 @@ Examples:
      --machine_type n2-highmem-2 \
      --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
      --job_name reanalysis-to-zarr
+    ```
+
+    Perform the conversion for the forecast dataset...
+
+    ```
+    python src/single-levels-to-zarr.py gs://anthromet-external-era5/single-level-forecast.zarr gs://$BUCKET/fc-cache1/ \
+     --start 1979-01-01 \
+     --end 2021-07-01 \
+     --chunks rad pcp_surface_cp pcp_surface_crr pcp_surface_csf pcp_surface_csfr pcp_surface_es pcp_surface_lsf \
+        pcp_surface_lsp pcp_surface_lspf pcp_surface_lsrr pcp_surface_lssfr pcp_surface_ptype pcp_surface_rsn \
+        pcp_surface_sd pcp_surface_sf pcp_surface_smlt pcp_surface_tp \
+     --runner DataflowRunner \
+     --project $PROJECT \
+     --region $REGION \
+     --temp_location "gs://$BUCKET/tmp/" \
+     --setup_file ./setup.py \
+     --experiment=use_runner_v2 \
+     --disk_size_gb 50 \
+     --machine_type n2-highmem-2 \
+     --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
+     --job_name forecasts-to-zarr
     ```
 """
 import datetime
