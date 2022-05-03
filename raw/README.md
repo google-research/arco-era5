@@ -60,7 +60,7 @@ _Steps_:
 
    Check out the [`weather-dl` docs](https://weather-tools.readthedocs.io/en/latest/weather_dl/README.html) for more
    information.
-5. Repeat for the rest of the config files.
+4. Repeat for the rest of the config files.
 
 ## Preparing grib data for conversion
 
