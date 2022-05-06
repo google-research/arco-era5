@@ -34,10 +34,8 @@ Examples:
      --region $REGION \
      --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
-     --experiment=use_runner_v2 \
      --disk_size_gb 3600 \
      --machine_type m1-ultramem-40 \
-     --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
      --job_name model-level-moisture-to-zarr
 
     ```
@@ -52,10 +50,8 @@ Examples:
      --region $REGION \
      --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
-     --experiment=use_runner_v2 \
      --disk_size_gb 3600 \
      --machine_type m1-ultramem-40 \
-     --sdk_container_image=gcr.io/ai-for-weather/ecmwf-beam-worker:latest \
      --job_name model-level-wind-to-zarr
     ```
 """
