@@ -40,11 +40,11 @@ to [Zarr](https://zarr.readthedocs.io/) with no other modifications. Next, we pl
 version, oriented towards common research workflows, which we will do in the open.
 
 This two-pronged approach for the data serves different user needs. Some researchers need full control over the
-interpolation of the data for their analysis. Most will want a batteries-included dataset, where standard pre-processing
-is already applied. In general, we ensure that every step in this pipeline is open and reproducible, to provide
-transparency in the providence of all data.
+interpolation of data for their analysis. Most will want a batteries-included dataset, where standard pre-processing and
+chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
+to provide transparency in the providence of all data.
 
-- TODO(alxr, carver): What have we done to make this possible?
+TODO([#1](https://github.com/googlestaging/arco-era5/issues/1)): What have we done to make this dataset possible?
 
 ## Roadmap
 
@@ -267,7 +267,7 @@ the [Pangeo Forge project](https://pangeo-forge.readthedocs.io/)
 
 ### Why are there two model-level datasets and not one?
 
-TODO(carver)
+TODO([#2](https://github.com/googlestaging/arco-era5/issues/2))
 
 ### Why doesn’t this project make use of Pangeo Forge Cloud?
 
@@ -284,37 +284,19 @@ the [right tool](https://github.com/google/weather-tools/) for the right job.
 
 ### Why use this dataset? What uses are there for the data?
 
-TODO(alxr)
-
-TODO(carver)
-
-Notes: Reanalysis with the greatest possible resolution; Native grid choice – Cloud-oriented instead of File System
-oriented Faster data loading (e.g. to GPUs)
+TODO([#3](https://github.com/googlestaging/arco-era5/issues/3))
 
 ### Where should I be cautious? What are the limitations of the dataset?
 
-TODO(carver)
-
-Notes:
-
-surface variables at the coastline!
-Land-sea mask. See: the bay area. Coastal China (Shanghai). Tokyo. Costal India or Jakarta (NBU)
-Also: areas of rapid topography, e.g. tibetan plateau Precipitation. Link out to papers floating around about the known
-issue. We include it to be complete, but we don’t recommend using it blindly.
+TODO([#4](https://github.com/googlestaging/arco-era5/issues/4))
 
 ### Can I use the data for {research,commercial} purposes?
 
-Notes/Draft:
-
-Yes, please do!
-
-* Research: Please cite this work and ECMWF (see [section below](#how-to-cite-this-work)).
-* Commercial: TODO(labato): What are the conditions of commercial use?
-    * TODO(alxr): describe – must acknowledge where the data came from CDS and must include ECMWF.
+TODO([#5](https://github.com/googlestaging/arco-era5/issues/5))
 
 ## How to cite this work
 
-TODO(alxr)
+TODO([#6](https://github.com/googlestaging/arco-era5/issues/6))
 
 ## License
 

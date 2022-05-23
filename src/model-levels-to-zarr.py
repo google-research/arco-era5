@@ -16,7 +16,7 @@ r"""Convert Model level Era 5 Data to an unprocessed Zarr dataset.
 Examples:
     Check if there's any missing data:
     ```
-    python src/model-levels-to-zarr.py gs://anthromet-external-era5/model-level-reanalysis.zarr gs://$BUCKET/ml-cache/ \
+    python src/model-levels-to-zarr.py gs://arco-era5/co/model-level-reanalysis.zarr gs://$BUCKET/ml-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --setup_file ./setup.py \
@@ -25,7 +25,7 @@ Examples:
 
     Perform the conversion for the moisture dataset...
     ```
-    python src/model-levels-to-zarr.py gs://anthromet-external-era5/model-level-moisture.zarr gs://$BUCKET/ml-moist-cache/ \
+    python src/model-levels-to-zarr.py gs://arco-era5/co/model-level-moisture.zarr gs://$BUCKET/ml-moist-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --chunks o3q qrqs \
@@ -41,7 +41,7 @@ Examples:
     ```
     Perform the conversion for the wind dataset...
     ```
-    python src/model-levels-to-zarr.py gs://anthromet-external-era5/model-level-wind.zarr gs://$BUCKET/ml-wind-cache1/ \
+    python src/model-levels-to-zarr.py gs://arco-era5/co/model-level-wind.zarr gs://$BUCKET/ml-wind-cache1/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --chunks dve tw \
@@ -73,12 +73,12 @@ if __name__ == "__main__":
         if '_' in chunk:
             chunk_, level, var = chunk.split('_')
             return (
-                f"gs://external-data-ai-for-weather/ERA5GRIB/HRES/Daily/"
+                f"gs://arco-era5/raw/ERA5GRIB/HRES/Daily/"
                 f"{time.year:04d}/{time.year:04d}{time.month:02d}{time.day:02d}_hres_{chunk_}.grb2_{level}_{var}.grib"
             )
 
         return (
-            f"gs://external-data-ai-for-weather/ERA5GRIB/HRES/Daily/"
+            f"gs://arco-era5/raw/ERA5GRIB/HRES/Daily/"
             f"{time.year:04d}/{time.year:04d}{time.month:02d}{time.day:02d}_hres_{chunk}.grb2"
         )
 

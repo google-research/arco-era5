@@ -90,8 +90,8 @@ _Steps_:
    differ.
    ```shell
    export DATASET=soil
-   weather-sp --input-pattern "gs://external-data-ai-for-weather/ERA5GRIB/HRES/Month/**/*_hres_$DATASET.grb2" \
-     --output-template "gs://external-data-ai-for-weather/ERA5GRIB/HRES/split/Month/{1}/{0}.grb2_{level}_{shortName}.grib" \
+   weather-sp --input-pattern "gs://arco-era5/raw/ERA5GRIB/HRES/Month/**/*_hres_$DATASET.grb2" \
+     --output-template "gs://arco-era5/raw/ERA5GRIB/HRES/Month/{1}/{0}.grb2_{level}_{shortName}.grib" \
      --dry-run
    ```
 2. Execute the data split on your
@@ -104,8 +104,8 @@ _Steps_:
    export BUCKET=<your-bucket>
    export REGION=us-central1
 
-   weather-sp --input-pattern "gs://external-data-ai-for-weather/ERA5GRIB/HRES/Month/**/*_hres_$DATASET.grb2" \
-     --output-template "gs://external-data-ai-for-weather/ERA5GRIB/HRES/split/Month/{1}/{0}.grb2_{level}_{shortName}.grib" \
+   weather-sp --input-pattern "gs://arco-era5/raw/ERA5GRIB/HRES/Month/**/*_hres_$DATASET.grb2" \
+     --output-template "gs://arco-era5/raw/ERA5GRIB/HRES/Month/{1}/{0}.grb2_{level}_{shortName}.grib" \
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
