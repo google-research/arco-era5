@@ -80,7 +80,7 @@ setup(
     author_email='anthromet-core+era5@google.com',
     description="Analysis-Ready & Cloud-Optimized ERA5.",
     platforms=['darwin', 'linux'],
-    python_requires='>=3.7, <3.9',
+    python_requires='>=3.7, <3.10',
     install_requires=[
         'apache_beam[gcp]',
         'pangeo-forge-recipes==0.8.3',

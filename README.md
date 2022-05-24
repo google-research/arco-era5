@@ -44,7 +44,7 @@ interpolation of data for their analysis. Most will want a batteries-included da
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
 to provide transparency in the providence of all data.
 
-TODO([#1](https://github.com/googlestaging/arco-era5/issues/1)): What have we done to make this dataset possible?
+TODO([#1](https://github.com/google-research-datasets/arco-era5/issues/1)): What have we done to make this dataset possible?
 
 ## Roadmap
 
@@ -267,7 +267,7 @@ the [Pangeo Forge project](https://pangeo-forge.readthedocs.io/)
 
 ### Why are there two model-level datasets and not one?
 
-TODO([#2](https://github.com/googlestaging/arco-era5/issues/2))
+TODO([#2](https://github.com/google-research-datasets/arco-era5/issues/2))
 
 ### Why doesn’t this project make use of Pangeo Forge Cloud?
 
@@ -284,19 +284,19 @@ the [right tool](https://github.com/google/weather-tools/) for the right job.
 
 ### Why use this dataset? What uses are there for the data?
 
-TODO([#3](https://github.com/googlestaging/arco-era5/issues/3))
+TODO([#3](https://github.com/google-research-datasets/arco-era5/issues/3))
 
 ### Where should I be cautious? What are the limitations of the dataset?
 
-TODO([#4](https://github.com/googlestaging/arco-era5/issues/4))
+TODO([#4](https://github.com/google-research-datasets/arco-era5/issues/4))
 
 ### Can I use the data for {research,commercial} purposes?
 
-TODO([#5](https://github.com/googlestaging/arco-era5/issues/5))
+TODO([#5](https://github.com/google-research-datasets/arco-era5/issues/5))
 
 ## How to cite this work
 
-TODO([#6](https://github.com/googlestaging/arco-era5/issues/6))
+TODO([#6](https://github.com/google-research-datasets/arco-era5/issues/6))
 
 ## License
 
