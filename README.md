@@ -44,7 +44,8 @@ interpolation of data for their analysis. Most will want a batteries-included da
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
 to provide transparency in the providence of all data.
 
-TODO([#1](https://github.com/google-research-datasets/arco-era5/issues/1)): What have we done to make this dataset possible?
+TODO([#1](https://github.com/google-research-datasets/arco-era5/issues/1)): What have we done to make this dataset
+possible?
 
 ## Roadmap
 
@@ -267,7 +268,19 @@ the [Pangeo Forge project](https://pangeo-forge.readthedocs.io/)
 
 ### Why are there two model-level datasets and not one?
 
-TODO([#2](https://github.com/google-research-datasets/arco-era5/issues/2))
+It definitely is possible for all model level data to be represented in one grid, and thus one dataset. However, we
+opted to preserve the representation of some variables, related to wind direction and temperature,
+in [spectral harmonic coefficients.](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ)
+This representation aids in the accuracy of downstream computation – there are typically reductions in numerical errors
+when working in a fourier space over physical space. For a more in depth review of this topic, please consult these
+reference:
+
+* [_Fundamentals of Numerical Weather Prediction_](https://doi.org/10.1017/CBO9780511734458) by Jean Coiffier
+* [_Atmospheric modeling, data assimilation, and predictability_](https://doi.org/10.1017/CBO9780511802270) by Eugenia
+  Kalnay
+
+The moisture model-level dataset primarily includes mixing ratios of physical quantities. Spectral basis functions are
+not appropriate for this type of data.
 
 ### Why doesn’t this project make use of Pangeo Forge Cloud?
 
