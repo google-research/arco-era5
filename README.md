@@ -44,7 +44,8 @@ interpolation of data for their analysis. Most will want a batteries-included da
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
 to provide transparency in the providence of all data.
 
-TODO([#1](https://github.com/google-research-datasets/arco-era5/issues/1)): What have we done to make this dataset possible?
+TODO([#1](https://github.com/google-research-datasets/arco-era5/issues/1)): What have we done to make this dataset
+possible?
 
 ## Roadmap
 
@@ -267,7 +268,19 @@ the [Pangeo Forge project](https://pangeo-forge.readthedocs.io/)
 
 ### Why are there two model-level datasets and not one?
 
-TODO([#2](https://github.com/google-research-datasets/arco-era5/issues/2))
+It definitely is possible for all model level data to be represented in one grid, and thus one dataset. However, we
+opted to preserve the native representation for variables in ECMWF's models. A handful of core model variables (wind,
+temperature and surface pressure) are represented
+as [spectral harmonic coefficients](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ)
+, while everything else is stored on a Gaussian grid. This avoids introducing numerical error by interpolating these
+variables to physical space. For a more in depth review of this topic, please consult these references:
+
+* [_Fundamentals of Numerical Weather Prediction_](https://doi.org/10.1017/CBO9780511734458) by Jean Coiffier
+* [_Atmospheric modeling, data assimilation, and predictability_](https://doi.org/10.1017/CBO9780511802270) by Eugenia
+  Kalnay
+
+Please note: in a future releases, we intend to create a dataset version where all model levels are in one grid and
+Zarr.
 
 ### Why doesn’t this project make use of Pangeo Forge Cloud?
 
@@ -288,15 +301,77 @@ TODO([#3](https://github.com/google-research-datasets/arco-era5/issues/3))
 
 ### Where should I be cautious? What are the limitations of the dataset?
 
-TODO([#4](https://github.com/google-research-datasets/arco-era5/issues/4))
+|                                                                         |                                                                               |
+|:-----------------------------------------------------------------------:|:-----------------------------------------------------------------------------:|
+| ![Mumbai, India](docs/assets/table0-fig0-mumbai.png) <br> Mumbai, India | ![San Francisco, USA](docs/assets/table0-fig1-sf.png) <br> San Francisco, USA |
+|  ![Tokyo, Japan](docs/assets/table0-fig2-tokyo.png) <br> Tokyo, Japan   |      ![Singapore](docs/assets/table0-fig3-singapore.png) <br> Singapore       |
+
+|                                                                                |                                                                                               |
+|:------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------:|
+| ![ERA5 Topography](docs/assets/table1-fig0-topo-era5.png) <br> ERA5 Topography | ![GMTED2010 Topography](docs/assets/table1-fig1-topo-GMTED2010.png) <br> GMTED2010 Topography |
+
+It is important to remember that a reanalysis is an estimate of what the weather was, it is not guaranteed to be an
+error-free estimate. There are several areas where the novice reanalysis user should be careful.
+
+First, the user should be careful using reanalysis data at locations near coastlines. The first figure shows the
+fraction of land (1 for land, 0 for ocean) of ERA5 gridpoints at different coastal locations. This is important because
+the land-surface model used in ERA5 tries to blend in the influence of water with the influence of land based on this
+fraction. The most visible effect of this blending is that as the fraction of land decreases, the daily variation in
+temperature will also decrease. Looking at the first figure, there are sharp changes in the fraction of land between
+neighboring grid cells so there could be differences in daily temperature range that might not be reflected in actual
+weather observations.
+
+The user should also be careful when using reanalysis data in areas with large variations in topography. The second
+figure is a plot of ERA5 topography around Mount Everest compared with GMTED2010 topography. The ERA5 topography is
+completely missing the high peaks of the Everest region and missing most of the structure of the mountain valleys.
+Topography strongly influences temperature and precipitation rate, so it is possible that ERA5’s temperature is too warm
+and ERA5’s precipitation patterns could be wrong as well.
+
+ERA5’s precipitation variables aren’t directly constrained by any observations, so we strongly encourage the user to
+check ERA5 against observed precipitation (for example, (Wu et al., 2022)[https://doi.org/10.1175/JHM-D-21-0195.1]). A
+study comparing reanalyses (not including ERA5) against gridded precipitation observations showed striking differences
+between reanalyses and
+observation [Lisa V Alexander et al 2020 Environ. Res. Lett. 15 055002 .](https://iopscience.iop.org/article/10.1088/1748-9326/ab79e2)
 
 ### Can I use the data for {research,commercial} purposes?
 
-TODO([#5](https://github.com/google-research-datasets/arco-era5/issues/5))
+Yes, you can use our ERA5 data according to the terms of
+the [Copernicus license](https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf).
+
+Researchers, see the [next section](#how-to-cite-this-work) for how to cite this work.
+
+Commercial users, please be sure to provide acknowledgement to the Copernicus Climate Change Service according
+the [Copernicus Licence](https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf)
+terms.
 
 ## How to cite this work
 
-TODO([#6](https://github.com/google-research-datasets/arco-era5/issues/6))
+TODO([#6](https://github.com/google-research-datasets/arco-era5/issues/6)): Please use our soon-to-come Zenodo citation.
+
+In addition, please cite the ERA5 dataset accordingly:
+
+```
+Hersbach, H., Bell, B., Berrisford, P., Hirahara, S., Horányi, A., 
+Muñoz‐Sabater, J., Nicolas, J., Peubey, C., Radu, R., Schepers, D., 
+Simmons, A., Soci, C., Abdalla, S., Abellan, X., Balsamo, G., 
+Bechtold, P., Biavati, G., Bidlot, J., Bonavita, M., De Chiara, G., 
+Dahlgren, P., Dee, D., Diamantakis, M., Dragani, R., Flemming, J., 
+Forbes, R., Fuentes, M., Geer, A., Haimberger, L., Healy, S., 
+Hogan, R.J., Hólm, E., Janisková, M., Keeley, S., Laloyaux, P., 
+Lopez, P., Lupu, C., Radnoti, G., de Rosnay, P., Rozum, I., Vamborg, F.,
+Villaume, S., Thépaut, J-N. (2017): Complete ERA5: Fifth generation of 
+ECMWF atmospheric reanalyses of the global climate. Copernicus Climate 
+Change Service (C3S) Data Store (CDS). (Accessed on DD-MM-YYYY)
+
+Hersbach et al, (2017) was downloaded from the Copernicus Climate Change 
+Service (C3S) Climate Data Store. We thank C3S for allowing us to 
+redistribute the data.
+
+The results contain modified Copernicus Climate Change Service 
+information 2022. Neither the European Commission nor ECMWF is 
+responsible for any use that may be made of the Copernicus information 
+or data it contains.
+```
 
 ## License
 
