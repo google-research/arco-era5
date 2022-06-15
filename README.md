@@ -328,10 +328,10 @@ Topography strongly influences temperature and precipitation rate, so it is poss
 and ERA5’s precipitation patterns could be wrong as well.
 
 ERA5’s precipitation variables aren’t directly constrained by any observations, so we strongly encourage the user to
-check ERA5 against observed precipitation (for example, (Wu et al., 2022)[https://doi.org/10.1175/JHM-D-21-0195.1]). A
+check ERA5 against observed precipitation (for example, [Wu et al., 2022](https://doi.org/10.1175/JHM-D-21-0195.1)). A
 study comparing reanalyses (not including ERA5) against gridded precipitation observations showed striking differences
-between reanalyses and
-observation [Lisa V Alexander et al 2020 Environ. Res. Lett. 15 055002 .](https://iopscience.iop.org/article/10.1088/1748-9326/ab79e2)
+between reanalyses and observation [Lisa V Alexander et al 2020 Environ. Res. Lett. 15 055002](
+https://iopscience.iop.org/article/10.1088/1748-9326/ab79e2).
 
 ### Can I use the data for {research,commercial} purposes?
 
