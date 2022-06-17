@@ -35,7 +35,7 @@ for more.
 </details>
 
 So far, we have ingested meteorologically valuable variables for the land and atmosphere. From this, we have produced a
-cloud-optimized version of ERA5, where we have converted [grib data](https://en.wikipedia.org/wiki/GRIB)
+cloud-optimized version of ERA5, in which we have converted [grib data](https://en.wikipedia.org/wiki/GRIB)
 to [Zarr](https://zarr.readthedocs.io/) with no other modifications. Next, we plan on creating an "analysis-ready"
 version, oriented towards common research workflows, which we will do in the open.
 
@@ -235,12 +235,13 @@ This phase of the project is under active development! If you would like to lend
 
 ### How did you pick these variables?
 
-This dataset came from Loon, Alphabet’s project to deliver internet service using stratospheric balloons. Loon’s
-Planning, Simulation and Control team needed accurate data on how the stratospheric winds have behaved in the past to
-evaluate the effectiveness of different balloon steering algorithms over a range of weather. This lead us to download
-the model-level data. But Loon also needed information about the atmospheric radiation to model balloon gas
-temperatures, so we downloaded that. And then we downloaded the most commonly used meteorological variables to support
-different product planning needs (RF propagation models, etc)...
+This dataset originated in [Loon](https://x.company/projects/loon/), Alphabet’s project to deliver internet service
+using stratospheric balloons, and is now curated by Google Research & Google Cloud Platform. Loon’s Planning, Simulation
+and Control team needed accurate data on how the stratospheric winds have behaved in the past to evaluate the
+effectiveness of different balloon steering algorithms over a range of weather. This lead us to download the model-level
+data. But Loon also needed information about the atmospheric radiation to model balloon gas temperatures, so we
+downloaded that. And then we downloaded the most commonly used meteorological variables to support different product
+planning needs (RF propagation models, etc)...
 
 Eventually, we found ourselves with a comprehensive history of weather for the world.
 
