@@ -44,7 +44,7 @@ interpolation of data for their analysis. Most will want a batteries-included da
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
 to provide transparency in the providence of all data.
 
-TODO([#1](https://github.com/google-research-datasets/arco-era5/issues/1)): What have we done to make this dataset
+TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we done to make this dataset
 possible?
 
 ## Roadmap
@@ -178,13 +178,13 @@ All phases of this dataset can be reproduced with scripts found here. To run the
 project.
 
 ```shell
-git clone https://github.com/google-research-datasets/arco-era5.git
+git clone https://github.com/google-research/arco-era5.git
 ```
 
 Or, via SSH:
 
 ```shell
-git clone git@github.com:google-research-datasets/arco-era5.git
+git clone git@github.com:google-research/arco-era5.git
 ```
 
 Then, install with `pip`:
@@ -253,7 +253,7 @@ wind can be computed from divergence and vorticity; geopotential is a vertical i
 In the second phase of our roadmap (towards "Analysis Ready" data), we aim to compute all of these variables ourselves.
 If you’d like to make use of these parameters sooner, please check out our example notebooks where we demo common
 calculations. If you notice non-derived missing data, such as surface variables, please let us know of your needs
-by [filing an issue](https://github.com/google-research-datasets/arco-era5/issues), and we will be happy to incorporate
+by [filing an issue](https://github.com/google-research/arco-era5/issues), and we will be happy to incorporate
 them into our roadmap.
 
 ### Do you have plans to get _all_ of ERA5?
@@ -261,7 +261,7 @@ them into our roadmap.
 We aim to support hosting data that serves general meteorological use cases, rather than aim for total completeness.
 Wave variables are missing from this corpus, and are a priority on our roadmap. If there is a variable or dataset that
 you think should be included here, please file
-a [Github issue](https://github.com/google-research-datasets/arco-era5/issues).
+a [Github issue](https://github.com/google-research/arco-era5/issues).
 
 For a complete ERA5 mirror, we recommend consulting with
 the [Pangeo Forge project](https://pangeo-forge.readthedocs.io/)
@@ -298,7 +298,7 @@ the [right tool](https://github.com/google/weather-tools/) for the right job.
 
 ### Why use this dataset? What uses are there for the data?
 
-TODO([#3](https://github.com/google-research-datasets/arco-era5/issues/3))
+TODO([#3](https://github.com/google-research/arco-era5/issues/3))
 
 ### Where should I be cautious? What are the limitations of the dataset?
 
@@ -347,7 +347,7 @@ terms.
 
 ## How to cite this work
 
-TODO([#6](https://github.com/google-research-datasets/arco-era5/issues/6)): Please use our soon-to-come Zenodo citation.
+TODO([#6](https://github.com/google-research/arco-era5/issues/6)): Please use our soon-to-come Zenodo citation.
 
 In addition, please cite the ERA5 dataset accordingly:
 
