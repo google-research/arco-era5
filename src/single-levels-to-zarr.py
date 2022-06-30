@@ -16,7 +16,7 @@ r"""Convert Surface level Era 5 Data to an unprocessed Zarr dataset.
 Examples:
     Check if there's any missing data:
     ```
-    python src/single-levels-to-zarr.py gs://arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --setup_file ./setup.py \
@@ -25,7 +25,7 @@ Examples:
 
     Perform the conversion for the reanalysis dataset...
     ```
-    python src/single-levels-to-zarr.py gs://arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --runner DataflowRunner \
@@ -41,7 +41,7 @@ Examples:
     Perform the conversion for the forecast dataset...
 
     ```
-    python src/single-levels-to-zarr.py gs://arco-era5/co/single-level-forecast.zarr gs://$BUCKET/fc-cache/ \
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr gs://$BUCKET/fc-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --chunks rad pcp_surface_cp pcp_surface_crr pcp_surface_csf pcp_surface_csfr pcp_surface_es pcp_surface_lsf \
@@ -75,12 +75,12 @@ if __name__ == "__main__":
         if '_' in chunk:
             chunk_, level, var = chunk.split('_')
             return (
-                f"gs://arco-era5/raw/ERA5GRIB/HRES/Month/"
+                f"gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/"
                 f"{time.year:04d}/{time.year:04d}{time.month:02d}_hres_{chunk_}.grb2_{level}_{var}.grib"
             )
 
         return (
-            f"gs://arco-era5/raw/ERA5GRIB/HRES/Month/"
+            f"gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/"
             f"{time.year:04d}/{time.year:04d}{time.month:02d}_hres_{chunk}.grb2"
         )
 
