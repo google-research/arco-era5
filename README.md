@@ -44,8 +44,7 @@ interpolation of data for their analysis. Most will want a batteries-included da
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
 to provide transparency in the providence of all data.
 
-TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we done to make this dataset
-possible?
+TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we done to make this dataset possible?
 
 ## Roadmap
 
@@ -253,15 +252,14 @@ wind can be computed from divergence and vorticity; geopotential is a vertical i
 In the second phase of our roadmap (towards "Analysis Ready" data), we aim to compute all of these variables ourselves.
 If you’d like to make use of these parameters sooner, please check out our example notebooks where we demo common
 calculations. If you notice non-derived missing data, such as surface variables, please let us know of your needs
-by [filing an issue](https://github.com/google-research/arco-era5/issues), and we will be happy to incorporate
-them into our roadmap.
+by [filing an issue](https://github.com/google-research/arco-era5/issues), and we will be happy to incorporate them into
+our roadmap.
 
 ### Do you have plans to get _all_ of ERA5?
 
 We aim to support hosting data that serves general meteorological use cases, rather than aim for total completeness.
 Wave variables are missing from this corpus, and are a priority on our roadmap. If there is a variable or dataset that
-you think should be included here, please file
-a [Github issue](https://github.com/google-research/arco-era5/issues).
+you think should be included here, please file a [Github issue](https://github.com/google-research/arco-era5/issues).
 
 For a complete ERA5 mirror, we recommend consulting with
 the [Pangeo Forge project](https://pangeo-forge.readthedocs.io/)
@@ -298,7 +296,10 @@ the [right tool](https://github.com/google/weather-tools/) for the right job.
 
 ### Why use this dataset? What uses are there for the data?
 
-TODO([#3](https://github.com/google-research/arco-era5/issues/3))
+ERA5 can be used in many applications. It can be used to train ML models that predict the impact of weather on different
+phenomena. ERA5 data could also be used to train and evaluate ML models that forecast the weather. The data could be
+used to compute climatologies, or the average weather for a region over a given period of time. ERA5 data can be used to
+visualize and study historical weather events, such as Hurricane Sandy.
 
 ### Where should I be cautious? What are the limitations of the dataset?
 
