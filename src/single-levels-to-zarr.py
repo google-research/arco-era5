@@ -42,7 +42,6 @@ Examples:
     ```
 
     Perform the conversion for the forecast dataset...
-
     ```
     python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr gs://$BUCKET/fc-cache/ \
      --start 1979-01-01 \
@@ -61,6 +60,25 @@ Examples:
      --network=$NETWORK \
      --subnetwork=regions/$REGION/subnetworks/$SUBNET \
      --job_name forecasts-to-zarr
+    ```
+
+    Perform the conversion for the surface dataset...
+    ```
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-surface.zarr gs://$BUCKET/sfc-cache/ \
+     --start 1979-01-01 \
+     --end 2021-07-01 \
+     --chunks lnsp zs \
+     --runner DataflowRunner \
+     --project $PROJECT \
+     --region $REGION \
+     --temp_location "gs://$BUCKET/tmp/" \
+     --setup_file ./setup.py \
+     --disk_size_gb 50 \
+     --machine_type n2-highmem-2 \
+     --no_use_public_ips  \
+     --network=$NETWORK \
+     --subnetwork=regions/$REGION/subnetworks/$SUBNET \
+     --job_name surface-to-zarr
     ```
 """
 import datetime
