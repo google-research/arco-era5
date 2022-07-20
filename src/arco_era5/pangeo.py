@@ -15,6 +15,7 @@
 import argparse
 import datetime
 import itertools
+import json
 import os
 import typing as t
 from urllib import parse
@@ -47,9 +48,16 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         'engine': 'cfgrib',
         'backend_kwargs': {
             'indexpath': '',
+            'read_keys': [
+                'pv',
+                'latitudeOfFirstGridPointInDegrees',
+                'longitudeOfFirstGridPointInDegrees',
+                'latitudeOfLastGridPointInDegrees',
+                'longitudeOfLastGridPointInDegrees'
+            ]
         },
         'cache': False,
-        'chunks': {'time': 4}
+        'chunks': {'time': 4},
     }
 
     fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
@@ -81,7 +89,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
     recipe = XarrayZarrRecipe(pattern,
                               storage_config=storage_config,
                               target_chunks={'time': 1},
-                              subset_inputs={'time': 4},
+                              subset_inputs=parsed_args.subset_inputs,
                               copy_input_to_local_file=True,
                               cache_inputs=False,
                               lock_timeout=120,  # seconds until lock times out.
@@ -104,8 +112,9 @@ def parse_args(desc: str, default_chunks: t.List[str]) -> t.Tuple[argparse.Names
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
                         default=default_chunks,
                         help='Chunks of variables to merge together.')
+    parser.add_argument('--subset-inputs', type=json.loads, default='{"time": 4}',
+                        help='A JSON string; when reading a chunk from disk, divide them into smaller chunks across '
+                             'each dimension. Think of this as the inverse of a chunk size (e.g. the total number of '
+                             'sub chunks). Default: `{"time": 4}`')
 
     return parser.parse_known_args()
-
-
-

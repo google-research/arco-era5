@@ -35,6 +35,9 @@ Examples:
      --setup_file ./setup.py \
      --disk_size_gb 50 \
      --machine_type n2-highmem-2 \
+     --no_use_public_ips  \
+     --network=$NETWORK \
+     --subnetwork=regions/$REGION/subnetworks/$SUBNET \
      --job_name reanalysis-to-zarr
     ```
 
@@ -54,6 +57,9 @@ Examples:
      --setup_file ./setup.py \
      --disk_size_gb 50 \
      --machine_type n2-highmem-2 \
+     --no_use_public_ips  \
+     --network=$NETWORK \
+     --subnetwork=regions/$REGION/subnetworks/$SUBNET \
      --job_name forecasts-to-zarr
     ```
 """

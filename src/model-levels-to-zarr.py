@@ -16,9 +16,10 @@ r"""Convert Model level Era 5 Data to an unprocessed Zarr dataset.
 Examples:
     Check if there's any missing data:
     ```
-    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-reanalysis.zarr gs://$BUCKET/ml-cache/ \
+    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-all.zarr gs://$BUCKET/ml-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
+     --chunks o3q qrqs dve tw \
      --setup_file ./setup.py \
      --find-missing
     ```
@@ -36,12 +37,15 @@ Examples:
      --setup_file ./setup.py \
      --disk_size_gb 3600 \
      --machine_type m1-ultramem-40 \
+     --no_use_public_ips  \
+     --network=$NETWORK \
+     --subnetwork=regions/$REGION/subnetworks/$SUBNET \
      --job_name model-level-moisture-to-zarr
 
     ```
     Perform the conversion for the wind dataset...
     ```
-    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-wind.zarr gs://$BUCKET/ml-wind-cache1/ \
+    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-wind.zarr gs://$BUCKET/ml-wind-cache/ \
      --start 1979-01-01 \
      --end 2021-07-01 \
      --chunks dve tw \
@@ -52,6 +56,9 @@ Examples:
      --setup_file ./setup.py \
      --disk_size_gb 3600 \
      --machine_type m1-ultramem-40 \
+     --no_use_public_ips  \
+     --network=$NETWORK \
+     --subnetwork=regions/$REGION/subnetworks/$SUBNET \
      --job_name model-level-wind-to-zarr
     ```
 """
