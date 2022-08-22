@@ -1,4 +1,4 @@
-name: era5-docs1
+name: era5-docs
 channels:
   - conda-forge
 dependencies:
