@@ -20,6 +20,7 @@ Please see the following documentation and examples for more:
 - https://beam.apache.org/documentation/sdks/python-pipeline-dependencies/#nonpython
 - https://github.com/apache/beam/blob/master/sdks/python/apache_beam/examples/complete/juliaset/setup.py
 """
+import platform
 import subprocess
 from distutils.command.build import build as _build  # type: ignore
 
@@ -70,13 +71,17 @@ class CustomCommands(Command):
                 'Command %s failed: exit code: %s' % (command_list, p.returncode))
 
     def run(self):
+        # Only run on Linux, which is Dataflow's environment.
+        if 'Linux' not in platform.system():
+            return
         for command in CUSTOM_COMMANDS:
             self.RunCustomCommand(command)
 
 
 setup(
     name='arco_era5',
-    packaging=find_packages('src'),
+    package_dir={'': 'src'},
+    packages=find_packages('src'),
     author_email='anthromet-core+era5@google.com',
     description="Analysis-Ready & Cloud-Optimized ERA5.",
     platforms=['darwin', 'linux'],

@@ -77,6 +77,8 @@ Examples:
      --machine_type n2-highmem-2 \
      --no_use_public_ips  \
      --network=$NETWORK \
+     --experiment=use_runner_v2 \
+     --sdk_container_image=gcr.io/$PROJECT/miniconda3-beam:0.0.3.git \
      --subnetwork=regions/$REGION/subnetworks/$SUBNET \
      --job_name surface-to-zarr
     ```
