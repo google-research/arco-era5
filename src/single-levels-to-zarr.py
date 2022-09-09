@@ -18,7 +18,7 @@ Examples:
     ```
     python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
      --start 1979-01-01 \
-     --end 2021-07-01 \
+     --end 2021-08-31 \
      --setup_file ./setup.py \
      --find-missing
     ```
@@ -27,7 +27,7 @@ Examples:
     ```
     python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
      --start 1979-01-01 \
-     --end 2021-07-01 \
+     --end 2021-08-31 \
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
@@ -45,7 +45,7 @@ Examples:
     ```
     python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr gs://$BUCKET/fc-cache/ \
      --start 1979-01-01 \
-     --end 2021-07-01 \
+     --end 2021-08-31 \
      --chunks rad pcp_surface_cp pcp_surface_crr pcp_surface_csf pcp_surface_csfr pcp_surface_es pcp_surface_lsf \
         pcp_surface_lsp pcp_surface_lspf pcp_surface_lsrr pcp_surface_lssfr pcp_surface_ptype pcp_surface_rsn \
         pcp_surface_sd pcp_surface_sf pcp_surface_smlt pcp_surface_tp \
@@ -66,7 +66,7 @@ Examples:
     ```
     python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-surface.zarr gs://$BUCKET/sfc-cache/ \
      --start 1979-01-01 \
-     --end 2021-07-01 \
+     --end 2021-08-31 \
      --chunks lnsp zs \
      --runner DataflowRunner \
      --project $PROJECT \

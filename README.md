@@ -71,7 +71,7 @@ Please view out our [walkthrough notebook](docs/Surface-Reanalysis-Walkthrough.i
 
 ## Data Description
 
-As of 2022-04-27, all data spans the dates `1979-01-01/to/2021-07-01` (inclusive).
+As of 2022-04-27, all data spans the dates `1979-01-01/to/2021-08-31` (inclusive).
 
 Whenever possible, we have chosen to represent parameters by their native grid resolution.
 See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.

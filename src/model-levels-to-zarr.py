@@ -18,7 +18,7 @@ Examples:
     ```
     python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-all.zarr gs://$BUCKET/ml-cache/ \
      --start 1979-01-01 \
-     --end 2021-07-01 \
+     --end 2021-08-31 \
      --chunks o3q qrqs dve tw \
      --setup_file ./setup.py \
      --find-missing
@@ -28,7 +28,7 @@ Examples:
     ```
     python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr gs://$BUCKET/ml-moist-cache/ \
      --start 1979-01-01 \
-     --end 2021-07-01 \
+     --end 2021-08-31 \
      --chunks o3q qrqs \
      --runner DataflowRunner \
      --project $PROJECT \
@@ -47,7 +47,7 @@ Examples:
     ```
     python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-wind.zarr gs://$BUCKET/ml-wind-cache/ \
      --start 1979-01-01 \
-     --end 2021-07-01 \
+     --end 2021-08-31 \
      --chunks dve tw \
      --runner DataflowRunner \
      --project $PROJECT \
