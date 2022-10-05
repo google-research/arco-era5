@@ -53,7 +53,7 @@ Please view out our [walkthrough notebook](docs/Surface-Reanalysis-Walkthrough.i
 1. [x] **Phase 0**: Ingest raw ERA5
 2. [x] **Phase 1**: Cloud-Optimize to Zarr, without data modifications
     1. [x] Use [Pangeo-Forge](https://pangeo-forge.readthedocs.io/) to convert the data from grib to Zarr.
-    2. [wip] Create example notebooks for common workflows, including regridding and variable derivation.
+    2. [x] Create example notebooks for common workflows, including regridding and variable derivation.
 3. [ ] **Phase 2**: Produce an Analysis-Ready corpus
     1. [ ] Regrid datasets to lat/long grids.
     2. [ ] Convert model levels to pressure levels (at high resolution).
@@ -350,7 +350,7 @@ terms.
 
 ## How to cite this work
 
-TODO([#6](https://github.com/google-research/arco-era5/issues/6)): Please use our soon-to-come Zenodo citation.
+TODO([#6](https://github.com/google-research/arco-era5/issues/6)): Please use our soon-to-come citation.
 
 In addition, please cite the ERA5 dataset accordingly:
 
