@@ -83,6 +83,13 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 * _Grid_: `Spectral Harmonic Coefficients`
   ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
 
+> Warning: We encountered a small error in one of our source data shards (the `dve` shard for 2008-08-27 actually had
+> data for 2008-_02_-27). We noticed this only after ECMWF's MARS archive went down due to
+> a [data center migration.](https://www.ecmwf.int/en/about/media-centre/focus/2022/data-handling-system-move-new-data-centre-practical-implications)
+> In order to release the data as soon as possible, we substituted the previous day's worth of data for this 24-hour
+> period. Once the center is back online, we will re-compute this
+> dataset ([#8](https://github.com/google-research/arco-era5/issues/8)).
+
 | name                 | short name | units   | docs                                              | config          |
 |----------------------|------------|---------|---------------------------------------------------|-----------------|
 | vorticity (relative) | vo         | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=138 | era5_ml_dv.cfg  |
