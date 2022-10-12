@@ -246,7 +246,7 @@ This phase of the project is under active development! If you would like to lend
 This dataset originated in [Loon](https://x.company/projects/loon/), Alphabet’s project to deliver internet service
 using stratospheric balloons, and is now curated by Google Research & Google Cloud Platform. Loon’s Planning, Simulation
 and Control team needed accurate data on how the stratospheric winds have behaved in the past to evaluate the
-effectiveness of different balloon steering algorithms over a range of weather. This lead us to download the model-level
+effectiveness of different balloon steering algorithms over a range of weather. This led us to download the model-level
 data. But Loon also needed information about the atmospheric radiation to model balloon gas temperatures, so we
 downloaded that. And then we downloaded the most commonly used meteorological variables to support different product
 planning needs (RF propagation models, etc)...
@@ -325,7 +325,7 @@ It is important to remember that a reanalysis is an estimate of what the weather
 error-free estimate. There are several areas where the novice reanalysis user should be careful.
 
 First, the user should be careful using reanalysis data at locations near coastlines. The first figure shows the
-fraction of land (1 for land, 0 for ocean) of ERA5 gridpoints at different coastal locations. This is important because
+fraction of land (1 for land, 0 for ocean) of ERA5 grid points at different coastal locations. This is important because
 the land-surface model used in ERA5 tries to blend in the influence of water with the influence of land based on this
 fraction. The most visible effect of this blending is that as the fraction of land decreases, the daily variation in
 temperature will also decrease. Looking at the first figure, there are sharp changes in the fraction of land between
@@ -351,7 +351,7 @@ the [Copernicus license](https://cds.climate.copernicus.eu/api/v2/terms/static/l
 
 Researchers, see the [next section](#how-to-cite-this-work) for how to cite this work.
 
-Commercial users, please be sure to provide acknowledgement to the Copernicus Climate Change Service according
+Commercial users, please be sure to provide acknowledgement to the Copernicus Climate Change Service according to
 the [Copernicus Licence](https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf)
 terms.
 
