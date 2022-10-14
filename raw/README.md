@@ -14,7 +14,7 @@ _Pre-requisites_:
    ```shell
    pip install google-weather-tools>=0.3.1
    ```
-2. Acquire one or more licenses from [Copernicus](https://cds.climate.copernicus.eu/api-how-to#install-the-cds-api-key).
+2. Acquire one or more licenses from [Copernicus](https://cds.climate.copernicus.eu/user/register?destination=/api-how-to).
    > Recommended: Download configs allow users to specify multiple API keys in a single data request via
    > ["parameter subsections"](https://weather-tools.readthedocs.io/en/latest/Configuration.html#subsections). We
    > highly recommend that institutions pool licenses together for faster downloads.
