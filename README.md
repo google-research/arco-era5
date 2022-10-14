@@ -46,7 +46,7 @@ to provide transparency in the providence of all data.
 
 TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we done to make this dataset possible?
 
-Please view out our [walkthrough notebook](docs/Surface-Reanalysis-Walkthrough.ipynb) for a demo of the datasets.
+**Please view out our [walkthrough notebook](docs/0-Surface-Reanalysis-Walkthrough.ipynb) for a demo of the datasets.**
 
 ## Roadmap
 
