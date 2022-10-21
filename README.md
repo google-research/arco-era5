@@ -82,6 +82,7 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 * _Times_: `00/to/23`
 * _Grid_: `Spectral Harmonic Coefficients`
   ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
+* _Size_: 305.89 TiB
 
 > Warning: We encountered a small error in one of our source data shards (the `dve` shard for 2008-08-27 actually had
 > data for 2008-_02_-27). We noticed this only after ECMWF's MARS archive went down due to
@@ -97,12 +98,24 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 | temperature          | t          | K       | https://apps.ecmwf.int/codes/grib/param-db?id=130 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
 | vertical velocity    | d          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
 
+
+```python
+import xarray as xr
+
+ml_wind = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/',
+    chunks={'time': 48},
+    consolidated=True,
+)
+```
+
 ### Model Level Moisture
 
 * _Levels_: `1/to/137`
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
+* _Size_: 707.34 TiB
 
 | name                                | short name | units    | docs                                              | config                                   |
 |-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
@@ -114,11 +127,22 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 | specific rain water content         | crwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=75  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
 | specific snow water content         | cswc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=76  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
 
+```python
+import xarray as xr
+
+ml_moisture = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/',
+    chunks={'time': 48},
+    consolidated=True,
+)
+```
+
 ### Single Level Reanalysis
 
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
+* _Size_: 28.02 TiB
 
 | name                                                       | short name | units        | docs                                                 | config                                       |
 |------------------------------------------------------------|------------|--------------|------------------------------------------------------|----------------------------------------------|
@@ -149,12 +173,22 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 | total column water                                         | tcw        | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=136    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
 | total column vertically-integrated water vapour            | tcwv       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=137    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
 
+```python
+import xarray as xr
+
+sl_reanalysis = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr', 
+    chunks={'time': 48},
+    consolidated=True,
+)
+```
 ### Single Level Forecast
 
 * _Times_: `06:00/18:00`
 * _Steps_: `0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
+* _Size_: 24.52 TiB
 
 | name                                       | short name | units                 | docs                                                 | config                                   |
 |--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
@@ -179,6 +213,16 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 | gravity wave dissipation                   | gwd        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=197    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
 | surface thermal radiation downwards        | strd       | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=175    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
 | surface net thermal radiation              | str        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=177    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
+
+```python
+import xarray as xr
+
+sl_forecasts = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr/', 
+    chunks={'time': 48},
+    consolidated=True,
+)
+```
 
 ## How to reproduce
 
