@@ -9,7 +9,7 @@ Recipes for reproducing Analysis-Ready & Cloud Optimized (ARCO) ERA5 datasets.
 ## Introduction
 
 Our goal is to make a global history of the climate highly accessible in the cloud. To that end, we present a curated
-copy of the ERA5 corpus.
+copy of the ERA5 corpus, found in [Google Cloud Public Datasets](https://cloud.google.com/storage/docs/public-datasets/era5).
 
 <details>
 <summary>What is ERA5?</summary>
