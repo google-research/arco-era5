@@ -42,7 +42,7 @@ version, oriented towards common research workflows, which we will do in the ope
 This two-pronged approach for the data serves different user needs. Some researchers need full control over the
 interpolation of data for their analysis. Most will want a batteries-included dataset, where standard pre-processing and
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
-to provide transparency in the providence of all data.
+to provide transparency in the provenance of all data.
 
 TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we done to make this dataset possible?
 
