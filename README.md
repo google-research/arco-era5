@@ -401,7 +401,10 @@ terms.
 
 ## How to cite this work
 
-TODO([#6](https://github.com/google-research/arco-era5/issues/6)): Please use our soon-to-come citation.
+Please cite our presentation at the 22nd Conference on Artificial Intelligence for Environmental Science describing ARCO-ERA5.
+```
+Carver, Robert W, and Merose, Alex. (2023): ARCO-ERA5: An Analysis-Ready Cloud-Optimized Reanalysis Dataset. 22nd Conf. on AI for Env. Science, Denver, CO, Amer. Meteo. Soc, 4A.1, https://ams.confex.com/ams/103ANNUAL/meetingapp.cgi/Paper/415842
+```
 
 In addition, please cite the ERA5 dataset accordingly:
 
