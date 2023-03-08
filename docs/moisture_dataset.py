@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Script to merge AR ML datasets into CO ML dataset
+"""Script to merge AR ML datasets into CO ML dataset.
 
 This script contains the Metview workflow that will merge the 
 AR ML datasets into a single ML dataset.  It will also create several 
@@ -27,7 +27,7 @@ def attribute_fix(ds):
 
 
 def compute_gg_ll_dataset(ml_surface, ml_wind, ml_moisture, datestring):
-   """Merges/processes AR ML dataset to a CO ML dataset
+   """Merges/processes AR ML dataset to a CO ML dataset.
    
    This function takes a datestamp and the three AR model-level ERA5 
    datasets to produce a unified model-level dataset on a Gaussian Grid
