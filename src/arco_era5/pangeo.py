@@ -88,7 +88,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
 
     recipe = XarrayZarrRecipe(pattern,
                               storage_config=storage_config,
-                              target_chunks={'time': 1},
+                              target_chunks={'time': 1, 'hybrid':1},
                               subset_inputs=parsed_args.subset_inputs,
                               copy_input_to_local_file=True,
                               cache_inputs=False,
