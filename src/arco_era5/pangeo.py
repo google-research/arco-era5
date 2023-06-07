@@ -22,6 +22,7 @@ from urllib import parse
 
 import apache_beam as beam
 import gcsfs
+from fsspec.implementations.local import LocalFileSystem
 from pangeo_forge_recipes.patterns import ConcatDim, FilePattern, MergeDim
 from pangeo_forge_recipes.recipes import XarrayZarrRecipe
 from pangeo_forge_recipes.storage import FSSpecTarget, MetadataTarget, StorageConfig
@@ -60,7 +61,8 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         'chunks': {'time': 4},
     }
 
-    fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
+    fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather')) \
+                                if not parsed_args.local_run else LocalFileSystem()
 
     if parsed_args.find_missing:
         print('Finding missing data...')
@@ -116,5 +118,8 @@ def parse_args(desc: str, default_chunks: t.List[str]) -> t.Tuple[argparse.Names
                         help='A JSON string; when reading a chunk from disk, divide them into smaller chunks across '
                              'each dimension. Think of this as the inverse of a chunk size (e.g. the total number of '
                              'sub chunks). Default: `{"time": 4}`')
+    parser.add_argument('-l', '--local-run', action='store_true',
+                        help='Argument to produce the output file locally.'
+                             'Note: "output" and "temp" must be local path.')
 
     return parser.parse_known_args()

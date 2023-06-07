@@ -24,6 +24,16 @@ Examples:
      --find-missing
     ```
 
+    Produce the output file locally:
+    ```
+    python src/model-levels-to-zarr.py ~/model-level-all.zarr ~/ml-cache/ \
+    --start 1979-01-01 \
+    --end 2021-08-31 \
+    --chunks o3q qrqs \
+    --local-run \
+    --setup_file ./setup.py
+    ```
+
     Perform the conversion for the moisture dataset...
     ```
     python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr gs://$BUCKET/ml-moist-cache/ \
@@ -66,6 +76,7 @@ import datetime
 import logging
 
 import pandas as pd
+from urllib.parse import urlparse
 
 from arco_era5 import run, parse_args
 
@@ -89,9 +100,18 @@ if __name__ == "__main__":
             f"{time.year:04d}/{time.year:04d}{time.month:02d}{time.day:02d}_hres_{chunk}.grb2"
         )
 
+    def check_url(url):
+        parsed_url = urlparse(url)
+        domain = parsed_url.scheme
+        
+        return 'gs' in domain.lower()
+
     default_chunks = ['dve', 'tw']
 
     parsed_args, unknown_args = parse_args('Convert Era 5 Model Level data to Zarr', default_chunks)
+
+    if parsed_args.local_run and ( check_url(parsed_args.output) or check_url(parsed_args.temp) ):
+        raise ValueError("output and temp path must be local path.")
 
     date_range = [
         ts.to_pydatetime()
