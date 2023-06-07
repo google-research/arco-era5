@@ -26,6 +26,7 @@ from fsspec.implementations.local import LocalFileSystem
 from pangeo_forge_recipes.patterns import ConcatDim, FilePattern, MergeDim
 from pangeo_forge_recipes.recipes import XarrayZarrRecipe
 from pangeo_forge_recipes.storage import FSSpecTarget, MetadataTarget, StorageConfig
+from urllib.parse import urlparse
 
 PROGRESS = itertools.cycle(''.join([c * 10 for c in '|/–-\\']))
 
@@ -34,10 +35,16 @@ def normalize_path(path: str) -> str:
     parsed_output = parse.urlparse(path)
     return f'{parsed_output.netloc}{parsed_output.path}'
 
+def check_url(url):
+        parsed_gcs_path = urlparse(url)
+        return parsed_gcs_path.scheme == 'gs'
 
 def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         parsed_args: argparse.Namespace, other_args: t.List[str]):
     """Perform the Zarr conversion pipeline with Pangeo Forge Recipes."""
+
+    if parsed_args.local_run and ( check_url(parsed_args.output) or check_url(parsed_args.temp) ):
+        raise ValueError("'output' and 'temp' path must be local path.")
 
     date_dim = ConcatDim("time", date_range)
     chunks_dim = MergeDim("chunk", parsed_args.chunks)
