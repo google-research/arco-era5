@@ -26,7 +26,6 @@ from fsspec.implementations.local import LocalFileSystem
 from pangeo_forge_recipes.patterns import ConcatDim, FilePattern, MergeDim
 from pangeo_forge_recipes.recipes import XarrayZarrRecipe
 from pangeo_forge_recipes.storage import FSSpecTarget, MetadataTarget, StorageConfig
-from urllib.parse import urlparse
 
 PROGRESS = itertools.cycle(''.join([c * 10 for c in '|/–-\\']))
 
@@ -36,7 +35,7 @@ def normalize_path(path: str) -> str:
     return f'{parsed_output.netloc}{parsed_output.path}'
 
 def check_url(url):
-        parsed_gcs_path = urlparse(url)
+        parsed_gcs_path = parse.urlparse(url)
         return parsed_gcs_path.scheme == 'gs'
 
 def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
@@ -68,8 +67,10 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         'chunks': {'time': 4},
     }
 
-    fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather')) \
-                                if not parsed_args.local_run else LocalFileSystem()
+    fs = (
+        gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
+        if not parsed_args.local_run else LocalFileSystem()
+    )
 
     if parsed_args.find_missing:
         print('Finding missing data...')
