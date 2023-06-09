@@ -137,6 +137,28 @@ ml_moisture = xr.open_zarr(
 )
 ```
 
+### Single Level Surface
+
+* _Times_: `00/to/23`
+* _Grid_: `Spectral Harmonic Coefficients`
+  ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
+* _Size_: 1.11 TiB
+
+| name                                | short name | units    | docs                                              | config                                   |
+|-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
+| logarithm of surface pressure       | lnsp       | ~        | https://apps.ecmwf.int/codes/grib/param-db?id=152 |   |
+| surface geopotential                | zs         | m^2 s^-2 | https://apps.ecmwf.int/codes/grib/param-db?id=162051 |    | 
+
+```python
+import xarray as xr
+
+ml_surface = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr/',
+    chunks={'time': 48},
+    consolidated=True,
+)
+```
+
 ### Single Level Reanalysis
 
 * _Times_: `00/to/23`
