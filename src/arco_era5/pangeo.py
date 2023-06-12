@@ -60,7 +60,6 @@ def copy(src: str, dst: str) -> None:
 @contextlib.contextmanager
 def open_local(uri: str) -> t.Iterator[str]:
     """Copy a cloud object (e.g. a netcdf, grib, or tif file) from cloud storage, like GCS, to local file."""
-    print("inside open_local")
     with tempfile.NamedTemporaryFile() as dest_file:
         # Transfer data with gsutil or gcloud alpha storage (when available)
         copy(uri, dest_file.name)
