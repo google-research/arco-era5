@@ -13,69 +13,25 @@
 # limitations under the License.
 """Common Pangeo-Forge Recipe definition for converting ERA5 datasets to Zarr."""
 import argparse
-import cfgrib
-import contextlib
 import datetime
 import itertools
 import json
-import logging
 import os
-import tempfile
 import typing as t
-import shutil
-import subprocess
 from urllib import parse
 
 import apache_beam as beam
 import gcsfs
-from apache_beam.io.filesystem import CompressionTypes, FileSystem, CompressedFile, DEFAULT_READ_BUFFER_SIZE
 from pangeo_forge_recipes.patterns import ConcatDim, FilePattern, MergeDim
 from pangeo_forge_recipes.recipes import XarrayZarrRecipe
 from pangeo_forge_recipes.storage import FSSpecTarget, MetadataTarget, StorageConfig
 
 PROGRESS = itertools.cycle(''.join([c * 10 for c in '|/–-\\']))
-logger = logging.getLogger(__name__)
 
 
 def normalize_path(path: str) -> str:
     parsed_output = parse.urlparse(path)
     return f'{parsed_output.netloc}{parsed_output.path}'
-
-
-def copy(src: str, dst: str) -> None:
-    """Copy data via `gcloud alpha storage` or `gsutil`."""
-    errors: t.List[subprocess.CalledProcessError] = []
-    for cmd in ['gcloud alpha storage cp', 'gsutil cp']:
-        try:
-            subprocess.run(cmd.split() + [src, dst], check=True, capture_output=True, text=True, input="n/n")
-            return
-        except subprocess.CalledProcessError as e:
-            errors.append(e)
-
-    msg = f'Failed to copy file {src!r} to {dst!r}'
-    err_msgs = ', '.join(map(lambda err: repr(err.stderr.decode('utf-8')), errors))
-    logger.error(f'{msg} due to {err_msgs}.')
-    raise EnvironmentError(msg, errors)
-
-@contextlib.contextmanager
-def open_local(uri: str) -> t.Iterator[str]:
-    """Copy a cloud object (e.g. a netcdf, grib, or tif file) from cloud storage, like GCS, to local file."""
-    with tempfile.NamedTemporaryFile() as dest_file:
-        # Transfer data with gsutil or gcloud alpha storage (when available)
-        copy(uri, dest_file.name)
-
-        # Check if data is compressed. Decompress the data using the same methods that beam's
-        # FileSystems interface uses.
-        compression_type = FileSystem._get_compression_type(uri, CompressionTypes.AUTO)
-        if compression_type == CompressionTypes.UNCOMPRESSED:
-            yield dest_file.name
-            return
-
-        dest_file.seek(0)
-        with tempfile.NamedTemporaryFile() as dest_uncompressed:
-            with CompressedFile(dest_file, compression_type=compression_type) as dcomp:
-                shutil.copyfileobj(dcomp, dest_uncompressed, DEFAULT_READ_BUFFER_SIZE)
-                yield dest_uncompressed.name
 
 
 def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
@@ -85,12 +41,6 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
     date_dim = ConcatDim("time", date_range)
     chunks_dim = MergeDim("chunk", parsed_args.chunks)
     pattern = FilePattern(make_path, date_dim, chunks_dim, file_type='grib')
-    with open_local(list(pattern.items())[0][1]) as local_path:
-        temp_data = cfgrib.open_datasets(local_path)
-        target_chunk = {}
-        #considering that all objects have same data.
-        for var_name in list(temp_data[0].indexes):
-            target_chunk[var_name] = 1
 
     # remove 'indexpath' experimental feature; it breaks the pipeline
     # see https://github.com/ecmwf/cfgrib#grib-index-file
@@ -138,7 +88,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
 
     recipe = XarrayZarrRecipe(pattern,
                               storage_config=storage_config,
-                              target_chunks=target_chunk,
+                              target_chunks=parsed_args.target_chunk,
                               subset_inputs=parsed_args.subset_inputs,
                               copy_input_to_local_file=True,
                               cache_inputs=False,
@@ -162,6 +112,8 @@ def parse_args(desc: str, default_chunks: t.List[str]) -> t.Tuple[argparse.Names
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
                         default=default_chunks,
                         help='Chunks of variables to merge together.')
+    parser.add_argument('-t', '--target-chunk', type=json.loads, default='{"time": 1}',
+                        help='A JSON string; Divide target chunks of variables at output level.')
     parser.add_argument('--subset-inputs', type=json.loads, default='{"time": 4}',
                         help='A JSON string; when reading a chunk from disk, divide them into smaller chunks across '
                              'each dimension. Think of this as the inverse of a chunk size (e.g. the total number of '
