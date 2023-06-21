@@ -67,10 +67,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         'chunks': {'time': 4},
     }
 
-    fs = (
-        gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
-        if not parsed_args.local_run else LocalFileSystem()
-    )
+    fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
 
     if parsed_args.find_missing:
         print('Finding missing data...')
@@ -87,6 +84,8 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         else:
             print('No missing data found.')
         return
+
+    fs = fs if not parsed_args.local_run else LocalFileSystem()
 
     output_path = normalize_path(parsed_args.output)
     temp_path = normalize_path(parsed_args.temp)

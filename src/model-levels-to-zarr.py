@@ -20,6 +20,7 @@ Examples:
      --start 1979-01-01 \
      --end 2021-08-31 \
      --chunks o3q qrqs dve tw \
+     --target-chunk '{"time": 1, "hybrid": 1}' \
      --setup_file ./setup.py \
      --find-missing
     ```
@@ -29,7 +30,8 @@ Examples:
     python src/model-levels-to-zarr.py ~/model-level-all.zarr ~/ml-cache/ \
     --start 1979-01-01 \
     --end 2021-08-31 \
-    --chunks o3q qrqs \
+    --chunks o3q qrqs dve tw \
+    --target-chunk '{"time": 1, "hybrid": 1}' \
     --local-run \
     --setup_file ./setup.py
     ```
@@ -40,6 +42,7 @@ Examples:
      --start 1979-01-01 \
      --end 2021-08-31 \
      --chunks o3q qrqs \
+     --target-chunk '{"time": 1, "hybrid": 1}' \
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
@@ -59,6 +62,7 @@ Examples:
      --start 1979-01-01 \
      --end 2021-08-31 \
      --chunks dve tw \
+     --target-chunk '{"time": 1, "hybrid": 1}' \
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
