@@ -67,10 +67,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         'chunks': {'time': 4},
     }
 
-    fs = (
-        gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
-        if not parsed_args.local_run else LocalFileSystem()
-    )
+    fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT', 'ai-for-weather'))
 
     if parsed_args.find_missing:
         print('Finding missing data...')
@@ -88,6 +85,8 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
             print('No missing data found.')
         return
 
+    fs = fs if not parsed_args.local_run else LocalFileSystem()
+
     output_path = normalize_path(parsed_args.output)
     temp_path = normalize_path(parsed_args.temp)
 
@@ -98,7 +97,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
 
     recipe = XarrayZarrRecipe(pattern,
                               storage_config=storage_config,
-                              target_chunks={'time': 1},
+                              target_chunks=parsed_args.target_chunk,
                               subset_inputs=parsed_args.subset_inputs,
                               copy_input_to_local_file=True,
                               cache_inputs=False,
@@ -122,6 +121,8 @@ def parse_args(desc: str, default_chunks: t.List[str]) -> t.Tuple[argparse.Names
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
                         default=default_chunks,
                         help='Chunks of variables to merge together.')
+    parser.add_argument('-t', '--target-chunk', type=json.loads, default='{"time": 1}',
+                        help='A JSON string; Divide target chunks of variables at output level.')
     parser.add_argument('--subset-inputs', type=json.loads, default='{"time": 4}',
                         help='A JSON string; when reading a chunk from disk, divide them into smaller chunks across '
                              'each dimension. Think of this as the inverse of a chunk size (e.g. the total number of '
