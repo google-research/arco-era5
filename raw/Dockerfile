@@ -1,5 +1,5 @@
 
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ RUN conda config --set solver libmamba
 # Create conda env using environment.yml
 ARG weather_tools_git_rev=main
 RUN git clone https://github.com/google/weather-tools.git /weather
-RUN pip install google-cloud-secret-manager==2.0.0
-
 WORKDIR /weather
 RUN git checkout "${weather_tools_git_rev}"
 RUN conda env create -f environment.yml --debug
@@ -37,8 +35,11 @@ ARG CONDA_ENV_NAME=weather-tools
 RUN echo "source activate ${CONDA_ENV_NAME}" >> ~/.bashrc
 ENV PATH /opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
 RUN pip install -e .
+# TDOO(#): 
+RUN pip install google-cloud-secret-manager==2.0.0
 
-COPY . .
+COPY *.cfg config_files/
+COPY fetch.py config_files/
 
 # Set the entrypoint to Apache Beam SDK launcher.
-ENTRYPOINT ["python", "fetch.py"]
+ENTRYPOINT ["python", "config_files/fetch.py"]
