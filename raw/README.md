@@ -136,7 +136,7 @@ _Pre-requisites_:
    > highly recommend that institutions pool licenses together for faster downloads.
 
 3. Create a docker image from the docker file of the [current directory](https://github.com/google-research/arco-era5/tree/main/raw) and push that image in the [GCR](https://cloud.google.com/artifact-registry).
-   > Note: This command will complete the above step. : gcloud builds submit . --tag "gcr.io/PROJECT_NAME/REPOSITORY_NAME:TAG"
+   > Reference: https://github.com/google/weather-tools/blob/main/Runtime-Container.md
 
 4. Add the all licenses of the cds in the [secret-manager](https://cloud.google.com/secret-manager) with secret value likes this dict: {"api_url": "URL", "api_key": "KEY"}
    > NOTE: for every API_key there must be unique secret-key.

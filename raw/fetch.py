@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import configparser
 import datetime
 import json
 import os
@@ -43,10 +44,10 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
         field_name (str): The name of the field to be updated with the new value.
         additional_content (str): The additional content to be added under the 
                                     '[selection]' section.
-        co_file (bool): True if the configuration file is a 'hourly' file, False 
+        co_file (bool): True if the configuration file is a 'CO' type file, False 
                         otherwise.
-        single_level_file (bool): True if the configuration file is a 'sfc' file,
-                                 False otherwise.
+        single_level_file (bool): True if the configuration file contains 'sfc' in 
+                                filename, False otherwise.
         first_day_first_prev (datetime.date): The first day of the first previous month.
         last_day_first_prev (datetime.date): The last day of the first previous month.
         first_day_third_prev (datetime.date): The first day of the third previous month.
@@ -57,41 +58,38 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
         sl_last_date (str): The last date of the third previous month in 'DD' format.
     """
 
-    with open(config_file, "r") as file:
-        lines = file.readlines()
+    config = configparser.ConfigParser()
+    config.read(config_file)
 
-    # Update the specified field with the new value
-    updated_lines = []
-    selection_line_found = False
-    for line in lines:
-        if not selection_line_found and line.strip() == "[selection]":
-            updated_lines.append(f"{additional_content}\n")
-            selection_line_found = True
+    if single_level_file:
+        config.set("selection", "year", sl_year)
+        config.set("selection", "month", sl_month)
+        config.set("selection", "day", f"{sl_first_date}/to/{sl_last_date}")
+    else:
+        if co_file:
+            config.set("selection", field_name, 
+                       f"{first_day_first_prev}/to/{last_day_first_prev}")
+        else:
+            config.set("selection", field_name, 
+                       f"{first_day_third_prev}/to/{last_day_third_prev}")
 
-        if single_level_file:
-            if line.startswith("year"):
-                line = f"year={sl_year}\n"
-            if line.startswith("month"):
-                line = f"month={sl_month}\n"
-            if line.startswith("day"):
-                line = f"day={sl_first_date}/to/{sl_last_date}\n"
-        elif line.startswith(field_name):
-            if co_file:
-                line = (
-                    f"{field_name}={first_day_first_prev}/to/{last_day_first_prev}\n"
-                )
-            else:
-                line = (
-                    f"{field_name}={first_day_third_prev}/to/{last_day_third_prev}\n"
-                )
-        updated_lines.append(line)
+    sections_list = additional_content.split("\n\n")
+    for section in sections_list[:-1]:
+        sections = section.split("\n")
+        print("sections is here",sections)
+        new_section_name= sections[0].strip()
+        config.add_section(new_section_name)
+        api_url_name, api_url_value = sections[1].split("=")
+        config.set(new_section_name, api_url_name.strip(), api_url_value.strip())
+        api_key_name, api_key_value = sections[2].split("=")
+        config.set(new_section_name, api_key_name.strip(), api_key_value.strip())
 
     with open(config_file, "w") as file:
-        file.writelines(updated_lines)
+        config.write(file, space_around_delimiters=False)
 
 
 def get_month_range(date: datetime.date) -> Tuple[datetime.date, datetime.date]:
-    """Return the first and last date of the month from the input date.
+    """Return the first and last date of the previous month based on the input date.
 
     Parameters:
         date (datetime.date): The input date.
@@ -122,14 +120,26 @@ def get_single_level_dates(first_day: datetime.date,
     return (year, month, first_date, last_date)
 
 
-def get_previous_month_dates() -> (Tuple[datetime.date, datetime.date, datetime.date,
-                                         datetime.date, str, str, str, str]):
-    """Return the first and third previous month's date from the current date.
+def get_previous_month_dates() -> dict:
+    """Return a dictionary containing the first and third previous month's dates from 
+    the current date.
 
     Returns:
-        tuple: A tuple containing the first and third previous month's dates as 
-            datetime.date objects, and the year, month, first date, and last date 
-            of the third previous month as strings.
+        dict: A dictionary containing the following key-value pairs:
+            - 'first_day_first_prev': The first day of the first previous month 
+                                        (datetime.date).
+            - 'last_day_first_prev': The last day of the first previous month 
+                                        (datetime.date).
+            - 'first_day_third_prev': The first day of the third previous month 
+                                        (datetime.date).
+            - 'last_day_third_prev': The last day of the third previous month 
+                                        (datetime.date).
+            - 'sl_year': The year of the third previous month in 'YYYY' format (str).
+            - 'sl_month': The month of the third previous month in 'MM' format (str).
+            - 'sl_first_date': The first date of the third previous month in 'DD' 
+                                format (str).
+            - 'sl_last_date': The last date of the third previous month in 'DD' 
+                                format (str).
     """
 
     today = datetime.date.today()
@@ -144,8 +154,16 @@ def get_previous_month_dates() -> (Tuple[datetime.date, datetime.date, datetime.
         first_day_third_prev, last_day_third_prev
     )
 
-    return (first_day_first_prev, last_day_first_prev, first_day_third_prev,
-        last_day_third_prev, sl_year, sl_month, sl_first_date, sl_last_date)
+    return {
+        'first_day_first_prev': first_day_first_prev,
+        'last_day_first_prev': last_day_first_prev,
+        'first_day_third_prev': first_day_third_prev,
+        'last_day_third_prev': last_day_third_prev,
+        'sl_year': sl_year,
+        'sl_month': sl_month,
+        'sl_first_date': sl_first_date,
+        'sl_last_date': sl_last_date
+    }
 
 
 def update_config_files(directory: str, field_name: str, 
@@ -158,9 +176,7 @@ def update_config_files(directory: str, field_name: str,
         additional_content (str): The additional content to be added under the 
                     '[selection]' section.
     """
-    (first_day_first_prev, last_day_first_prev, first_day_third_prev,
-    last_day_third_prev, sl_year, sl_month, sl_first_date,
-    sl_last_date) = get_previous_month_dates()
+    dates_data = get_previous_month_dates()
 
     for filename in os.listdir(directory):
         single_level_file = False
@@ -171,11 +187,10 @@ def update_config_files(directory: str, field_name: str,
             if "hourly" in filename:
                 co_file = True
             config_file = os.path.join(directory, filename)
+            # Pass the data as keyword arguments to the new_config_file function
             new_config_file(config_file, field_name, additional_content,
-                            co_file, single_level_file, first_day_first_prev,
-                            last_day_first_prev, first_day_third_prev,
-                            last_day_third_prev, sl_year, sl_month,
-                            sl_first_date, sl_last_date)
+                            co_file=co_file, single_level_file=single_level_file,
+                            **dates_data)
 
 
 def get_secret(api_key: str) -> dict:
@@ -205,7 +220,7 @@ if __name__ == "__main__":
     additional_content = ""
     for count,key in enumerate(API_KEY_LIST):
         api_key_value = get_secret(key)
-        additional_content += f'[parameters.api{count}]\n\
+        additional_content += f'parameters.api{count}\n\
             api_url={api_key_value["api_url"]}\napi_key={api_key_value["api_key"]}\n\n'
     
     current_day = datetime.date.today()
