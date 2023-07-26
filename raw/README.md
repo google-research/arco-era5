@@ -142,12 +142,12 @@ _Pre-requisites_:
    > NOTE: for every API_key there must be unique secret-key.
 
 5. Create a new job in [Cloud-Run](https://cloud.google.com/run) using of the above docker image with this **ENV** variables.
-   * PROJECT 
-   * REGION
-   * BUCKET
-   * SDK_CONTAINER_IMAGE
-   * MANIFEST_LOCATION
-   * API_KEY_*
+   * `PROJECT` 
+   * `REGION`
+   * `BUCKET`
+   * `SDK_CONTAINER_IMAGE`
+   * `MANIFEST_LOCATION`
+   * `API_KEY_*`
 
    Here, API_KEY_* is access of [secret-manager key](https://cloud.google.com/secret-manager) and it's value is looks like this :: projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1
 

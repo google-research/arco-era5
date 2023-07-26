@@ -35,7 +35,7 @@ ARG CONDA_ENV_NAME=weather-tools
 RUN echo "source activate ${CONDA_ENV_NAME}" >> ~/.bashrc
 ENV PATH /opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
 RUN pip install -e .
-# TDOO(#): 
+# TODO([##368](https://github.com/google/weather-tools/issues/368))
 RUN pip install google-cloud-secret-manager==2.0.0
 
 COPY *.cfg config_files/
