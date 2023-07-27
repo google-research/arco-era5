@@ -125,7 +125,7 @@ specifically `weather-dl` (see [weather-tools.readthedocs.io](https://weather-to
 
 _Pre-requisites_:
 
-1. Set up a cloud project with sufficient permissions to use cloud storage (such as
+1. Set up a Cloud project with sufficient permissions to use cloud storage (such as
    [GCS](https://cloud.google.com/storage)) and a Beam runner (such as [Dataflow](https://cloud.google.com/dataflow)).
    > Note: Other cloud systems should work too, such as S3 and Elastic Map Reduce. However, these are untested. If you
    > experience an error here, please let us know by [filing an issue](https://github.com/google/weather-tools/issues).
@@ -138,8 +138,8 @@ _Pre-requisites_:
 3. Create a docker image from the docker file of the [current directory](https://github.com/google-research/arco-era5/tree/main/raw) and push that image in the [GCR](https://cloud.google.com/artifact-registry).
    > Reference: https://github.com/google/weather-tools/blob/main/Runtime-Container.md
 
-4. Add the all licenses of the cds in the [secret-manager](https://cloud.google.com/secret-manager) with secret value likes this dict: {"api_url": "URL", "api_key": "KEY"}
-   > NOTE: for every API_key there must be unique secret-key.
+4. 4. Add the all CDS licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
+   > NOTE: for every API_KEY there must be unique secret-key.
 
 5. Create a new job in [Cloud-Run](https://cloud.google.com/run) using of the above docker image with this **ENV** variables.
    * `PROJECT` 

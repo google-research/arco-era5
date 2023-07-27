@@ -1,4 +1,3 @@
-
 # Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +34,7 @@ ARG CONDA_ENV_NAME=weather-tools
 RUN echo "source activate ${CONDA_ENV_NAME}" >> ~/.bashrc
 ENV PATH /opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
 RUN pip install -e .
-# TODO([##368](https://github.com/google/weather-tools/issues/368))
+# TODO(#368): Add google-cloud-secret-manager in weather-tools
 RUN pip install google-cloud-secret-manager==2.0.0
 
 COPY *.cfg config_files/
