@@ -138,7 +138,7 @@ _Pre-requisites_:
 3. Create a docker image from the docker file of the [current directory](https://github.com/google-research/arco-era5/tree/main/raw) and push that image in the [GCR](https://cloud.google.com/artifact-registry).
    > Reference: https://github.com/google/weather-tools/blob/main/Runtime-Container.md
 
-4. 4. Add the all CDS licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
+4. Add the all CDS licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
    > NOTE: for every API_KEY there must be unique secret-key.
 
 5. Create a new job in [Cloud-Run](https://cloud.google.com/run) using of the above docker image with this **ENV** variables.

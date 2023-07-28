@@ -19,6 +19,7 @@ import logging
 import os
 import re
 import subprocess
+import signal
 import typing as t
 
 from google.cloud import secretmanager
@@ -258,10 +259,19 @@ if __name__ == "__main__":
         f'--manifest-location {MANIFEST_LOCATION} --experiment use_runner_v2'
     )
 
-    try:
-        update_config_files(DIRECTORY, FIELD_NAME, additional_content)
-        subprocess.run(command, shell=True, check=True, capture_output=True)
-    except subprocess.CalledProcessError as e:
-        logger.error(
-            f'Failed to execute dataflow job due to {e.stderr.decode("utf-8")}'
-        )
+    update_config_files(DIRECTORY, FIELD_NAME, additional_content)
+    stop_on_log = 'JOB_STATE_RUNNING'
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT)
+    with process.stdout:
+        try:
+            for line in iter(process.stdout.readline, b''):
+                log_message = line.decode("utf-8").strip()
+                print(log_message)
+                if stop_on_log in log_message:
+                    print(f'Stopping subprocess as {stop_on_log}')
+                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        except subprocess.CalledProcessError as e:
+            logger.error(
+                f'Failed to execute dataflow job due to {e.stderr.decode("utf-8")}'
+            )
