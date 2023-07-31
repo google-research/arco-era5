@@ -250,7 +250,7 @@ if __name__ == "__main__":
 
     current_day = datetime.date.today()
     job_name = f"wx-dl-arco-era5-{current_day.month}-{current_day.year}"
-
+    # TODO(#373): Update the command once `--async` keyword added in weather-dl.
     command = (
         f'python weather_dl/weather-dl /weather/config_files/*.cfg --runner '
         f'DataflowRunner --project {PROJECT} --region {REGION} --temp_location '
