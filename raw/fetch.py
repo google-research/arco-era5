@@ -219,7 +219,7 @@ def update_config_files(directory: str, field_name: str,
                             config_args=config_args)
 
 
-def get_secret(api_key: str) -> dict:
+def get_secret(secret_key: str) -> dict:
     """Retrieve the secret value from the Google Cloud Secret Manager.
 
     Parameters:
@@ -230,7 +230,7 @@ def get_secret(api_key: str) -> dict:
         dict: A dictionary containing the retrieved secret data.
     """
     client = secretmanager.SecretManagerServiceClient()
-    response = client.access_secret_version(request={"name": api_key})
+    response = client.access_secret_version(request={"name": secret_key})
     payload = response.payload.data.decode("UTF-8")
     secret_dict = json.loads(payload)
     return secret_dict
@@ -243,10 +243,10 @@ if __name__ == "__main__":
             API_KEY_LIST.append(api_key_value)
 
     additional_content = ""
-    for count, key in enumerate(API_KEY_LIST):
-        api_key_value = get_secret(key)
+    for count, secret_key in enumerate(API_KEY_LIST):
+        secret_key_value = get_secret(secret_key)
         additional_content += f'parameters.api{count}\n\
-            api_url={api_key_value["api_url"]}\napi_key={api_key_value["api_key"]}\n\n'
+            api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
 
     current_day = datetime.date.today()
     job_name = f"wx-dl-arco-era5-{current_day.month}-{current_day.year}"
