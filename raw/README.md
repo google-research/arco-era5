@@ -91,7 +91,7 @@ _Steps_:
    ```shell
    export DATASET=soil
    weather-sp --input-pattern "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/**/*_hres_$DATASET.grb2" \
-     --output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{1}/{0}.grb2_{level}_{shortName}.grib" \
+     --output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{1}/{0}.grb2_{typeOfLevel}_{shortName}.grib" \
      --dry-run
    ```
 2. Execute the data split on your
@@ -105,7 +105,7 @@ _Steps_:
    export REGION=us-central1
 
    weather-sp --input-pattern "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/**/*_hres_$DATASET.grb2" \
-     --output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{1}/{0}.grb2_{level}_{shortName}.grib" \
+     --output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{1}/{0}.grb2_{typeOfLevel}_{shortName}.grib" \
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
