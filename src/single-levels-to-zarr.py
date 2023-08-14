@@ -43,7 +43,6 @@ Examples:
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
-     --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
      --disk_size_gb 50 \
      --machine_type n2-highmem-2 \
@@ -65,7 +64,6 @@ Examples:
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
-     --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
      --disk_size_gb 50 \
      --machine_type n2-highmem-2 \
@@ -85,7 +83,6 @@ Examples:
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
-     --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
      --disk_size_gb 50 \
      --machine_type n2-highmem-2 \
