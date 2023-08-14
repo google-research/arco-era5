@@ -55,20 +55,17 @@ def generate_daily_file_names(year: int, chunks: t.List) -> t.List[str]:
 
     Args:
         year (int): The year for which to generate file names.
-        chunks (List):  A list of the daily files chunks.
+        chunks (List): A list of the daily file chunks.
     Returns:
         List[str]: A list of generated daily file names.
     """
     generated_files = []
-    start_date = pd.Timestamp(year, 1, 1)
-    end_date = pd.Timestamp(year + 1, 1, 1)
-    date_range = pd.date_range(start_date, end_date, freq='D')
+    date_range = pd.date_range(f'{year}-01-01', f'{year+1}-01-01', freq='D')
 
-    for date in date_range:
-        formatted_date = date.strftime('%Y%m%d')
+    for date in date_range[:-1]:
         for chunk in chunks:
             generated_files.append(
-                f'raw/ERA5GRIB/HRES/Daily/{year}/{formatted_date}_hres_{chunk}.grb2')
+                f'raw/ERA5GRIB/HRES/Daily/{year}/{date:%Y%m%d}_hres_{chunk}.grb2')
     return generated_files
 
 
