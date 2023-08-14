@@ -44,8 +44,8 @@ class ConfigArgs(t.TypedDict):
     Attributes:
         co_file (bool): True if the configuration file is a 'CO' type file, False
                         otherwise.
-        single_level_file (bool): True if the configuration file contains 'sfc' in
-                                filename, False otherwise.
+        year_wise_date (bool): True if the configuration file contains 'year',
+                                'month' and 'day', False otherwise.
         first_day_first_prev (datetime.date): The first day of the first previous month.
         last_day_first_prev (datetime.date): The last day of the first previous month.
         first_day_third_prev (datetime.date): The first day of the third previous month.
@@ -54,7 +54,7 @@ class ConfigArgs(t.TypedDict):
         sl_month (str): The month of the third previous month in 'MM' format.
     """
     co_file: bool
-    single_level_file: bool
+    year_wise_date: bool
     first_day_first_prev: datetime.date
     last_day_first_prev: datetime.date
     first_day_third_prev: datetime.date
@@ -97,7 +97,7 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
 
     # Unpack the values from config_args dictionary
     co_file = config_args["co_file"]
-    single_level_file = config_args["single_level_file"]
+    year_wise_date = config_args["year_wise_date"]
     first_day_first_prev = config_args["first_day_first_prev"]
     last_day_first_prev = config_args["last_day_first_prev"]
     first_day_third_prev = config_args["first_day_third_prev"]
@@ -108,7 +108,7 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
     config = configparser.ConfigParser()
     config.read(config_file)
 
-    if single_level_file:
+    if year_wise_date:
         config.set("selection", "year", sl_year)
         config.set("selection", "month", sl_month)
         config.set("selection", "day", "all")
@@ -207,10 +207,10 @@ def update_config_files(directory: str, field_name: str,
         "sl_month": dates_data['sl_month'],
     }
     for filename in os.listdir(directory):
-        config_args['single_level_file'] = config_args['co_file'] = False
+        config_args["year_wise_date"] = config_args["co_file"] = False
         if filename.endswith(".cfg"):
-            if "sfc" in filename:
-                config_args["single_level_file"] = True
+            if "lnsp" in filename or "zs" in filename or "sfc" in filename:
+                config_args["year_wise_date"] = True
             if "hourly" in filename:
                 config_args["co_file"] = True
             config_file = os.path.join(directory, filename)
