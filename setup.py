@@ -84,6 +84,7 @@ setup(
     packages=find_packages('src'),
     author_email='anthromet-core+era5@google.com',
     description="Analysis-Ready & Cloud-Optimized ERA5.",
+    version='0.1.0',
     platforms=['darwin', 'linux'],
     python_requires='>3.8, <3.11',
     install_requires=[

@@ -15,7 +15,7 @@ subsequent years by:
 Example usage:
 
   $ python src/netcdf_to_zarr.py \
-      --output_path="gs://gcp-public-data-arco-era5/test/ar/1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" \
+      --output_path="gs://gcp-public-data-arco-era5/ar/$USER-1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \
       --runner DataflowRunner \
@@ -347,6 +347,7 @@ def define_pipeline(
 
 
 def main(argv):
+    logging.getLogger().setLevel(logging.INFO)
     fs = fsspec.filesystem('gcs')
 
     if fs.exists(OUTPUT_PATH.value):
