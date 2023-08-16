@@ -46,7 +46,6 @@ Examples:
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
-     --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
      --disk_size_gb 3600 \
      --machine_type m1-ultramem-40 \
@@ -66,7 +65,6 @@ Examples:
      --runner DataflowRunner \
      --project $PROJECT \
      --region $REGION \
-     --temp_location "gs://$BUCKET/tmp/" \
      --setup_file ./setup.py \
      --disk_size_gb 3600 \
      --machine_type m1-ultramem-40 \
