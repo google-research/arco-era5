@@ -2,19 +2,19 @@
 
 __author__ = 'Matthew Willson, Alvaro Sanchez, Peter Battaglia, Stephan Hoyer, Stephan Rasp'
 
+import argparse
+import fsspec
 import immutabledict
 
+import pathlib
 import xarray
 
-import pathlib
-import fsspec
+import numpy as np
+import pandas as pd
+import typing as t
+import xarray as xa
 
-FIRST_DATE = "1959-01-01"
-LAST_DATE = "2023-01-11"  # Exclusive
 TIME_RESOLUTION_HOURS = 1
-
-LATITUDE_SIZE = 721
-LONGITUDE_SIZE = 1440
 
 GCP_DIRECTORY = "gs://gcp-public-data-arco-era5/raw"
 
@@ -28,7 +28,7 @@ MULTILEVEL_SUBDIR_TEMPLATE = (
     "date-variable-pressure_level/{year}/{month:02d}/"
     "{day:02d}/{variable}/{pressure_level}.nc")
 
-STATIC_VARIABLES = (
+STATIC_VARIABLES = [
     "type_of_low_vegetation",
     "type_of_high_vegetation",
     "standard_deviation_of_orography",
@@ -43,10 +43,10 @@ STATIC_VARIABLES = (
     "geopotential_at_surface",
     "anisotropy_of_sub_gridscale_orography",
     "angle_of_sub_gridscale_orography",
-)
+]
 
 # TODO(alvarosg): Add more variables.
-SINGLE_LEVEL_VARIABLES = (
+SINGLE_LEVEL_VARIABLES = [
     "total_precipitation",
     "total_column_water_vapour",
     "total_cloud_cover",
@@ -58,16 +58,16 @@ SINGLE_LEVEL_VARIABLES = (
     "2m_temperature",
     "10m_v_component_of_wind",
     "10m_u_component_of_wind",
-)
+]
 
-MULTILEVEL_VARIABLES = (
+MULTILEVEL_VARIABLES = [
     "geopotential",
     "specific_humidity",
     "temperature",
     "u_component_of_wind",
     "v_component_of_wind",
     "vertical_velocity",
-)
+]
 
 # Variables that correspond to an integration over a `TIME_RESOLUTION_HOURS`
 # interval, rather than an instantaneous sample in time.
@@ -80,7 +80,8 @@ MULTILEVEL_VARIABLES = (
 # we don't have values for these variables until 1959-01-01 07:00:00, while
 # for all other variables we have values since 1959-01-01 00:00:00, which may
 # indicate at 6-8h accumulation.
-CUMULATIVE_VARIABLES = ("total_precipitation", "toa_incident_solar_radiation")
+CUMULATIVE_VARIABLES = ("total_precipitation",
+                        "toa_incident_solar_radiation")
 
 PRESSURE_LEVELS_GROUPS = immutabledict.immutabledict({
     "weatherbench_13":
@@ -213,3 +214,63 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
             data_array.attrs["short_name"] = data_array.name
             var_attrs_dict[variable] = data_array.attrs
     return var_attrs_dict
+
+
+def daily_date_iterator(start_date: str, end_date: str
+                        ) -> t.Iterable[t.Tuple[int, int, int]]:
+    """Iterates all (year, month, day) tuples between start_date and end_date."""
+    first_day = pd.Timestamp(start_date)
+    final_day = pd.Timestamp(end_date)  # non-inclusive
+    time_delta = pd.Timedelta("1 day")
+    current_day = first_day
+    while current_day < final_day:
+        yield current_day.year, current_day.month, current_day.day
+        current_day += time_delta
+
+
+def align_coordinates(dataset: xa.Dataset) -> xa.Dataset:
+    """Align coordinates of per-variable datasets prior to consolidation."""
+
+    # It's possible to have coordinate metadata for coordinates which aren't
+    # actually used as dimensions of any variables (called 'non-index'
+    # coordinates), and some of the source NetCDF files use these, e.g. a scalar
+    # 'height' coordinate (= 2.0) in the NetCDF files for the 2-meter temperature
+    # variable tas. We remove these, for simplicity and since once the variables
+    # are combined in a single zarr dataset it won't be clear what these
+    # additional coordinates are referring to.
+    dataset = dataset.reset_coords(drop=True)
+
+    # Downcast lat and lon coordinates to float32. This is because there are
+    # small rounding-error (~1e-14 relative error) discrepancies between the
+    # float64 latitude coordinates across different source NetCDF files, and
+    # xarray_beam complains about this. After downcasting to float32 the
+    # differences go away, and the extra float64 precision isn't important to us.
+    # (Ideally you'd be able to specify a tolerance for the comparison, but this
+    # works for now.)
+    dataset = dataset.assign_coords(
+        latitude=dataset["latitude"].astype(np.float32),
+        longitude=dataset["longitude"].astype(np.float32))
+
+    return dataset
+
+
+def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument("--output_path", type=str, required=True,
+                        help="Path to the destination Zarr archive.")
+    parser.add_argument('-s', "--start_date", default='2020-01-01',
+                        help='Start date, iso format string.')
+    parser.add_argument('-e', "--end_date", default='2020-01-02',
+                        help='End date, iso format string.')
+    parser.add_argument("--temp_location", type=str, required=True,
+                        help="A temp location where this data is stored temporarily.")
+    parser.add_argument('--find-missing', action='store_true', default=False,
+                        help='Print all paths to missing input data.')  # implementation pending
+    parser.add_argument("--pressure_levels_group", type=str, default="weatherbench_13",
+                        help="Group label for the set of pressure levels to use.")
+    parser.add_argument("--time_chunk_size", type=int, required=True,
+                        help="Number of 1-hourly timesteps to include in a \
+                        single chunk. Must evenly divide 24.")
+
+    return parser.parse_known_args()
