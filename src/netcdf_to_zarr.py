@@ -18,6 +18,8 @@ Example usage:
       --output_path="gs://gcp-public-data-arco-era5/ar/$USER-1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \
+      --start_date '1997-01-01' \
+      --end_date '1997-01-02' \
       --runner DataflowRunner \
       --project $PROJECT \
       --region $REGION \
@@ -28,7 +30,8 @@ Example usage:
       --no_use_public_ips  \
       --network=$NETWORK \
       --subnetwork=regions/$REGION/subnetworks/$SUBNET \
-      --job_name $USER-ar-zarr-full
+      --job_name $USER-ar-zarr-full \
+      --number_of_worker_harness_threads 20
 """
 
 # TODO(alvarosg): Make this pipeline resumable in case of error in the middle
