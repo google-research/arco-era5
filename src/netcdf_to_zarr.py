@@ -144,44 +144,50 @@ def make_template(data_path: str, start_date: str, end_date: str, time_chunk_siz
     return xa.Dataset(template_dataset, coords=coords), chunk_sizes
 
 
-def load_temporal_data_for_date(args, data_path: str, start_date: str,
-                                pressure_levels_group:
-                                str) -> t.Tuple[xb.Key, xa.Dataset]:
-    """Loads temporal data for a day, with an xarray_beam key for it.."""
-    year, month, day = args
-    logging.info("Loading NetCDF files for %d-%d-%d", year, month, day)
+class LoadTemporalDataForDateDoFn(beam.DoFn):
+    def __init__(self, data_path, start_date, pressure_levels_group):
+        self.data_path = data_path
+        self.start_date = start_date
+        self.pressure_levels_group = pressure_levels_group
 
-    try:
-        single_level_vars = read_single_level_vars(
-            year,
-            month,
-            day,
-            variables=SINGLE_LEVEL_VARIABLES,
-            root_path=data_path)
-        multilevel_vars = read_multilevel_vars(
-            year,
-            month,
-            day,
-            variables=MULTILEVEL_VARIABLES,
-            pressure_levels=_get_pressure_levels_arg(pressure_levels_group),
-            root_path=data_path)
-    except BaseException as e:
-        # Make sure we print the date as part of the error for easier debugging
-        # if something goes wrong. Note "from e" will also raise the details of the
-        # original exception.
-        raise Exception(f"Error loading {year}-{month}-{day}") from e
+    def process(self, args):
 
-    # It is crucial to actually "load" as otherwise we get a pickle error.
-    single_level_vars = single_level_vars.load()
-    multilevel_vars = multilevel_vars.load()
+        """Loads temporal data for a day, with an xarray_beam key for it.."""
+        year, month, day = args
+        logging.info("Loading NetCDF files for %d-%d-%d", year, month, day)
 
-    dataset = xa.merge([single_level_vars, multilevel_vars])
-    dataset = align_coordinates(dataset)
-    offsets = {"latitude": 0, "longitude": 0, "level": 0,
-               "time": offset_along_time_axis(start_date, year, month, day)}
-    key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
-    logging.info("Finished loading NetCDF files for %s-%s-%s", year, month, day)
-    return key, dataset
+        try:
+            single_level_vars = read_single_level_vars(
+                year,
+                month,
+                day,
+                variables=SINGLE_LEVEL_VARIABLES,
+                root_path=self.data_path)
+            multilevel_vars = read_multilevel_vars(
+                year,
+                month,
+                day,
+                variables=MULTILEVEL_VARIABLES,
+                pressure_levels=_get_pressure_levels_arg(self.pressure_levels_group),
+                root_path=self.data_path)
+        except BaseException as e:
+            # Make sure we print the date as part of the error for easier debugging
+            # if something goes wrong. Note "from e" will also raise the details of the
+            # original exception.
+            raise Exception(f"Error loading {year}-{month}-{day}") from e
+
+        # It is crucial to actually "load" as otherwise we get a pickle error.
+        single_level_vars = single_level_vars.load()
+        multilevel_vars = multilevel_vars.load()
+
+        dataset = xa.merge([single_level_vars, multilevel_vars])
+        dataset = align_coordinates(dataset)
+        offsets = {"latitude": 0, "longitude": 0, "level": 0,
+                   "time": offset_along_time_axis(self.start_date, year, month, day)}
+        key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
+        logging.info("Finished loading NetCDF files for %s-%s-%s", year, month, day)
+        yield key, dataset
+        dataset.close()
 
 
 def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> int:
@@ -248,14 +254,16 @@ def define_pipeline(
         template=xb.make_template(template),
         zarr_chunks=chunk_sizes)
 
+    load_temporal_data_for_date_do_fn = LoadTemporalDataForDateDoFn(
+        data_path=input_path,
+        start_date=start_date,
+        pressure_levels_group=pressure_levels_group
+    )
     logging.info("Setting up temporal variables.")
     temporal_variables_chunks = (
             root
             | "DayIterator" >> beam.Create(daily_date_iterator(start_date, end_date))
-            | "TemporalDataForDay"
-            >> beam.Map(load_temporal_data_for_date, data_path=input_path,
-                        start_date=start_date,
-                        pressure_levels_group=pressure_levels_group)
+            | "TemporalDataForDay" >> beam.ParDo(load_temporal_data_for_date_do_fn)
             | xb.SplitChunks(chunk_sizes)
             # We can skip the consolidation if we are using a `time_chunk_size` that
             # evenly divides a day worth of data.
