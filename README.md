@@ -36,8 +36,8 @@ for more.
 
 So far, we have ingested meteorologically valuable variables for the land and atmosphere. From this, we have produced a
 cloud-optimized version of ERA5, in which we have converted [grib data](https://en.wikipedia.org/wiki/GRIB)
-to [Zarr](https://zarr.readthedocs.io/) with no other modifications. Next, we plan on creating an "analysis-ready"
-version, oriented towards common research workflows, which we will do in the open.
+to [Zarr](https://zarr.readthedocs.io/) with no other modifications. In addition, we have created an "analysis-ready"
+version, oriented towards common research & ML workflows.
 
 This two-pronged approach for the data serves different user needs. Some researchers need full control over the
 interpolation of data for their analysis. Most will want a batteries-included dataset, where standard pre-processing and
@@ -50,24 +50,30 @@ TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we 
 
 ## Roadmap
 
+_Updated on 2023-08-23_
+
+| Location       | Type            | Description                                                                   |
+|----------------|-----------------|-------------------------------------------------------------------------------|
+| `$BUCEKT/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
+| `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
+| `$BUCKET/ar/`  | Analysis Ready  | An ML-ready, unified (surface & atmospheric) version of the data in Zarr.     |
+| `$BUCKET/hr/`  | High Resolution | Similar to `ar/`, but all 137 model levels are translated to pressure levels. |
+
+
 1. [x] **Phase 0**: Ingest raw ERA5
 2. [x] **Phase 1**: Cloud-Optimize to Zarr, without data modifications
     1. [x] Use [Pangeo-Forge](https://pangeo-forge.readthedocs.io/) to convert the data from grib to Zarr.
     2. [x] Create example notebooks for common workflows, including regridding and variable derivation.
-3. [ ] **Phase 2**: Produce an Analysis-Ready corpus
+3. [x] **Phase 2**: Produce an Analysis-Ready corpus
+   1. [ ] Update GCP CPDs documentation.
+   2. [ ] Create walkthrough notebooks.
+4. WIP **Phase 3**: Automatic dataset updates, data is back-fillable.
+5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
+6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
     1. [ ] Regrid datasets to lat/long grids.
     2. [ ] Convert model levels to pressure levels (at high resolution).
     3. [ ] Compute derived variables.
     4. [ ] Expand on example notebooks.
-4. [ ] **Phase 3**: Create an analysis & machine learning (ML) pipeline toolkit
-    1. [ ] Dataset generator for ML Models.
-    2. [ ] Examples of reading data in [XArray-Beam](https://xarray-beam.readthedocs.io/) pipelines.
-    3. [ ] Notebooks demoing common data analysis,
-       like [Extreme Value Analysis](https://en.wikipedia.org/wiki/Extreme_value_theory).
-5. [ ] General future plans...
-    1. [ ] Include more variables, especially ocean data.
-    2. [ ] Integrate preliminary ERA5 data (1950 to 1978).
-    3. [ ] Automatically update with recent data.
 
 ## Data Description
 
