@@ -18,8 +18,8 @@ Example usage:
       --output_path="gs://gcp-public-data-arco-era5/ar/$USER-1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \
-      --start_date '1997-01-01' \
-      --end_date '1997-01-02' \
+      --start_date '1959-01-01' \
+      --end_date '2021-12-31' \
       --runner DataflowRunner \
       --project $PROJECT \
       --region $REGION \
@@ -49,8 +49,6 @@ import pandas as pd
 import typing as t
 import xarray as xa
 import xarray_beam as xb
-
-from apache_beam.options.pipeline_options import PipelineOptions
 
 from arco_era5 import (
     GCP_DIRECTORY,
@@ -294,8 +292,7 @@ def main():
     known_args, pipeline_args = parse_arguments(
         "Create a Zarr dataset from NetCDF files."
     )
-    pipeline_args.append('--save_main_session')
-    pipeline_args.append('True')
+    pipeline_args.extend(['--save_main_session', 'True'])
 
     if fs.exists(known_args.output_path):
         raise ValueError(f"{known_args.output_path} already exists")
@@ -306,7 +303,7 @@ def main():
             f"time_chunk_size {known_args.time_chunk_size} must evenly divide {num_steps_per_day}"
         )
 
-    with beam.Pipeline(options=PipelineOptions(pipeline_args)) as root:
+    with beam.Pipeline(argv=pipeline_args) as root:
         define_pipeline(
             root,
             input_path=INPUT_PATH,

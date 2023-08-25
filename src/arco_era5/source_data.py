@@ -12,7 +12,7 @@ import xarray
 import numpy as np
 import pandas as pd
 import typing as t
-import xarray as xa
+import xarray as xr
 
 TIME_RESOLUTION_HOURS = 1
 
@@ -28,7 +28,7 @@ MULTILEVEL_SUBDIR_TEMPLATE = (
     "date-variable-pressure_level/{year}/{month:02d}/"
     "{day:02d}/{variable}/{pressure_level}.nc")
 
-STATIC_VARIABLES = [
+STATIC_VARIABLES = (
     "type_of_low_vegetation",
     "type_of_high_vegetation",
     "standard_deviation_of_orography",
@@ -43,10 +43,10 @@ STATIC_VARIABLES = [
     "geopotential_at_surface",
     "anisotropy_of_sub_gridscale_orography",
     "angle_of_sub_gridscale_orography",
-]
+)
 
 # TODO(alvarosg): Add more variables.
-SINGLE_LEVEL_VARIABLES = [
+SINGLE_LEVEL_VARIABLES = (
     "total_precipitation",
     "total_column_water_vapour",
     "total_cloud_cover",
@@ -58,16 +58,16 @@ SINGLE_LEVEL_VARIABLES = [
     "2m_temperature",
     "10m_v_component_of_wind",
     "10m_u_component_of_wind",
-]
+)
 
-MULTILEVEL_VARIABLES = [
+MULTILEVEL_VARIABLES = (
     "geopotential",
     "specific_humidity",
     "temperature",
     "u_component_of_wind",
     "v_component_of_wind",
     "vertical_velocity",
-]
+)
 
 # Variables that correspond to an integration over a `TIME_RESOLUTION_HOURS`
 # interval, rather than an instantaneous sample in time.
@@ -219,16 +219,12 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
 def daily_date_iterator(start_date: str, end_date: str
                         ) -> t.Iterable[t.Tuple[int, int, int]]:
     """Iterates all (year, month, day) tuples between start_date and end_date."""
-    first_day = pd.Timestamp(start_date)
-    final_day = pd.Timestamp(end_date)  # non-inclusive
-    time_delta = pd.Timedelta("1 day")
-    current_day = first_day
-    while current_day < final_day:
-        yield current_day.year, current_day.month, current_day.day
-        current_day += time_delta
+    date_range = pd.date_range(start=start_date, end=end_date, inclusive='left')
+    for date in date_range:
+        yield date.year, date.month, date.day
 
 
-def align_coordinates(dataset: xa.Dataset) -> xa.Dataset:
+def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
     """Align coordinates of per-variable datasets prior to consolidation."""
 
     # It's possible to have coordinate metadata for coordinates which aren't

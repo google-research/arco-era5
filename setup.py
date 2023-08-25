@@ -94,7 +94,6 @@ setup(
         'gcsfs',
         'cfgrib',
         'immutabledict',
-        'absl-py',
         'xarray-beam',
         'scipy',
     ],
