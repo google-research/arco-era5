@@ -25,8 +25,8 @@ Example usage:
       --region $REGION \
       --temp_location "gs://$BUCKET/tmp/" \
       --setup_file ./setup.py \
-      --disk_size_gb 50 \
-      --machine_type n2-highmem-2 \
+      --disk_size_gb 500 \
+      --machine_type m1-ultramem-40 \
       --no_use_public_ips  \
       --network=$NETWORK \
       --subnetwork=regions/$REGION/subnetworks/$SUBNET \
