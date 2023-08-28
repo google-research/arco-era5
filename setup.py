@@ -88,11 +88,11 @@ setup(
     python_requires='>=3.7, <3.10',
     install_requires=[
         'apache_beam[gcp]',
-        'pangeo-forge-recipes==0.9.1',
+        'pangeo-forge-recipes @ git+https://github.com/DarshanSP19/pangeo-forge-recipes.git@0.9.4/update-data-slice',
         'pandas',
         'gcsfs',
         'cfgrib',
-        'google-weather-tools>=0.3.1',
+        # 'google-weather-tools>=0.3.1',
     ],
     tests_require=['pytest'],
     cmdclass={

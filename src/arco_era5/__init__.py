@@ -12,3 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .pangeo import run, parse_args
+from .update import GenerateOffset, UpdateSlice
