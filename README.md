@@ -265,9 +265,44 @@ sl_forecasts = xr.open_zarr(
 * _Levels_: `1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000`
 * _Size_: 486.03 TiB
 
-| name                                       | short name | units                 | docs                                                 | config                                   |
-|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
-
+| name                                           | short name | units      | docs                                          | 
+|--------------------------------------------    |------------|----------- |-----------------------------------------------|
+10m_u_component_of_wind                          |
+10m_v_component_of_wind                          |
+geopotential_at_surface                          |
+sea_ice_cover                                    | 
+temperature                                      | 
+toa_incident_solar_radiation_12hr                |
+toa_incident_solar_radiation_24hr                |
+toa_incident_solar_radiation_6hr                 |
+total_precipitation_12hr                         |
+total_precipitation_24hr                         |
+total_precipitation_6hr                          |
+2m_temperature                                   | 2t         | K         | https://codes.ecmwf.int/grib/param-db/?id=167
+angle_of_sub_gridscale_orography                 | anor       | radians   | https://codes.ecmwf.int/grib/param-db/?id=162 
+anisotropy_of_sub_gridscale_orography            | isor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=161
+geopotential                                     | z	      | m^2 s^-2  | https://apps.ecmwf.int/codes/grib/param-dbid=129
+high_vegetation_cover                            | cvh        | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=28
+lake_cover                                       | cl         | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=26
+lake_depth                                       | dl         | m         | https://codes.ecmwf.int/grib/param-db/?id=228007
+land_sea_mask                                    | lsm        | (0 - 1)   | https://apps.ecmwf.int/codes/grib/param-db?id=172
+low_vegetation_cover                             | cvl        | (0 - 1)   | https://apps.ecmwf.int/codes/grib/param-db?id=27
+mean_sea_level_pressure                          | msl        | Pa        | https://codes.ecmwf.int/grib/param-db/?id=151
+sea_surface_temperature                          | sst        | K         | https://codes.ecmwf.int/grib/param-db/?id=134
+slope_of_sub_gridscale_orography                 | slor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=163
+soil_type                                        | slt        | ~         | https://codes.ecmwf.int/grib/param-db/?id=43
+specific_humidity                                | q          | kg kg**-1 | https://codes.ecmwf.int/grib/param-db/?id=133
+standard_deviation_of_filtered_subgrid_orography | sdfor      | m         | https://codes.ecmwf.int/grib/param-db/?id=74
+standard_deviation_of_orography                  | sdor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=160
+surface_pressure                                 | sp         | Pa        | https://codes.ecmwf.int/grib/param-db/?id=134
+toa_incident_solar_radiation                     | tisr       | J m**-2   | https://codes.ecmwf.int/grib/param-db/?id=212
+total_cloud_cover                                | tcc        | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=164
+total_column_water_vapour                        | tcwv       | kg m**-2  | https://codes.ecmwf.int/grib/param-db/?id=137
+type_of_high_vegetation                          | tvh        | ~         | https://codes.ecmwf.int/grib/param-db/?id=74
+type_of_low_vegetation                           | tvl        | ~         | https://codes.ecmwf.int/grib/param-db/?id=29
+u_component_of_wind                              | u          | m s**-1   | https://codes.ecmwf.int/grib/param-db/?id=131
+v_component_of_wind                              | v          | m s**-1   | https://codes.ecmwf.int/grib/param-db/?id=132
+vertical_velocity                                | w          | Pa s**-1  | https://codes.ecmwf.int/grib/param-db/?id=135
 
 ```python
 import xarray as xr
@@ -282,10 +317,44 @@ ar_full_37_1h = xr.open_zarr(
 * _Levels_: `1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000`
 * _Size_: 81.35 TiB
 
-| name                                       | short name | units                 | docs                                                 | config                                   |
-|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
-
-
+| name                                           | short name | units      | docs                                          | 
+|--------------------------------------------    |------------|----------- |-----------------------------------------------|
+|10m_u_component_of_wind                          |
+|10m_v_component_of_wind                          |
+geopotential_at_surface                          |
+sea_ice_cover                                    | 
+temperature                                      | 
+toa_incident_solar_radiation_12hr                |
+toa_incident_solar_radiation_24hr                |
+toa_incident_solar_radiation_6hr                 |
+total_precipitation_12hr                         |
+total_precipitation_24hr                         |
+total_precipitation_6hr                          |
+2m_temperature                                   | 2t         | K         | https://codes.ecmwf.int/grib/param-db/?id=167
+angle_of_sub_gridscale_orography                 | anor       | radians   | https://codes.ecmwf.int/grib/param-db/?id=162 
+anisotropy_of_sub_gridscale_orography            | isor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=161
+geopotential                                     | z	      | m^2 s^-2  | https://apps.ecmwf.int/codes/grib/param-dbid=129
+high_vegetation_cover                            | cvh        | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=28
+lake_cover                                       | cl         | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=26
+lake_depth                                       | dl         | m         | https://codes.ecmwf.int/grib/param-db/?id=228007
+land_sea_mask                                    | lsm        | (0 - 1)   | https://apps.ecmwf.int/codes/grib/param-db?id=172
+low_vegetation_cover                             | cvl        | (0 - 1)   | https://apps.ecmwf.int/codes/grib/param-db?id=27
+mean_sea_level_pressure                          | msl        | Pa        | https://codes.ecmwf.int/grib/param-db/?id=151
+sea_surface_temperature                          | sst        | K         | https://codes.ecmwf.int/grib/param-db/?id=134
+slope_of_sub_gridscale_orography                 | slor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=163
+soil_type                                        | slt        | ~         | https://codes.ecmwf.int/grib/param-db/?id=43
+specific_humidity                                | q          | kg kg**-1 | https://codes.ecmwf.int/grib/param-db/?id=133
+standard_deviation_of_filtered_subgrid_orography | sdfor      | m         | https://codes.ecmwf.int/grib/param-db/?id=74
+standard_deviation_of_orography                  | sdor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=160
+surface_pressure                                 | sp         | Pa        | https://codes.ecmwf.int/grib/param-db/?id=134
+toa_incident_solar_radiation                     | tisr       | J m**-2   | https://codes.ecmwf.int/grib/param-db/?id=212
+total_cloud_cover                                | tcc        | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=164
+total_column_water_vapour                        | tcwv       | kg m**-2  | https://codes.ecmwf.int/grib/param-db/?id=137
+type_of_high_vegetation                          | tvh        | ~         | https://codes.ecmwf.int/grib/param-db/?id=74
+type_of_low_vegetation                           | tvl        | ~         | https://codes.ecmwf.int/grib/param-db/?id=29
+u_component_of_wind                              | u          | m s**-1   | https://codes.ecmwf.int/grib/param-db/?id=131
+v_component_of_wind                              | v          | m s**-1   | https://codes.ecmwf.int/grib/param-db/?id=132
+vertical_velocity                                | w          | Pa s**-1  | https://codes.ecmwf.int/grib/param-db/?id=135
 ```python
 import xarray as xr
 
@@ -299,10 +368,44 @@ ar_full_37_6h = xr.open_zarr(
 * _Levels_:  `50/100/150/200/250/300/400/500/600/700/850/925/1000`
 * _Size_: 32.68 TiB
 
-| name                                       | short name | units                 | docs                                                 | config                                   |
-|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
-
-
+| name                                           | short name | units      | docs                                          | 
+|--------------------------------------------    |------------|----------- |-----------------------------------------------|
+10m_u_component_of_wind                          |
+10m_v_component_of_wind                          |
+geopotential_at_surface                          |
+sea_ice_cover                                    | 
+temperature                                      | 
+toa_incident_solar_radiation_12hr                |
+toa_incident_solar_radiation_24hr                |
+toa_incident_solar_radiation_6hr                 |
+total_precipitation_12hr                         |
+total_precipitation_24hr                         |
+total_precipitation_6hr                          |
+2m_temperature                                   | 2t         | K         | https://codes.ecmwf.int/grib/param-db/?id=167
+angle_of_sub_gridscale_orography                 | anor       | radians   | https://codes.ecmwf.int/grib/param-db/?id=162 
+anisotropy_of_sub_gridscale_orography            | isor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=161
+geopotential                                     | z	      | m^2 s^-2  | https://apps.ecmwf.int/codes/grib/param-dbid=129
+high_vegetation_cover                            | cvh        | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=28
+lake_cover                                       | cl         | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=26
+lake_depth                                       | dl         | m         | https://codes.ecmwf.int/grib/param-db/?id=228007
+land_sea_mask                                    | lsm        | (0 - 1)   | https://apps.ecmwf.int/codes/grib/param-db?id=172
+low_vegetation_cover                             | cvl        | (0 - 1)   | https://apps.ecmwf.int/codes/grib/param-db?id=27
+mean_sea_level_pressure                          | msl        | Pa        | https://codes.ecmwf.int/grib/param-db/?id=151
+sea_surface_temperature                          | sst        | K         | https://codes.ecmwf.int/grib/param-db/?id=134
+slope_of_sub_gridscale_orography                 | slor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=163
+soil_type                                        | slt        | ~         | https://codes.ecmwf.int/grib/param-db/?id=43
+specific_humidity                                | q          | kg kg**-1 | https://codes.ecmwf.int/grib/param-db/?id=133
+standard_deviation_of_filtered_subgrid_orography | sdfor      | m         | https://codes.ecmwf.int/grib/param-db/?id=74
+standard_deviation_of_orography                  | sdor       | ~         | https://codes.ecmwf.int/grib/param-db/?id=160
+surface_pressure                                 | sp         | Pa        | https://codes.ecmwf.int/grib/param-db/?id=134
+toa_incident_solar_radiation                     | tisr       | J m**-2   | https://codes.ecmwf.int/grib/param-db/?id=212
+total_cloud_cover                                | tcc        | (0 - 1)   | https://codes.ecmwf.int/grib/param-db/?id=164
+total_column_water_vapour                        | tcwv       | kg m**-2  | https://codes.ecmwf.int/grib/param-db/?id=137
+type_of_high_vegetation                          | tvh        | ~         | https://codes.ecmwf.int/grib/param-db/?id=74
+type_of_low_vegetation                           | tvl        | ~         | https://codes.ecmwf.int/grib/param-db/?id=29
+u_component_of_wind                              | u          | m s**-1   | https://codes.ecmwf.int/grib/param-db/?id=131
+v_component_of_wind                              | v          | m s**-1   | https://codes.ecmwf.int/grib/param-db/?id=132
+vertical_velocity                                | w          | Pa s**-1  | https://codes.ecmwf.int/grib/param-db/?id=135
 ```python
 import xarray as xr
 
