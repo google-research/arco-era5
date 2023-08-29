@@ -77,7 +77,7 @@ _Updated on 2023-08-23_
 
 ## Data Description
 
-As of 2022-04-27, all data spans the dates `1979-01-01/to/2021-08-31` (inclusive).
+As of 2023-08-29, all data spans the dates `1940-01-01/to/2023-05-31` (inclusive).
 
 Whenever possible, we have chosen to represent parameters by their native grid resolution.
 See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
@@ -93,8 +93,8 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 
 | name                 | short name | units   | docs                                              | config                               |
 |----------------------|------------|---------|---------------------------------------------------|--------------------------------------|
-| vorticity (relative) | vo         | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=138 | [era5_ml_dv.cfg](raw/era5_ml_dv.cfg) |
-| divergence           | d          | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=155 | [era5_ml_dv.cfg](raw/era5_ml_dv.cfg) |
+| vorticity (relative) | vo         | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=138 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
+| divergence           | d          | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=155 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
 | temperature          | t          | K       | https://apps.ecmwf.int/codes/grib/param-db?id=130 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
 | vertical velocity    | d          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
 
@@ -103,7 +103,7 @@ See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+
 import xarray as xr
 
 ml_wind = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/',
+    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/',
     chunks={'time': 48},
     consolidated=True,
 )
@@ -115,7 +115,7 @@ ml_wind = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 707.34 TiB
+* _Size_: 2045.97 TiB
 
 | name                                | short name | units    | docs                                              | config                                   |
 |-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
@@ -131,7 +131,7 @@ ml_wind = xr.open_zarr(
 import xarray as xr
 
 ml_moisture = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/',
+    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/',
     chunks={'time': 48},
     consolidated=True,
 )
@@ -142,18 +142,18 @@ ml_moisture = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `Spectral Harmonic Coefficients`
   ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
-* _Size_: 1.11 TiB
+* _Size_: 3.23 TiB
 
 | name                                | short name | units    | docs                                              | config                                   |
 |-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
-| logarithm of surface pressure       | lnsp       | ~        | https://apps.ecmwf.int/codes/grib/param-db?id=152 |   |
-| surface geopotential                | zs         | m^2 s^-2 | https://apps.ecmwf.int/codes/grib/param-db?id=162051 |    | 
+| logarithm of surface pressure       | lnsp       | Numeric  | https://apps.ecmwf.int/codes/grib/param-db?id=152 | [era5_ml_lnsp.cfg](raw/era5_ml_lnsp.cfg)  |
+| surface geopotential                | zs         | m^2 s^-2 | https://apps.ecmwf.int/codes/grib/param-db?id=162051 | [era5_ml_zs.cfg](raw/era5_ml_zs.cfg)  | 
 
 ```python
 import xarray as xr
 
 ml_surface = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr/',
+    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/',
     chunks={'time': 48},
     consolidated=True,
 )
@@ -164,7 +164,7 @@ ml_surface = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 28.02 TiB
+* _Size_: 81.07 TiB
 
 | name                                                       | short name | units        | docs                                                 | config                                       |
 |------------------------------------------------------------|------------|--------------|------------------------------------------------------|----------------------------------------------|
@@ -194,12 +194,25 @@ ml_surface = xr.open_zarr(
 | total column snow water                                    | tcsw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=228090 | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
 | total column water                                         | tcw        | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=136    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
 | total column vertically-integrated water vapour            | tcwv       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=137    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
-
+| Geopotential	                                             | z	      | m^2 s^-2	 | https://apps.ecmwf.int/codes/grib/param-dbid=129     |  [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Surface pressure	                                         | sp	      | Pa	         | https://apps.ecmwf.int/codes/grib/param-db?id=134    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Total column vertically-integrated water vapour            | tcwv	      | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=137    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Mean sea level pressure	                                 | msl	      | Pa	         | https://apps.ecmwf.int/codes/grib/param-db?id=151    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Total cloud cover                                          | tcc	      | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=164    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 10 metre U wind component	                                 | 10u	      | m s^-1	     | https://apps.ecmwf.int/codes/grib/param-db?id=165    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 10 metre V wind component	                                 | 10v	      | m s^-1	     | https://apps.ecmwf.int/codes/grib/param-db?id=166    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 2 metre temperature	                                     | 2t	      | K	         | https://apps.ecmwf.int/codes/grib/param-db?id=167    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 2 metre dewpoint temperature	                             | 2d	      | K	         | https://apps.ecmwf.int/codes/grib/param-db?id=168    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Low cloud cover	                                         | lcc	      | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=186    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Medium cloud cover	                                     | mcc	      | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=187    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| High cloud cover	                                         | hcc	      | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=188    |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 100 metre U wind component                                 | 100u       | m s^-1	     | https://apps.ecmwf.int/codes/grib/param-db?id=228246 |[era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 100 metre V wind component                                 | 100v	      | m s^-1	     | https://apps.ecmwf.int/codes/grib/param-db?id=228247 |[era5_sfc.cfg](raw/era5_sfc.cfg) 
 ```python
 import xarray as xr
 
 sl_reanalysis = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr', 
+    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2', 
     chunks={'time': 48},
     consolidated=True,
 )
@@ -210,7 +223,7 @@ sl_reanalysis = xr.open_zarr(
 * _Steps_: `0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 24.52 TiB
+* _Size_: 70.94 TiB
 
 | name                                       | short name | units                 | docs                                                 | config                                   |
 |--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
@@ -240,7 +253,7 @@ sl_reanalysis = xr.open_zarr(
 import xarray as xr
 
 sl_forecasts = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr/', 
+    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2/', 
     chunks={'time': 48},
     consolidated=True,
 )
