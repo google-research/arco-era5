@@ -259,6 +259,57 @@ sl_forecasts = xr.open_zarr(
 )
 ```
 
+### 1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2/
+
+* _Times_: `00/to/23`
+* _Levels_: `1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000`
+* _Size_: 486.03 TiB
+
+| name                                       | short name | units                 | docs                                                 | config                                   |
+|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
+
+
+```python
+import xarray as xr
+
+ar_full_37_1h = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/ar/1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2/'
+)
+```
+### 1959-2022-full_37-6h-0p25deg-chunk-1.zarr-v2/
+
+* _Times_: `00:00/06:00/12:00/18:00`
+* _Levels_: `1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000`
+* _Size_: 81.35 TiB
+
+| name                                       | short name | units                 | docs                                                 | config                                   |
+|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
+
+
+```python
+import xarray as xr
+
+ar_full_37_6h = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/ar/1959-2022-full_37-6h-0p25deg-chunk-1.zarr-v2/', 
+)
+```
+### 1959-2022-wb13-6h-0p25deg-chunk-1.zarr-v2/
+
+* _Times_: `00:00/06:00/12:00/18:00`
+* _Levels_:  `50/100/150/200/250/300/400/500/600/700/850/925/1000`
+* _Size_: 32.68 TiB
+
+| name                                       | short name | units                 | docs                                                 | config                                   |
+|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
+
+
+```python
+import xarray as xr
+
+ar_wb13_6h = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/ar/1959-2022-wb13-6h-0p25deg-chunk-1.zarr-v2/', 
+)
+```
 ## How to reproduce
 
 All phases of this dataset can be reproduced with scripts found here. To run them, please clone the repo and install the
