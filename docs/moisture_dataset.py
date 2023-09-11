@@ -10,12 +10,18 @@ a Gaussian gridded dataset and a regular lat-lon dataset.
 import xarray
 
 def attribute_fix(ds):
-    """Needed to fix a low-level bug in ecCodes.
-    
-    Sometimes, shortNames get overloaded in ecCodes's table. 
-    To eliminate ambiguity in their string matching, we
-    force ecCodes to make use of the paramId, which is a
-    consistent source-of-truth.
+    """
+    Fix attributes in an xarray Dataset for compatibility with ecCodes.
+
+    In some cases, shortNames in the ecCodes table can cause ambiguity in string matching. 
+    To eliminate this ambiguity, this function updates the Dataset attributes to make use
+    of the paramId, which serves as a consistent source-of-truth.
+
+    Args:
+        ds (xarray.Dataset): The Dataset to fix attributes for.
+
+    Returns:
+        xarray.Dataset: The updated Dataset with fixed attributes.
     """
     for var in ds:
         attrs = ds[var].attrs
@@ -27,12 +33,38 @@ def attribute_fix(ds):
 
 
 def compute_gg_ll_dataset(ml_surface, ml_wind, ml_moisture, datestring):
-   """Merges/processes AR ML dataset to a CO ML dataset.
-   
-   This function takes a datestamp and the three AR model-level ERA5 
-   datasets to produce a unified model-level dataset on a Gaussian Grid
-   and a regular lat-lon grid for a single hour.
    """
+    Merges and processes AR model-level ERA5 datasets into CO ML Gaussian Grid and regular lat-lon grid datasets for a single hour.
+
+    This function takes a datestamp and the three AR model-level ERA5 
+    datasets to produce a unified model-level dataset on a Gaussian Grid
+    and a regular lat-lon grid for a single hour.
+   
+    Args:
+        ml_surface (xarray.Dataset): Model-level surface dataset.
+        ml_wind (xarray.Dataset): Model-level wind dataset.
+        ml_moisture (xarray.Dataset): Model-level moisture dataset.
+        datestring (str): Datestamp for the dataset in ISO format (e.g., "2023-09-11").
+
+    Returns:
+        Tuple[xarray.Dataset, xarray.Dataset]: A tuple containing the Gaussian Grid dataset and the regular lat-lon grid dataset.
+
+    This function takes three AR model-level ERA5 datasets and a datestamp to produce unified model-level datasets on Gaussian Grid and regular lat-lon grid for a single hour.
+
+    Note:
+        - This function relies on the Metview library for data processing.
+        - Temporary files may be created during processing, and it's important to delete unnecessary variables to free up disk space.
+
+    Example:
+        >>> import xarray as xr
+        >>> datestring = "2023-09-11"
+        >>> ml_surface = xr.Dataset(...)  # Replace with actual data
+        >>> ml_wind = xr.Dataset(...)     # Replace with actual data
+        >>> ml_moisture = xr.Dataset(...) # Replace with actual data
+        >>> gg_dataset, ll_dataset = compute_gg_ll_dataset(ml_surface, ml_wind, ml_moisture, datestring)
+        >>> print(gg_dataset)
+        >>> print(ll_dataset)
+    """
    import metview as mv
 
    surface_slice = ml_surface.sel(time=slice(datestring,datestring)).compute()

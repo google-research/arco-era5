@@ -100,7 +100,21 @@ _VARIABLE_TO_ERA5_FILE_NAME = {
 
 
 def _read_nc_dataset(gpath_file):
-    """Read the .nc dataset from disk."""
+    """
+    Read a .nc NetCDF dataset from a cloud storage path and disk.
+
+    Args:
+        gpath_file (str): The cloud storage path to the NetCDF file.
+
+    Returns:
+        xarray.DataArray: The loaded NetCDF dataset.
+
+    This function reads a NetCDF dataset from a cloud storage path and combines data from ERA5 and ERA5T
+    versions if necessary.
+
+    Example:
+        >>> data = _read_nc_dataset("gs://bucket/data/era5_data.nc")
+    """
     path = str(gpath_file).replace('gs:/', 'gs://')
     with fsspec.open(path, mode="rb") as fid:
         dataset = xarray.open_dataset(fid, engine="scipy", cache=False)
@@ -135,7 +149,21 @@ def _read_nc_dataset(gpath_file):
 
 
 def read_static_vars(variables=STATIC_VARIABLES, root_path=GCP_DIRECTORY):
-    """xarray.Dataset with static variables for single level data from nc files."""
+    """
+    Read static variables from NetCDF files and return an xarray.Dataset.
+
+    Args:
+        variables (list): List of variable names to read.
+        root_path (str): Root directory where the NetCDF files are located.
+
+    Returns:
+        xarray.Dataset: A dataset containing the requested static variables.
+
+    This function reads static variables from NetCDF files and returns them as an xarray.Dataset.
+
+    Example:
+        >>> static_data = read_static_vars(["land_mask", "topography"])
+    """
     root_path = pathlib.Path(root_path)
     output = {}
     for variable in variables:
@@ -150,7 +178,24 @@ def read_static_vars(variables=STATIC_VARIABLES, root_path=GCP_DIRECTORY):
 
 def read_single_level_vars(year, month, day, variables=SINGLE_LEVEL_VARIABLES,
                            root_path=GCP_DIRECTORY):
-    """xarray.Dataset with variables for singel level data from nc files."""
+    """
+    Read single-level variables for a specific date and return an xarray.Dataset.
+
+    Args:
+        year (int): Year of the data.
+        month (int): Month of the data.
+        day (int): Day of the data.
+        variables (list): List of variable names to read.
+        root_path (str): Root directory where the NetCDF files are located.
+
+    Returns:
+        xarray.Dataset: A dataset containing the requested single-level variables for the given date.
+
+    This function reads single-level variables from NetCDF files for a specific date and returns them as an xarray.Dataset.
+
+    Example:
+        >>> date_data = read_single_level_vars(2023, 9, 11, ["temperature", "humidity"])
+    """
     root_path = pathlib.Path(root_path)
     output = {}
     for variable in variables:
@@ -166,7 +211,25 @@ def read_multilevel_vars(year,
                          variables=MULTILEVEL_VARIABLES,
                          pressure_levels=PRESSURE_LEVELS_GROUPS["full_37"],
                          root_path=GCP_DIRECTORY):
-    """xarray.Dataset with variables for all levels from nc files."""
+    """
+    Read multilevel variables for a specific date and return an xarray.Dataset.
+
+    Args:
+        year (int): Year of the data.
+        month (int): Month of the data.
+        day (int): Day of the data.
+        variables (list): List of variable names to read.
+        pressure_levels (list): List of pressure levels to read.
+        root_path (str): Root directory where the NetCDF files are located.
+
+    Returns:
+        xarray.Dataset: A dataset containing the requested multilevel variables for the given date.
+
+    This function reads multilevel variables from NetCDF files for a specific date and returns them as an xarray.Dataset.
+
+    Example:
+        >>> date_data = read_multilevel_vars(2023, 9, 11, ["temperature", "humidity"], [1000, 850, 500])
+    """
     root_path = pathlib.Path(root_path)
     output = {}
     for variable in variables:
@@ -184,7 +247,20 @@ def read_multilevel_vars(year,
 
 
 def get_var_attrs_dict(root_path=GCP_DIRECTORY):
-    """Returns attributes for all variables."""
+    """
+    Return a dictionary of attributes for all variables.
+
+    Args:
+        root_path (str): Root directory where the NetCDF files are located.
+
+    Returns:
+        dict: A dictionary containing variable attributes.
+
+    This function retrieves attributes for all variables from NetCDF files.
+
+    Example:
+        >>> variable_attrs = get_var_attrs_dict()
+    """"""Returns attributes for all variables."""
     root_path = pathlib.Path(root_path)
 
     # The variable attributes should be independent of the date chosen here
@@ -218,14 +294,42 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
 
 def daily_date_iterator(start_date: str, end_date: str
                         ) -> t.Iterable[t.Tuple[int, int, int]]:
-    """Iterates all (year, month, day) tuples between start_date and end_date."""
+    """
+    Iterate through all (year, month, day) tuples between start_date and end_date (inclusive).
+
+    Args:
+        start_date (str): The start date in ISO format (YYYY-MM-DD).
+        end_date (str): The end date in ISO format (YYYY-MM-DD).
+
+    Yields:
+        tuple: A tuple containing the year, month, and day for each date in the range.
+
+    Example:
+        >>> for year, month, day in daily_date_iterator('2023-09-01', '2023-09-05'):
+        ...     print(f"Year: {year}, Month: {month}, Day: {day}")
+        Year: 2023, Month: 9, Day: 1
+        Year: 2023, Month: 9, Day: 2
+        Year: 2023, Month: 9, Day: 3
+        Year: 2023, Month: 9, Day: 4
+        Year: 2023, Month: 9, Day: 5
+    """
     date_range = pd.date_range(start=start_date, end=end_date, inclusive='left')
     for date in date_range:
         yield date.year, date.month, date.day
 
 
 def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
-    """Align coordinates of per-variable datasets prior to consolidation."""
+    """
+    Align coordinates of variables in the dataset before consolidation.
+
+    Args:
+        dataset (xr.Dataset): The dataset containing variables.
+
+    Returns:
+        xr.Dataset: The dataset with aligned coordinates.
+
+    This function removes non-index coordinates and downcasts latitude and longitude coordinates to float32.
+    """
 
     # It's possible to have coordinate metadata for coordinates which aren't
     # actually used as dimensions of any variables (called 'non-index'
@@ -251,6 +355,19 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
 
 
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
+    """
+    Parse command-line arguments for the data processing pipeline.
+
+    Args:
+        desc (str): A description of the command-line interface.
+
+    Returns:
+        tuple: A tuple containing the parsed arguments as a namespace and a list of unknown arguments.
+
+    Example:
+        To parse command-line arguments, you can call this function like this:
+        >>> parsed_args, unknown_args = parse_arguments("Data Processing Pipeline")
+    """
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument("--output_path", type=str, required=True,

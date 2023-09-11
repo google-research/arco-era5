@@ -11,18 +11,44 @@ from mpl_toolkits.axes_grid1 import axes_divider
 __author__ = 'carver@google.com'
 
 
-def plot_map(lats, lons,
-             x, label,
-             ax, cmap,
-             norm,
-             coastlines=False,
-             lakes=False,
-             rivers=False,
-             countries=False,
-             states=False,
-             counties=False,
-             provinces=False,
-             ):
+def plot_map(
+        lats, 
+        lons,
+        x, 
+        label,
+        ax, 
+        cmap,
+        norm,
+        coastlines=False,
+        lakes=False,
+        rivers=False,
+        countries=False,
+        states=False,
+        counties=False,
+        provinces=False,
+    ):
+    """
+    Plot a map with data using Matplotlib and Cartopy.
+
+    Args:
+        lats (numpy.ndarray): Array of latitude values.
+        lons (numpy.ndarray): Array of longitude values.
+        x (numpy.ndarray): Data values to be plotted.
+        label (str): Title for the plot.
+        ax (matplotlib.axes.Axes): Matplotlib axes object to draw the map on.
+        cmap (matplotlib.colors.Colormap): Colormap for coloring the data.
+        norm (matplotlib.colors.Normalize): Normalize object for data scaling.
+        coastlines (bool): Whether to plot coastlines.
+        lakes (bool): Whether to plot lakes.
+        rivers (bool): Whether to plot rivers.
+        countries (bool): Whether to plot country borders.
+        states (bool): Whether to plot state borders.
+        counties (bool): Whether to plot county borders.
+        provinces (bool): Whether to plot province borders.
+
+    Returns:
+        matplotlib.collections.QuadMesh: The QuadMesh object representing the plot.
+    """
 
     if counties:
         counties_features = cfeature.NaturalEarthFeature(
@@ -74,6 +100,20 @@ def plot_map(lats, lons,
 
 
 def plot_barbs(lats, lons, u, v, ax, skip=4):
+    """
+    Plot wind barbs on a map.
+
+    Args:
+        lats (numpy.ndarray): Array of latitude values.
+        lons (numpy.ndarray): Array of longitude values.
+        u (numpy.ndarray): U-component of wind data.
+        v (numpy.ndarray): V-component of wind data.
+        ax (matplotlib.axes.Axes): Matplotlib axes object to draw the map on.
+        skip (int): Skip factor for plotting wind barbs (default is 4).
+
+    Returns:
+        matplotlib.quiver.Quiver: Quiver object representing the wind barbs.
+    """
     p = ax.barbs(
         lons[::skip], lats[::skip], u[::skip, ::skip], v[::skip, ::skip],
         color='k',
@@ -99,7 +139,32 @@ def plot_shaded_with_barbs(plot_ds,
                            uvar="u10",
                            vvar="v10",
                            figsize=(12, 15)):
+    """
+    Plot shaded data on a map with optional wind barbs.
 
+    Args:
+        plot_ds (xarray.Dataset): Dataset containing the data to be plotted.
+        shading_variable (str): Name of the variable to be used for shading.
+        label (str): Label for the plot.
+        cmap (str or matplotlib.colors.Colormap): Colormap for coloring the data.
+        plot_wind_barbs (bool): Whether to plot wind barbs (default is True).
+        barb_skip (int): Skip factor for plotting wind barbs (default is 4).
+        scalevar (float): Scaling factor for the shading variable (default is 1.0).
+        add_offset (float): Offset to be added to the shading variable (default is 0.0).
+        coastlines (bool): Whether to plot coastlines (default is True).
+        lakes (bool): Whether to plot lakes (default is False).
+        rivers (bool): Whether to plot rivers (default is False).
+        countries (bool): Whether to plot country borders (default is False).
+        states (bool): Whether to plot state borders (default is False).
+        counties (bool): Whether to plot county borders (default is False).
+        provinces (bool): Whether to plot province borders (default is False).
+        uvar (str): Name of the U-component of wind variable (default is "u10").
+        vvar (str): Name of the V-component of wind variable (default is "v10").
+        figsize (tuple): Figure size (width, height) (default is (12, 15)).
+
+    Returns:
+        None
+    """
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(2, 1, 1, projection=ccrs.PlateCarree())
     ax.set_global()
@@ -130,7 +195,55 @@ def plot_shaded_with_barbs(plot_ds,
     fig.colorbar(im, cax=cax)
 
 
+
 def shaded_plot(fieldset, **kwargs):
+    """
+    Create a shaded plot with optional wind vectors and customizations.
+
+    Args:
+        fieldset (xarray.Dataset): Dataset containing the data to be plotted.
+        **kwargs: Keyword arguments for customizing the plot.
+
+    Keyword Args:
+        shortName (str): The shortName of the field to plot (default is "ws").
+        plotWind (bool): True to overlay wind vectors (default is False).
+        level (int): The level to plot (default is 137).
+        line (list): Line with coordinates [Lat1, Lon1, Lat2, Lon2] (default is [0, 0, 0, 0]).
+        plotLine (bool): True to plot the line (default is False).
+        scaleFactor (float): Rescale the variable by scaleFactor (default is 1.0).
+        scaleBias (float): Adjust the rescaled variable by a constant factor (default is 0.0).
+        styleName (str): Contour style to use (default is "sh_all_f03t70_beauf").
+        coastLatSpacing (int): Spacing of latitude labels in degrees (default is 15).
+        coastLonSpacing (int): Spacing of longitude labels in degrees (default is 20).
+        mapAdministrativeBoundaries (str): "on" to plot administrative boundaries (default is "off").
+        mapAdministrativeBoundariesColour (str): Administrative boundary color (default is "automatic").
+        mapAdministrativeBoundariesCountriesList (list): List of countries to plot administrative boundaries
+                                                        using ISO 3166-1 alpha-3 codes (default is []).
+        mapAdministrativeBoundariesStyle (str): Administrative (states/provinces) boundary style (default is "dash").
+        mapAdministrativeBoundariesThickness (int): Administrative boundary thickness (default is 1).
+        mapAreaName (str): Plot a predefined region, overrides mapCorners (default is "").
+        mapBoundaries (str): National boundaries (default is "on").
+        mapBoundariesColour (str): National boundary color (default is "automatic").
+        mapBoundariesThickness (int): National boundary thickness (default is 1).
+        mapCoastLandShade (str): "on" to shade the land (default is "off").
+        mapCoastSeaShade (str): "on" to shade the ocean (default is "off").
+        mapCoastLineThickness (int): Coastline thickness (default is 1).
+        mapCities (str): "on" to plot the capitals of each country (default is "off").
+        mapCitiesFontSize (float): Font size for city labels (default is 2.5).
+        mapCitiesMarkerHeight (float): Marker height for city labels (default is 0.7).
+        mapCorners (list): Lat1, Lon1, Lat2, Lon2 of a plotting region (default is [-90, -180, 90, 180]).
+        mapGrid (str): "on" to plot lat/lon grid lines (default is "off").
+        mapLabelHeight (float): Font size for map labels (default is 0.4).
+        mapRivers (str): "on" to plot major rivers (default is "off").
+        outputWidth (int): Width of the output plot (default is 1800).
+        textFontSize (float): Font size for text elements (default is 1.0).
+        unitString (str): Custom unit string for the plot (default is "").
+        windDensity (float): Wind density for wind vectors (default is 2.5).
+        windFieldType (str): Type of wind vectors ("flags", "arrows", "streamlines") (default is "arrows").
+
+    Returns:
+        None
+    """
     # The shortName of the field we want to plot
     shortName = kwargs.get("shortName", "ws")
     # True to overlay the vector winds
