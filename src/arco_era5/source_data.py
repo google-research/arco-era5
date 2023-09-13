@@ -255,7 +255,7 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
 
     Example:
         >>> variable_attrs = get_var_attrs_dict()
-    """"""Returns attributes for all variables."""
+    """
     root_path = pathlib.Path(root_path)
 
     # The variable attributes should be independent of the date chosen here
