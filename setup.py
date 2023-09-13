@@ -38,9 +38,9 @@ CUSTOM_COMMANDS = [
 # This class handles the pip install mechanism.
 class build(_build):  # pylint: disable=invalid-name
     """A build command class that will be invoked during package install.
-
+    
     The package built using the current setup.py will be staged and later
-    installed in the worker using `pip install package'. This class will be
+    installed in the worker using `pip install package`. This class will be
     instantiated during install for this specific scenario and will trigger
     running the custom commands specified.
     """
