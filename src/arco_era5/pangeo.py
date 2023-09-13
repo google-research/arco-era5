@@ -31,8 +31,7 @@ PROGRESS = itertools.cycle(''.join([c * 10 for c in '|/–-\\']))
 
 
 def normalize_path(path: str) -> str:
-    """
-    Normalize a URL path by extracting the network location (netloc) and path components.
+    """Normalize a URL path by extracting the network location (netloc) and path components.
 
     Args:
         path (str): The input URL path to be normalized.
@@ -48,8 +47,7 @@ def normalize_path(path: str) -> str:
     return f'{parsed_output.netloc}{parsed_output.path}'
 
 def check_url(url):
-    """
-    Check if a given URL has the 'gs' scheme (Google Cloud Storage).
+    """Check if a given URL has the 'gs' scheme (Google Cloud Storage).
 
     Args:
         url (str): The URL to be checked.
@@ -68,8 +66,7 @@ def check_url(url):
 
 def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         parsed_args: argparse.Namespace, other_args: t.List[str]):
-    """
-    Perform the Zarr conversion pipeline with Pangeo Forge Recipes.
+    """Perform the Zarr conversion pipeline with Pangeo Forge Recipes.
 
     Args:
         make_path (callable): A function that generates file paths based on input parameters.
@@ -153,8 +150,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
 
 
 def parse_args(desc: str, default_chunks: t.List[str]) -> t.Tuple[argparse.Namespace, t.List[str]]:
-    """
-    Parse command-line arguments for the Zarr conversion pipeline with Pangeo Forge Recipes.
+    """Parse command-line arguments for the Zarr conversion pipeline with Pangeo Forge Recipes.
 
     Args:
         desc (str): A description of the command-line interface.

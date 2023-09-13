@@ -27,8 +27,7 @@ def plot_map(
         counties=False,
         provinces=False,
     ):
-    """
-    Plot a map with data using Matplotlib and Cartopy.
+    """Plot a map with data using Matplotlib and Cartopy.
 
     Args:
         lats (numpy.ndarray): Array of latitude values.
@@ -100,8 +99,7 @@ def plot_map(
 
 
 def plot_barbs(lats, lons, u, v, ax, skip=4):
-    """
-    Plot wind barbs on a map.
+    """Plot wind barbs on a map.
 
     Args:
         lats (numpy.ndarray): Array of latitude values.
@@ -139,8 +137,7 @@ def plot_shaded_with_barbs(plot_ds,
                            uvar="u10",
                            vvar="v10",
                            figsize=(12, 15)):
-    """
-    Plot shaded data on a map with optional wind barbs.
+    """Plot shaded data on a map with optional wind barbs.
 
     Args:
         plot_ds (xarray.Dataset): Dataset containing the data to be plotted.
@@ -197,8 +194,7 @@ def plot_shaded_with_barbs(plot_ds,
 
 
 def shaded_plot(fieldset, **kwargs):
-    """
-    Create a shaded plot with optional wind vectors and customizations.
+    """Create a shaded plot with optional wind vectors and customizations.
 
     Args:
         fieldset (xarray.Dataset): Dataset containing the data to be plotted.

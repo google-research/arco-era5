@@ -10,8 +10,7 @@ a Gaussian gridded dataset and a regular lat-lon dataset.
 import xarray
 
 def attribute_fix(ds):
-    """
-    Fix attributes in an xarray Dataset for compatibility with ecCodes.
+    """Fix attributes in an xarray Dataset for compatibility with ecCodes.
 
     In some cases, shortNames in the ecCodes table can cause ambiguity in string matching. 
     To eliminate this ambiguity, this function updates the Dataset attributes to make use
@@ -33,8 +32,7 @@ def attribute_fix(ds):
 
 
 def compute_gg_ll_dataset(ml_surface, ml_wind, ml_moisture, datestring):
-   """
-    Merges and processes AR model-level ERA5 datasets into CO ML Gaussian Grid and regular lat-lon grid datasets for a single hour.
+   """Merges and processes AR model-level ERA5 datasets into CO ML Gaussian Grid and regular lat-lon grid datasets for a single hour.
 
     This function takes a datestamp and the three AR model-level ERA5 
     datasets to produce a unified model-level dataset on a Gaussian Grid

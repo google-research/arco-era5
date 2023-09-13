@@ -106,8 +106,7 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     def make_path(time: datetime.datetime, chunk: str) -> str:
-        """
-        Generate the path to ERA5 data from a timestamp and variable chunk.
+        """Generate the path to ERA5 data from a timestamp and variable chunk.
 
         Args:
             time (datetime.datetime): The timestamp for the data.

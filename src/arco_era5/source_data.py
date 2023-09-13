@@ -100,8 +100,7 @@ _VARIABLE_TO_ERA5_FILE_NAME = {
 
 
 def _read_nc_dataset(gpath_file):
-    """
-    Read a .nc NetCDF dataset from a cloud storage path and disk.
+    """Read a .nc NetCDF dataset from a cloud storage path and disk.
 
     Args:
         gpath_file (str): The cloud storage path to the NetCDF file.
@@ -149,8 +148,7 @@ def _read_nc_dataset(gpath_file):
 
 
 def read_static_vars(variables=STATIC_VARIABLES, root_path=GCP_DIRECTORY):
-    """
-    Read static variables from NetCDF files and return an xarray.Dataset.
+    """Read static variables from NetCDF files and return an xarray.Dataset.
 
     Args:
         variables (list): List of variable names to read.
@@ -178,8 +176,7 @@ def read_static_vars(variables=STATIC_VARIABLES, root_path=GCP_DIRECTORY):
 
 def read_single_level_vars(year, month, day, variables=SINGLE_LEVEL_VARIABLES,
                            root_path=GCP_DIRECTORY):
-    """
-    Read single-level variables for a specific date and return an xarray.Dataset.
+    """Read single-level variables for a specific date and return an xarray.Dataset.
 
     Args:
         year (int): Year of the data.
@@ -211,8 +208,7 @@ def read_multilevel_vars(year,
                          variables=MULTILEVEL_VARIABLES,
                          pressure_levels=PRESSURE_LEVELS_GROUPS["full_37"],
                          root_path=GCP_DIRECTORY):
-    """
-    Read multilevel variables for a specific date and return an xarray.Dataset.
+    """Read multilevel variables for a specific date and return an xarray.Dataset.
 
     Args:
         year (int): Year of the data.
@@ -247,8 +243,7 @@ def read_multilevel_vars(year,
 
 
 def get_var_attrs_dict(root_path=GCP_DIRECTORY):
-    """
-    Return a dictionary of attributes for all variables.
+    """Return a dictionary of attributes for all variables.
 
     Args:
         root_path (str): Root directory where the NetCDF files are located.
@@ -294,8 +289,7 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
 
 def daily_date_iterator(start_date: str, end_date: str
                         ) -> t.Iterable[t.Tuple[int, int, int]]:
-    """
-    Iterate through all (year, month, day) tuples between start_date and end_date (inclusive).
+    """Iterate through all (year, month, day) tuples between start_date and end_date (inclusive).
 
     Args:
         start_date (str): The start date in ISO format (YYYY-MM-DD).
@@ -319,8 +313,7 @@ def daily_date_iterator(start_date: str, end_date: str
 
 
 def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
-    """
-    Align coordinates of variables in the dataset before consolidation.
+    """Align coordinates of variables in the dataset before consolidation.
 
     Args:
         dataset (xr.Dataset): The dataset containing variables.
@@ -355,8 +348,7 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
 
 
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
-    """
-    Parse command-line arguments for the data processing pipeline.
+    """Parse command-line arguments for the data processing pipeline.
 
     Args:
         desc (str): A description of the command-line interface.

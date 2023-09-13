@@ -72,8 +72,7 @@ _HOURS_PER_DAY = 24
 
 
 def _get_pressure_levels_arg(pressure_levels_group: str):
-    """
-    Get pressure levels based on a pressure levels group.
+    """Get pressure levels based on a pressure levels group.
 
     Args:
         pressure_levels_group (str): The group label for the set of pressure levels.
@@ -89,8 +88,7 @@ def _get_pressure_levels_arg(pressure_levels_group: str):
 
 def make_template(data_path: str, start_date: str, end_date: str, time_chunk_size: int,
                   pressure_levels_group: str) -> t.Tuple[xa.Dataset, t.Dict[str, int]]:
-    """
-    Create a lazy template with the same dimensions, coordinates, and variables as expected results.
+    """Create a lazy template with the same dimensions, coordinates, and variables as expected results.
 
     Args:
         data_path (str): The path to the data source.
@@ -180,8 +178,7 @@ def make_template(data_path: str, start_date: str, end_date: str, time_chunk_siz
 
 
 class LoadTemporalDataForDateDoFn(beam.DoFn):
-    """
-    A Beam DoFn for loading temporal data for a specific date.
+    """A Beam DoFn for loading temporal data for a specific date.
 
     This class is responsible for loading temporal data for a given date, including both single-level and multi-level variables.
 
@@ -204,8 +201,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
         ...     print(dataset)
     """
     def __init__(self, data_path, start_date, pressure_levels_group):
-        """
-        Initialize the LoadTemporalDataForDateDoFn.
+        """Initialize the LoadTemporalDataForDateDoFn.
 
         Args:
             data_path (str): The path to the data source.
@@ -217,8 +213,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
         self.pressure_levels_group = pressure_levels_group
 
     def process(self, args):
-        """
-        Load temporal data for a day, with an xarray_beam key for it.
+        """Load temporal data for a day, with an xarray_beam key for it.
 
         Args:
             args (tuple): A tuple containing the year, month, and day.
@@ -264,8 +259,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
 
 
 def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> int:
-    """
-    Calculate the offset in indices along the time axis relative to the start date of the dataset.
+    """Calculate the offset in indices along the time axis relative to the start date of the dataset.
 
     Args:
         start_date (str): The start date of the dataset in ISO format (YYYY-MM-DD).
@@ -296,8 +290,7 @@ def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> 
 
 
 def load_static_data(args, data_path: str) -> t.Tuple[xb.Key, xa.Dataset]:
-    """
-    Load all static data and return it with an xarray_beam key.
+    """Load all static data and return it with an xarray_beam key.
 
     Args:
         args: Additional arguments (not used in this function).
@@ -344,8 +337,7 @@ def define_pipeline(
     end_date: str,
     pressure_levels_group: str
 ) -> t.Tuple[beam.Pipeline, beam.Pipeline]:
-    """
-    Define a Beam pipeline to convert ERA5 NetCDF files to Zarr format.
+    """Define a Beam pipeline to convert ERA5 NetCDF files to Zarr format.
 
     Args:
         root (beam.Pipeline): The root Beam pipeline.
@@ -427,13 +419,11 @@ def define_pipeline(
 
 
 def main():
-    """
-    Main function for creating a Zarr dataset from NetCDF files.
+    """Main function for creating a Zarr dataset from NetCDF files.
 
     This function sets up the Beam pipeline and executes it to create a Zarr dataset from NetCDF files.
-
-    Example:
-        >>> main()
+    
+    
     """
     logging.getLogger().setLevel(logging.INFO)
     fs = fsspec.filesystem('gcs')
