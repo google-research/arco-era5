@@ -192,7 +192,6 @@ def plot_shaded_with_barbs(plot_ds,
     fig.colorbar(im, cax=cax)
 
 
-
 def shaded_plot(fieldset, **kwargs):
     """Create a shaded plot with optional wind vectors and customizations.
 
