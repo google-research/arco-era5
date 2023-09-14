@@ -2,17 +2,20 @@
 
 __author__ = 'Matthew Willson, Alvaro Sanchez, Peter Battaglia, Stephan Hoyer, Stephan Rasp'
 
+import apache_beam as beam
 import argparse
+import datetime
 import fsspec
 import immutabledict
+import logging
 
 import pathlib
-import xarray
 
 import numpy as np
 import pandas as pd
 import typing as t
 import xarray as xr
+import xarray_beam as xb
 
 TIME_RESOLUTION_HOURS = 1
 
@@ -98,12 +101,13 @@ _VARIABLE_TO_ERA5_FILE_NAME = {
     "geopotential_at_surface": "geopotential"
 }
 
+HOURS_PER_DAY = 24
 
 def _read_nc_dataset(gpath_file):
     """Read the .nc dataset from disk."""
     path = str(gpath_file).replace('gs:/', 'gs://')
     with fsspec.open(path, mode="rb") as fid:
-        dataset = xarray.open_dataset(fid, engine="scipy", cache=False)
+        dataset = xr.open_dataset(fid, engine="scipy", cache=False)
     # All dataset have a single data array in them, so we just return the array.
     assert len(dataset) == 1
     dataarray = next(iter(dataset.values()))
@@ -135,7 +139,7 @@ def _read_nc_dataset(gpath_file):
 
 
 def read_static_vars(variables=STATIC_VARIABLES, root_path=GCP_DIRECTORY):
-    """xarray.Dataset with static variables for single level data from nc files."""
+    """xr.Dataset with static variables for single level data from nc files."""
     root_path = pathlib.Path(root_path)
     output = {}
     for variable in variables:
@@ -145,19 +149,19 @@ def read_static_vars(variables=STATIC_VARIABLES, root_path=GCP_DIRECTORY):
             era5_variable = variable
         relative_path = STATIC_SUBDIR_TEMPLATE.format(variable=era5_variable)
         output[variable] = _read_nc_dataset(root_path / relative_path)
-    return xarray.Dataset(output)
+    return xr.Dataset(output)
 
 
 def read_single_level_vars(year, month, day, variables=SINGLE_LEVEL_VARIABLES,
                            root_path=GCP_DIRECTORY):
-    """xarray.Dataset with variables for singel level data from nc files."""
+    """xr.Dataset with variables for singel level data from nc files."""
     root_path = pathlib.Path(root_path)
     output = {}
     for variable in variables:
         relative_path = SINGLE_LEVEL_SUBDIR_TEMPLATE.format(
             year=year, month=month, day=day, variable=variable)
         output[variable] = _read_nc_dataset(root_path / relative_path)
-    return xarray.Dataset(output)
+    return xr.Dataset(output)
 
 
 def read_multilevel_vars(year,
@@ -166,7 +170,7 @@ def read_multilevel_vars(year,
                          variables=MULTILEVEL_VARIABLES,
                          pressure_levels=PRESSURE_LEVELS_GROUPS["full_37"],
                          root_path=GCP_DIRECTORY):
-    """xarray.Dataset with variables for all levels from nc files."""
+    """xr.Dataset with variables for all levels from nc files."""
     root_path = pathlib.Path(root_path)
     output = {}
     for variable in variables:
@@ -179,8 +183,8 @@ def read_multilevel_vars(year,
             single_level_data_array.coords["level"] = pressure_level
             pressure_data.append(
                 single_level_data_array.expand_dims(dim="level", axis=1))
-        output[variable] = xarray.concat(pressure_data, dim="level")
-    return xarray.Dataset(output)
+        output[variable] = xr.concat(pressure_data, dim="level")
+    return xr.Dataset(output)
 
 
 def get_var_attrs_dict(root_path=GCP_DIRECTORY):
@@ -249,6 +253,62 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
 
     return dataset
 
+def get_pressure_levels_arg(pressure_levels_group: str):
+    return PRESSURE_LEVELS_GROUPS[pressure_levels_group]
+
+class LoadTemporalDataForDateDoFn(beam.DoFn):
+    def __init__(self, data_path, start_date, pressure_levels_group):
+        self.data_path = data_path
+        self.start_date = start_date
+        self.pressure_levels_group = pressure_levels_group
+
+    def process(self, args):
+
+        """Loads temporal data for a day, with an xarray_beam key for it.."""
+        year, month, day = args
+        logging.info("Loading NetCDF files for %d-%d-%d", year, month, day)
+
+        try:
+            single_level_vars = read_single_level_vars(
+                year,
+                month,
+                day,
+                variables=SINGLE_LEVEL_VARIABLES,
+                root_path=self.data_path)
+            multilevel_vars = read_multilevel_vars(
+                year,
+                month,
+                day,
+                variables=MULTILEVEL_VARIABLES,
+                pressure_levels=get_pressure_levels_arg(self.pressure_levels_group),
+                root_path=self.data_path)
+        except BaseException as e:
+            # Make sure we print the date as part of the error for easier debugging
+            # if something goes wrong. Note "from e" will also raise the details of the
+            # original exception.
+            raise Exception(f"Error loading {year}-{month}-{day}") from e
+
+        # It is crucial to actually "load" as otherwise we get a pickle error.
+        single_level_vars = single_level_vars.load()
+        multilevel_vars = multilevel_vars.load()
+
+        dataset = xr.merge([single_level_vars, multilevel_vars])
+        dataset = align_coordinates(dataset)
+        offsets = {"latitude": 0, "longitude": 0, "level": 0,
+                   "time": offset_along_time_axis(self.start_date, year, month, day)}
+        key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
+        logging.info("Finished loading NetCDF files for %s-%s-%s", year, month, day)
+        yield key, dataset
+        dataset.close()
+
+def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> int:
+    """Offset in indices along the time axis, relative to start of the dataset."""
+    # Note the length of years can vary due to leap years, so the chunk lengths
+    # will not always be the same, and we need to do a proper date calculation
+    # not just multiply by 365*24.
+    time_delta = pd.Timestamp(
+        year=year, month=month, day=day) - pd.Timestamp(start_date)
+    return time_delta.days * HOURS_PER_DAY // TIME_RESOLUTION_HOURS
 
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
     parser = argparse.ArgumentParser(description=desc)
@@ -259,8 +319,6 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='Start date, iso format string.')
     parser.add_argument('-e', "--end_date", default='2020-01-02',
                         help='End date, iso format string.')
-    parser.add_argument("--temp_location", type=str, required=True,
-                        help="A temp location where this data is stored temporarily.")
     parser.add_argument('--find-missing', action='store_true', default=False,
                         help='Print all paths to missing input data.')  # implementation pending
     parser.add_argument("--pressure_levels_group", type=str, default="weatherbench_13",
@@ -268,5 +326,11 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
     parser.add_argument("--time_chunk_size", type=int, required=True,
                         help="Number of 1-hourly timesteps to include in a \
                         single chunk. Must evenly divide 24.")
+    parser.add_argument("--init_date", type=str, default='1900-01-01',
+                        help="Date to initialize the zarr store.")
+    parser.add_argument("--from_init_date", action='store_true', default=False,
+                        help="To initialize the store from some previous date (--init_date). i.e. 1900-01-01")
+    parser.add_argument("--only_initialize_store", action='store_true', default=False,
+                        help="Initialize zarr store without data.")
 
     return parser.parse_known_args()
