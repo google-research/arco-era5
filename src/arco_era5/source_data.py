@@ -58,6 +58,37 @@ SINGLE_LEVEL_VARIABLES = (
     "2m_temperature",
     "10m_v_component_of_wind",
     "10m_u_component_of_wind",
+    "volumetric_soil_water_layer_1",
+    "volumetric_soil_water_layer_2",
+    "volumetric_soil_water_layer_3",
+    "volumetric_soil_water_layer_4",
+    "mean_top_net_long_wave_radiation_flux",
+    "mean_top_net_short_wave_radiation_flux",
+    "high_vegetation_cover",
+    "ice_temperature_layer_1",
+    "ice_temperature_layer_2",
+    "ice_temperature_layer_3",
+    "ice_temperature_layer_4",
+    "lake_cover",
+    "lake_depth",
+    "lake_ice_depth",
+    "lake_ice_temperature",
+    "lake_mix_layer_depth",
+    "lake_mix_layer_temperature",
+    "lake_total_layer_temperature",
+    "land_sea_mask",
+    "leaf_area_index_high_vegetation",
+    "leaf_area_index_low_vegetation",
+    "low_vegetation_cover",
+    "skin_temperature",
+    "snow_depth",
+    "soil_temperature_level_1",
+    "soil_temperature_level_2",
+    "soil_temperature_level_3",
+    "soil_temperature_level_4",
+    "soil_type",
+    "type_of_high_vegetation",
+    "type_of_low_vegetation"
 )
 
 MULTILEVEL_VARIABLES = (
@@ -67,6 +98,11 @@ MULTILEVEL_VARIABLES = (
     "u_component_of_wind",
     "v_component_of_wind",
     "vertical_velocity",
+    "potential_vorticity",
+    "specific_cloud_ice_water_content",
+    "specific_cloud_liquid_water_content",
+    "fraction_of_cloud_cover",
+    "ozone_mass_mixing_ratio"
 )
 
 # Variables that correspond to an integration over a `TIME_RESOLUTION_HOURS`
