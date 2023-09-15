@@ -376,12 +376,12 @@ def _read_nc_dataset(gpath_file):
         # and: https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation#ERA5:datadocumentation-Dataupdatefrequency  # pylint: disable=line-too-long
         # for further details.
 
-        all_dims_except_time = tuple(set(dataarray.dims) - {"time"})
+        all_dims_except_time = tuple(set(dataarray.dims) - {"time", "expver"})
         # Should have only trailing nans.
         a = dataarray.sel(expver=1).isnull().any(dim=all_dims_except_time)
         # Should having only leading nans.
         b = dataarray.sel(expver=5).isnull().any(dim=all_dims_except_time)
-        disjoint_nans = bool(next(iter((a ^ b).all().data_vars.values())))
+        disjoint_nans = bool((a ^ b).all().variable.values)
         assert disjoint_nans, "The nans are not disjoint in expver=1 vs 5"
         dataarray = dataarray.sel(expver=1).combine_first(dataarray.sel(expver=5))
     return dataarray
@@ -565,6 +565,7 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
 def get_pressure_levels_arg(pressure_levels_group: str):
     return PRESSURE_LEVELS_GROUPS[pressure_levels_group]
 
+
 class LoadTemporalDataForDateDoFn(beam.DoFn):
     def __init__(self, data_path, start_date, pressure_levels_group):
         self.data_path = data_path
@@ -572,8 +573,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
         self.pressure_levels_group = pressure_levels_group
 
     def process(self, args):
-
-        """Loads temporal data for a day, with an xarray_beam key for it.."""
+        """Loads temporal data for a day, with an xarray_beam key for it."""
         year, month, day = args
         logging.info("Loading NetCDF files for %d-%d-%d", year, month, day)
 
@@ -609,6 +609,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
         logging.info("Finished loading NetCDF files for %s-%s-%s", year, month, day)
         yield key, dataset
         dataset.close()
+
 
 def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> int:
     """Offset in indices along the time axis, relative to start of the dataset."""
