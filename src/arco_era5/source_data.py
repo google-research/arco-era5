@@ -107,7 +107,7 @@ SINGLE_LEVEL_VARIABLES = (
     "forecast_surface_roughness",
     "free_convective_velocity_over_the_oceans",
     "friction_velocity",
-    "geopotential",
+    "geopotential_at_surface",
     "gravity_wave_dissipation",
     "high_cloud_cover",
     "instantaneous_10m_wind_gust",
@@ -396,8 +396,12 @@ def read_single_level_vars(year, month, day, variables=SINGLE_LEVEL_VARIABLES,
     root_path = pathlib.Path(root_path)
     output = {}
     for variable in variables:
+        if variable in _VARIABLE_TO_ERA5_FILE_NAME:
+            era5_variable = _VARIABLE_TO_ERA5_FILE_NAME[variable]
+        else:
+            era5_variable = variable
         relative_path = SINGLE_LEVEL_SUBDIR_TEMPLATE.format(
-            year=year, month=month, day=day, variable=variable)
+            year=year, month=month, day=day, variable=era5_variable)
         output[variable] = _read_nc_dataset(root_path / relative_path)
     return xarray.Dataset(output)
 
@@ -441,7 +445,7 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
     var_attrs_dict = {}
     for variables, template, rename_dict in [
         (STATIC_VARIABLES, STATIC_SUBDIR_TEMPLATE, _VARIABLE_TO_ERA5_FILE_NAME),
-        (SINGLE_LEVEL_VARIABLES, SINGLE_LEVEL_SUBDIR_TEMPLATE, {}),
+        (SINGLE_LEVEL_VARIABLES, SINGLE_LEVEL_SUBDIR_TEMPLATE, _VARIABLE_TO_ERA5_FILE_NAME),
         (MULTILEVEL_VARIABLES, MULTILEVEL_SUBDIR_TEMPLATE, {}),
     ]:
         for variable in variables:
