@@ -52,7 +52,6 @@ import xarray_beam as xb
 
 from arco_era5 import (
     GCP_DIRECTORY,
-    STATIC_VARIABLES,
     SINGLE_LEVEL_VARIABLES,
     MULTILEVEL_VARIABLES,
     PRESSURE_LEVELS_GROUPS,
@@ -60,7 +59,6 @@ from arco_era5 import (
     get_var_attrs_dict,
     read_multilevel_vars,
     read_single_level_vars,
-    read_static_vars,
     daily_date_iterator,
     align_coordinates,
     parse_arguments
@@ -147,14 +145,6 @@ def make_template(data_path: str, start_date: str, end_date: str, time_chunk_siz
     time_size = len(coords["time"])
 
     template_dataset = {}
-    for name in STATIC_VARIABLES:
-        template_dataset[name] = xa.Variable(
-            dims=("latitude", "longitude"),
-            data=dask.array.zeros(
-                shape=(lat_size, lon_size),
-                dtype=np.float32),
-            attrs=var_attrs_dict[name])
-
     for name in SINGLE_LEVEL_VARIABLES:
         template_dataset[name] = xa.Variable(
             dims=("time", "latitude", "longitude"),
@@ -289,45 +279,6 @@ def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> 
     return time_delta.days * _HOURS_PER_DAY // TIME_RESOLUTION_HOURS
 
 
-def load_static_data(args, data_path: str) -> t.Tuple[xb.Key, xa.Dataset]:
-    """Load all static data and return it with an xarray_beam key.
-
-    Args:
-        args: Additional arguments (not used in this function).
-        data_path (str): The path to the data source.
-
-    Returns:
-        tuple: A tuple containing an xarray_beam key and the loaded static dataset.
-
-    This function loads all static data and returns it with an xarray_beam key.
-
-    Example:
-        >>> args = ...
-        >>> data_path = "gs://your-bucket/static_data/"
-        >>> key, static_data = load_static_data(args, data_path)
-        >>> print(f"Loaded static data for key: {key}")
-        >>> print(static_data)
-    """
-
-    logging.info("Loading static data")
-
-    dataset = read_static_vars(
-        variables=STATIC_VARIABLES, root_path=data_path)
-
-    logging.info("static data loaded.")
-    # It is crucial to actually "load" as otherwise we get a pickle error.
-    dataset = dataset.load()
-
-    # Technically the static data has a time coordinate, but we don't need it.
-    dataset = dataset.squeeze("time").drop("time")
-    dataset = align_coordinates(dataset)
-
-    offsets = {"latitude": 0, "longitude": 0}
-    key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
-    logging.info("Finished loading static data")
-    return key, dataset
-
-
 def define_pipeline(
     root: beam.Pipeline,
     input_path: str,
@@ -405,17 +356,8 @@ def define_pipeline(
             | "ChunksToZarrTemporal" >> chunks_to_zarr
     )
 
-    logging.info("Setting up static variables.")
-    static_variables_chunks = (
-            root
-            # This is a single element with no parameters.
-            | "DummySingleElement" >> beam.Create(range(1))
-            | "StaticVariableFromNetCDFFile" >> beam.Map(load_static_data,
-                                                         data_path=input_path)
-            | "ChunksToZarrStatic" >> chunks_to_zarr
-    )
     logging.info("Finished defining pipeline.")
-    return (temporal_variables_chunks, static_variables_chunks)
+    return temporal_variables_chunks
 
 
 def main():
