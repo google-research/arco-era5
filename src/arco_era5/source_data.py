@@ -18,8 +18,6 @@ TIME_RESOLUTION_HOURS = 1
 
 GCP_DIRECTORY = "gs://gcp-public-data-arco-era5/raw"
 
-STATIC_SUBDIR_TEMPLATE = "date-variable-static/2021/12/31/{variable}/static.nc"
-
 SINGLE_LEVEL_SUBDIR_TEMPLATE = (
     "date-variable-single_level/{year}/{month:02d}/"
     "{day:02d}/{variable}/surface.nc")
@@ -27,10 +25,6 @@ SINGLE_LEVEL_SUBDIR_TEMPLATE = (
 MULTILEVEL_SUBDIR_TEMPLATE = (
     "date-variable-pressure_level/{year}/{month:02d}/"
     "{day:02d}/{variable}/{pressure_level}.nc")
-
-STATIC_VARIABLES = (
-)
-
 
 SINGLE_LEVEL_VARIABLES = (
     "total_precipitation",
@@ -376,20 +370,6 @@ def _read_nc_dataset(gpath_file):
     return dataarray
 
 
-def read_static_vars(variables=STATIC_VARIABLES, root_path=GCP_DIRECTORY):
-    """xarray.Dataset with static variables for single level data from nc files."""
-    root_path = pathlib.Path(root_path)
-    output = {}
-    for variable in variables:
-        if variable in _VARIABLE_TO_ERA5_FILE_NAME:
-            era5_variable = _VARIABLE_TO_ERA5_FILE_NAME[variable]
-        else:
-            era5_variable = variable
-        relative_path = STATIC_SUBDIR_TEMPLATE.format(variable=era5_variable)
-        output[variable] = _read_nc_dataset(root_path / relative_path)
-    return xarray.Dataset(output)
-
-
 def read_single_level_vars(year, month, day, variables=SINGLE_LEVEL_VARIABLES,
                            root_path=GCP_DIRECTORY):
     """xarray.Dataset with variables for singel level data from nc files."""
@@ -444,7 +424,6 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
     # have to download the data files to get this into.
     var_attrs_dict = {}
     for variables, template, rename_dict in [
-        (STATIC_VARIABLES, STATIC_SUBDIR_TEMPLATE, _VARIABLE_TO_ERA5_FILE_NAME),
         (SINGLE_LEVEL_VARIABLES, SINGLE_LEVEL_SUBDIR_TEMPLATE, _VARIABLE_TO_ERA5_FILE_NAME),
         (MULTILEVEL_VARIABLES, MULTILEVEL_SUBDIR_TEMPLATE, {}),
     ]:
