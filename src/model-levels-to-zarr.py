@@ -86,7 +86,24 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     def make_path(time: datetime.datetime, chunk: str) -> str:
-        """Make path to Era5 data from timestamp and variable."""
+        """Create a path to Era5 data file from timestamp and variable chunk.
+
+        Args:
+            time (datetime.datetime): The timestamp for the data.
+            chunk (str): The variable chunk specification.
+
+        Returns:
+            str: The path to the Era5 data file.
+
+        This function constructs a path to an Era5 data file based on the timestamp and variable chunk.
+
+        Example:
+            >>> timestamp = datetime.datetime(2023, 9, 11)
+            >>> variable_chunk = 'dve'
+            >>> path = make_path(timestamp, variable_chunk)
+            >>> print(path)
+            gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/2023/20230911_hres_dve.grb2
+        """
 
         # Handle chunks that have been manually split into one-variable files.
         if '_' in chunk:

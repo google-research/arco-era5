@@ -38,8 +38,9 @@ CUSTOM_COMMANDS = [
 # This class handles the pip install mechanism.
 class build(_build):  # pylint: disable=invalid-name
     """A build command class that will be invoked during package install.
+    
     The package built using the current setup.py will be staged and later
-    installed in the worker using `pip install package'. This class will be
+    installed in the worker using `pip install package`. This class will be
     instantiated during install for this specific scenario and will trigger
     running the custom commands specified.
     """
@@ -47,8 +48,38 @@ class build(_build):  # pylint: disable=invalid-name
 
 
 class CustomCommands(Command):
-    """A setuptools Command class able to run arbitrary commands."""
+    """A setuptools Command class able to run arbitrary commands.
 
+    This class allows running arbitrary commands during the package installation
+    process. It can be used to execute custom build or setup steps required for
+    the package.
+
+    Attributes:
+        CUSTOM_COMMANDS (list): A list of lists, where each inner list represents
+            a command and its arguments.
+
+    Methods:
+        initialize_options(): Initialize custom command options.
+        finalize_options(): Finalize custom command options.
+        RunCustomCommand(command_list): Run a custom command and print its output.
+        run(): Run the custom commands specified in CUSTOM_COMMANDS.
+
+    Example:
+        To add custom commands, define them in the CUSTOM_COMMANDS list and
+        include 'CustomCommands' as a sub-command in the setup.py script.
+
+        ```python
+        CUSTOM_COMMANDS = [['command1', 'arg1', 'arg2'], ['command2', 'arg1']]
+
+        setup(
+            # ...
+            cmdclass={
+                'build': build,
+                'CustomCommands': CustomCommands,
+            }
+        )
+        ```
+    """
     def initialize_options(self):
         pass
 

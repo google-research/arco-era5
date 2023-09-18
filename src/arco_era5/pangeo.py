@@ -31,16 +31,56 @@ PROGRESS = itertools.cycle(''.join([c * 10 for c in '|/–-\\']))
 
 
 def normalize_path(path: str) -> str:
+    """Normalize a URL path by extracting the network location (netloc) and path components.
+
+    Args:
+        path (str): The input URL path to be normalized.
+
+    Returns:
+        str: The normalized path, which includes the netloc and path components.
+
+    Example:
+        >>> normalize_path("https://example.com/data/file.txt")
+        'example.com/data/file.txt'
+    """
     parsed_output = parse.urlparse(path)
     return f'{parsed_output.netloc}{parsed_output.path}'
 
 def check_url(url):
-        parsed_gcs_path = parse.urlparse(url)
-        return parsed_gcs_path.scheme == 'gs'
+    """Check if a given URL has the 'gs' scheme (Google Cloud Storage).
+
+    Args:
+        url (str): The URL to be checked.
+
+    Returns:
+        bool: True if the URL has the 'gs' scheme, False otherwise.
+
+    Example:
+        >>> check_url("https://example.com/data/file.txt")
+        False
+        >>> check_url("gs://bucket/data/file.txt")
+        True
+    """
+    parsed_gcs_path = parse.urlparse(url)
+    return parsed_gcs_path.scheme == 'gs'
 
 def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         parsed_args: argparse.Namespace, other_args: t.List[str]):
-    """Perform the Zarr conversion pipeline with Pangeo Forge Recipes."""
+    """Perform the Zarr conversion pipeline with Pangeo Forge Recipes.
+
+    Args:
+        make_path (callable): A function that generates file paths based on input parameters.
+        date_range (list of datetime.datetime): A list of datetime objects representing a date range.
+        parsed_args (argparse.Namespace): Parsed command-line arguments.
+        other_args (list of str): Additional command-line arguments.
+
+    Raises:
+        ValueError: If 'output' and 'temp' paths are not local when '--local_run' is enabled.
+
+    Example:
+        To run the pipeline, you can call this function with the appropriate arguments:
+        >>> run(make_path_function, date_range_list, parsed_arguments, other_arguments)
+    """
 
     if parsed_args.local_run and ( check_url(parsed_args.output) or check_url(parsed_args.temp) ):
         raise ValueError("'output' and 'temp' path must be local path.")
@@ -110,6 +150,20 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
 
 
 def parse_args(desc: str, default_chunks: t.List[str]) -> t.Tuple[argparse.Namespace, t.List[str]]:
+    """Parse command-line arguments for the Zarr conversion pipeline with Pangeo Forge Recipes.
+
+    Args:
+        desc (str): A description of the command-line interface.
+        default_chunks (list of str): A list of default chunk sizes for variables.
+
+    Returns:
+        tuple: A tuple containing the parsed arguments as a namespace and a list of unknown arguments.
+
+    Example:
+        To parse command-line arguments, you can call this function like this:
+        >>> parsed_args, unknown_args = parse_args("Zarr conversion pipeline", ["time:1", "latitude:180", "longitude:360"])
+    """
+    
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('output', type=str, help='Path to output Zarr in Cloud bucket.')
