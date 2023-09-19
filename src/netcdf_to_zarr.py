@@ -120,14 +120,12 @@ import xarray_beam as xb
 from arco_era5 import (
     GCP_DIRECTORY,
     HOURS_PER_DAY,
-    STATIC_VARIABLES,
     SINGLE_LEVEL_VARIABLES,
     MULTILEVEL_VARIABLES,
     TIME_RESOLUTION_HOURS,
     get_pressure_levels_arg,
     get_var_attrs_dict,
     read_multilevel_vars,
-    read_single_level_vars,
     daily_date_iterator,
     align_coordinates,
     parse_arguments,
@@ -193,6 +191,7 @@ def make_template(data_path: str, start_date: str, end_date: str, time_chunk_siz
         pd.Timestamp(start_date),
         pd.Timestamp(end_date),
         freq=pd.DateOffset(hours=TIME_RESOLUTION_HOURS),
+        inclusive="left"
         ).values
     time_size = len(coords["time"])
 
