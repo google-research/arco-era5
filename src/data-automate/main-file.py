@@ -1,12 +1,9 @@
-# remove all the comments and ask question of that comment from the code.
-# raw_data_download_dataflow_job aa function no content change karvano.
-# date na type all jagya e change karvana with checking. init date add karyu e badhe jovanu & accordingly change karvanu.
-# jo job failed thay to su karvanu e nathi e add karvanu.
-import multiprocessing
+import argparse
 import datetime
 import gcsfs
 import itertools
 import logging
+import multiprocessing
 import os
 import re
 import subprocess
@@ -16,12 +13,10 @@ import pandas as pd
 import typing as t
 import xarray as xr
 
-import sys
-sys.path.append("/usr/local/google/home/dabhis/github_repo/arco-era5/src")
-from ..arco_era5 import update_config_files, get_previous_month_dates, get_secret
+from arco_era5 import update_config_files, get_previous_month_dates, get_secret
 
 # DIRECTORY = "/weather/config_files"
-DIRECTORY = "/usr/local/google/home/dabhis/github_repo/arco-era5/raw/"
+DIRECTORY = "/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw"
 FIELD_NAME = "date"
 PROJECT = os.environ.get("PROJECT")
 PROJECT1 = os.environ.get("PROJECT1")
@@ -166,7 +161,7 @@ ar_single_level_chunks = ["total_precipitation", "total_column_water_vapour", "t
                           "wave_spectral_directional_width_for_swell", "wave_spectral_directional_width_for_wind_waves", 
                           "wave_spectral_kurtosis", "wave_spectral_peakedness", "wave_spectral_skewness", "zero_degree_level"]
 
-ar_single_level_chunks_local = ['total_precipitation']
+ar_single_level_chunks_local = ['2m_temperature']
 pressure_level = [1, 2, 3, 5, 7, 10, 20, 30, 50, 70, 100, 125, 150, 175, 200, 225, 250,
                   300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 775, 800, 825, 850,
                   875, 900, 925, 950, 975, 1000]
@@ -178,8 +173,8 @@ ZARR_FILES_LIST = ['gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1
                    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
                    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2']
 
-ZARR_LOCAL = ['gs://dabhis_temp/ar/3-full_37-1h-0p25deg-chunk-1-2023-3months.zarr-v3']
-BQ_LOCAL = ["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3-2023-3month"]
+ZARR_LOCAL = ['gs://dabhis_temp/ar/8-full_37-1h-0p25deg-chunk-1-2023-3months.zarr-v3']
+BQ_LOCAL = ["grid-intelligence-sandbox.dabhis_test.full-8_37-1h-0p25deg-chunk-1-v3-2023-3month"]
 
 BQ_TABLES_LIST = ["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3",
                   "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2",
@@ -241,7 +236,6 @@ def raw_data_download_dataflow_job():
     current_day = datetime.date.today()
     job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
 
-    # TODO(#373): Update the command once `--async` keyword added in weather-dl.
     command = (
         f"python weather_dl/weather-dl /weather/config_files/era5_ml_dve.cfg --runner "
         f"DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
@@ -250,7 +244,7 @@ def raw_data_download_dataflow_job():
         # f"--manifest-location {MANIFEST_LOCATION} "
     )
     local_command = (
-        f"python weather_dl/weather-dl /usr/local/google/home/dabhis/github_repo/arco-era5/raw/era5_sl_hourly.cfg --runner "
+        f"python weather_dl/weather-dl /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_sl_hourly.cfg --runner "
         f"DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
         f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 --use-local-code"
@@ -272,7 +266,7 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
     """
 
     PROGRESS = itertools.cycle("".join([c * 10 for c in "|/–-\\"]))
-    fs = gcsfs.GCSFileSystem(project=os.environ.get("PROJECT", "grid-intelligence-sandbox"))  # update with ai-for-weather
+    fs = gcsfs.GCSFileSystem(project="grid-intelligence-sandbox")  # update with ai-for-weather
     all_uri = []
 
     for date in co_date_range:
@@ -312,8 +306,6 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
                     AR_SINGLELEVEL_DIR_TEMPLATE_LOCAL.format(
                         year=date.year, month=date.month, day=date.day, chunk=chunk))
 
-    
-    
     data_is_missing = False
     for path in local_all_uri:
         print(next(PROGRESS), end="\r")
@@ -337,14 +329,14 @@ def convert_to_date(date_str: str) -> datetime.datetime:
     return datetime.datetime.strptime(date_str, '%Y-%m-%d')
 
 
-def resize_zarr_target(target_store: str, end_date: datetime, init_date: datetime = datetime.date(2023,6,1), interval: int = 24) -> None:
+def resize_zarr_target(target_store: str, end_date: datetime, init_date: str, interval: int = 24) -> None:
     """
     Resizes a Zarr target and consolidates metadata.
 
     Args:
         target_store (str): The Zarr target store path.
-        start (str): The start date in the format 'YYYY-MM-DD'.
-        end (str): The end date in the format 'YYYY-MM-DD'.
+        end_date (str): The end date in the format 'YYYY-MM-DD'.
+        init_date (str): The initial date of the zarr store in the format of str.
         interval (int, optional): The interval to use for resizing. Default is 24.
 
     Returns:
@@ -353,28 +345,30 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: datetim
     print("inside resize zarr target.")
     zf = zarr.open(target_store)
     ds = xr.open_zarr(target_store)
-    day_diff = end_date - init_date
-    # day_diff = convert_to_date(end_date) - convert_to_date(init_date)
+    day_diff = end_date - convert_to_date(init_date)
+    print("day difference is :",day_diff)
     total = (day_diff.days + 1) * interval
     time = zf["time"]
     existing = time.size
-    time.resize(total)
-    time[slice(existing, total)] = list(range(existing, total))
-    logger.info("Consolidated Time")
-    print("Consolidated Time")
-    for vname, var in ds.data_vars.items():
-        if "time" in var.dims:
-            shape = [ ds[i].size for i in var.dims ]
-            shape[0] = total
-            zf[vname].resize(shape)
-    logger.info("Resized Data Vars")
-    print("Resized Data Vars")
-    zarr.consolidate_metadata(zf.store)
-    logger.info("Done")
-    print("Done")
+    if existing != total:
+        time.resize(total)
+        time[slice(existing, total)] = list(range(existing, total))
+        logger.info(f"Consolidated Time for {target_store}.")
+        print(f"Consolidated Time for {target_store}.")
+        for vname, var in ds.data_vars.items():
+            if "time" in var.dims:
+                shape = [ ds[i].size for i in var.dims ]
+                shape[0] = total
+                zf[vname].resize(shape)
+        logger.info(f"Resized data vars of {target_store}.")
+        print(f"Resized data vars of {target_store}.")
+        zarr.consolidate_metadata(zf.store)
+    else:
+        logger.info(f"data is already resized for {target_store}.")
+        print(f"data is already resized for {target_store}.")
 
 
-def ingest_data_in_zarr_dataflow_job(target_path: str, start_date: str, end_date: str) -> None:
+def ingest_data_in_zarr_dataflow_job(target_path: str, start_date: str, end_date: str, init_date: str) -> None:
     """
     Ingests data into a Zarr store and runs a Dataflow job.
 
@@ -382,35 +376,30 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, start_date: str, end_date
         target_path (str): The target Zarr store path.
         start_date (str): The start date in the format 'YYYY-MM-DD'.
         end_date (str): The end date in the format 'YYYY-MM-DD'.
+        init_date (str): The initial date of the zarr store in the format of str.
 
     Returns:
         None
     """
-
-    # python src/update-data.py --output_path gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3 -s 1975-12-31 
-    # -e 1976-01-01 --pressure_levels_group full_37 --temp_location gs://darshan-store/temp --runner DataflowRunner 
-    # --project anthromet-ingestion --region us-west4 --experiments use_runner_v2 --worker_machine_type n2-highmem-16 
-    # --disk_size_gb 250 --setup_file ./setup.py --job_name ar-update-1975-12-31 --number_of_worker_harness_threads 1
-    
     job_name = target_path.split('/')[-1]
     job_name = os.path.splitext(job_name)[0]
     if '/ar/' in target_path:
-        job_name = "ar-zarr-data-ingestion"
+        job_name = f"zarr-data-ingestion-{job_name}"
     else:
-        job_name = f"co-zarr-{job_name}-data-ingestion"
-    # should we have to change the worker_machine_type??
+        job_name = f"zarr-data-ingestion-{job_name}"
+
     command = (
         f"python /weather/config_files/data-ingest.py --output_path {target_path} -s {start_date} -e {end_date} "
         f"--pressure_levels_group full_37 --temp_location gs://{BUCKET}/temp --runner DataflowRunner "
-        f"--project {PROJECT1} --region {REGION} --experiments use_runner_v2 --worker_machine_type n2-highmem-16 "
-        f"--disk_size_gb 250 --setup_file /usr/local/google/home/dabhis/github_repo/arco-era5/setup.py --job_name {job_name} --number_of_worker_harness_threads 1"
+        f"--project {PROJECT} --region {REGION} --experiments use_runner_v2 --worker_machine_type n2-highmem-16 "
+        f"--disk_size_gb 250 --setup_file /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py --job_name {job_name} --number_of_worker_harness_threads 1"
+        f" --init_date {init_date}"
     )
-    init_date = '2023-06-01'  # change this
     command_local = (
-        f"python /usr/local/google/home/dabhis/github_repo/arco-era5/src/data-automate/data-ingest.py --output_path {target_path} -s {start_date} -e {end_date} "
+        f"python /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data-automate/data-ingest.py --output_path {target_path} -s {start_date} -e {end_date} "
         f"--pressure_levels_group full_37 --temp_location gs://{BUCKET}/temp --runner DataflowRunner "
-        f"--project {PROJECT1} --region {REGION} --experiments use_runner_v2 --worker_machine_type n2-highmem-16 "
-        f"--disk_size_gb 250 --setup_file /usr/local/google/home/dabhis/github_repo/arco-era5/setup.py --job_name {job_name} --number_of_worker_harness_threads 1"
+        f"--project {PROJECT} --region {REGION} --experiments use_runner_v2 --worker_machine_type n2-highmem-16 "
+        f"--disk_size_gb 250 --setup_file /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py --job_name {job_name} --number_of_worker_harness_threads 1"
         f" --init_date {init_date}"
     )
     subprocess_run(command_local)
@@ -428,20 +417,10 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, zarr_k
     Returns:
         None
     """
-
-    # python weather_mv/weather-mv bq --uris "gs://gcp-public-data-arco-era5/ar/1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" 
-    # --output_table grid-intelligence-sandbox.dabhis_test.ar-1day-all-var --runner DataflowRunner --project grid-intelligence-sandbox 
-    # --region us-east1 --temp_location "gs://dabhis_temp/tmp" --job_name ar-1day-all-var  --use-local-code --zarr 
-    # --number_of_worker_harness_threads 1 --disk_size_gb 500 --machine_type n2-highmem-4 
-    # --zarr_kwargs '{"start_date": "2021-07-18", "end_date": "2021-07-19"}'
-
     job_name = zarr_file.split('/')[-1]
     job_name = os.path.splitext(job_name)[0]
-    if '/ar/' in zarr_file:
-        job_name = "ar-zarr-ingestion-into-bq-table"
-    else:
-        job_name = f"co-zarr-{job_name}-ingestion-into-BQ-table"
-    # should we have to change the worker_machine_type??
+    job_name = f"{job_name}-ingestion-into-bq"
+    
     command = (
         f"python weather_mv/weather-mv bq --uris {zarr_file} --output_table {table_name} --runner DataflowRunner "
         f"--project {PROJECT} --region {REGION} --temp_location gs://{BUCKET}/tmp --job_name {job_name} "
@@ -452,74 +431,97 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, zarr_k
     subprocess_run(command)
 
 
-def process_zarr_and_table(z_file: str, table: str, start_date: str, end_date: str):
-    # logger.info(f"Resizing zarr file: {z_file} started.")
-    # print(f"Resizing zarr file: {z_file} started.")
-    # resize_zarr_target(z_file, end_date)
-    # logger.info(f"Resizing zarr file: {z_file} completed.")
-    # print(f"Resizing zarr file: {z_file} completed.")
-    # logger.info(f"data ingesting for {z_file} is started.")
-    # print(f"data ingesting for {z_file} is started.")
-    # ingest_data_in_zarr_dataflow_job(z_file, start_date, end_date)
-    # logger.info(f"data ingesting for {z_file} is completed.")
-    # print(f"data ingesting for {z_file} is completed.")
+def process_zarr_and_table(z_file: str, table: str, start_date: str, end_date: str, init_date: str):
+    logger.info(f"Resizing zarr file: {z_file} started.")
+    print(f"Resizing zarr file: {z_file} started.")
+    resize_zarr_target(z_file, end_date, init_date)
+    logger.info(f"Resizing zarr file: {z_file} completed.")
+    print(f"Resizing zarr file: {z_file} completed.")
+    logger.info(f"data ingesting for {z_file} is started.")
+    print(f"data ingesting for {z_file} is started.")
+    ingest_data_in_zarr_dataflow_job(z_file, start_date, end_date, init_date)
+    logger.info(f"data ingesting for {z_file} is completed.")
+    print(f"data ingesting for {z_file} is completed.")
     start = f' "start_date": "{start_date}" '
     end = f'"end_date": "{end_date}" '
     zarr_kwargs = "'{" + f'{start},{end}' + "}'"
     logger.info(f"data ingesting into BQ table: {table} started.")
     print(f"data ingesting into BQ table: {table} started.")
-    print(zarr_kwargs)
     ingest_data_in_bigquery_dataflow_job(z_file, table, zarr_kwargs)
     logger.info(f"data ingesting into BQ table: {table} completed.")
     print(f"data ingesting into BQ table: {table} completed.")
 
 
-def process(z_file, table):
+def process(z_file: str, table: str, init_date: str):
     # Function to process a single pair of z_file and table
     if '/ar/' in z_file:
-        process_zarr_and_table(z_file, table, dates_data["first_day_first_prev"], dates_data["last_day_first_prev"])
+        process_zarr_and_table(z_file, table, dates_data["first_day_first_prev"], dates_data["last_day_first_prev"], init_date)
     else:
-        process_zarr_and_table(z_file, table, dates_data["first_day_third_prev"], dates_data["last_day_third_prev"])
+        process_zarr_and_table(z_file, table, dates_data["first_day_third_prev"], dates_data["last_day_third_prev"], init_date)
+
+
+def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
+    """Parse command-line arguments for the data processing pipeline.
+
+    Args:
+        desc (str): A description of the command-line interface.
+
+    Returns:
+        tuple: A tuple containing the parsed arguments as a namespace and a list of unknown arguments.
+
+    Example:
+        To parse command-line arguments, you can call this function like this:
+        >>> parsed_args, unknown_args = parse_arguments("Data Processing Pipeline")
+    """
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument("--init_date", type=str, default='1900-01-01',
+                        help="Date to initialize the zarr store.")
+
+    return parser.parse_known_args()
 
 
 if __name__ == "__main__":
+
+    parsed_args, unknown_args = parse_arguments("Parse arguments.")
+
     logger.info("program is started.")
     print("program is started.")
-    # co_date_range = date_range(
-    #     dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
-    # )
-    # ar_date_range = date_range(
-    #     dates_data["first_day_first_prev"], dates_data["last_day_first_prev"]
-    # )
+    co_date_range = date_range(
+        dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
+    )
+    ar_date_range = date_range(
+        dates_data["first_day_first_prev"], dates_data["last_day_first_prev"]
+    )
     
-    # for env_var in os.environ:
-    #     if API_KEY_PATTERN.match(env_var):
-    #         api_key_value = os.environ.get(env_var)
-    #         API_KEY_LIST.append(api_key_value)
+    for env_var in os.environ:
+        if API_KEY_PATTERN.match(env_var):
+            api_key_value = os.environ.get(env_var)
+            API_KEY_LIST.append(api_key_value)
 
-    # additional_content = ""
-    # for count, secret_key in enumerate(API_KEY_LIST):
-    #     secret_key_value = get_secret(secret_key)
-    #     additional_content += f'parameters.api{count}\n\
-    #         api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
+    additional_content = ""
+    for count, secret_key in enumerate(API_KEY_LIST):
+        secret_key_value = get_secret(secret_key)
+        additional_content += f'parameters.api{count}\n\
+            api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
 
-    # update_config_files(DIRECTORY, FIELD_NAME, additional_content)
-    # logger.info("Raw data downloading start.")
-    # print("Raw data downloading start.")
-    # raw_data_download_dataflow_job()
-    # logger.info("Raw data downloaded successfully.")
-    # print("Raw data downloaded successfully.")
+    update_config_files(DIRECTORY, FIELD_NAME, additional_content)
+    logger.info("Raw data downloading start.")
+    print("Raw data downloading start.")
+    raw_data_download_dataflow_job()
+    logger.info("Raw data downloaded successfully.")
+    print("Raw data downloaded successfully.")
 
-    # data_is_missing = 1  # Initialize with a non-zero value
-    # while data_is_missing:
-    #     data_is_missing = check_data_availability(co_date_range, ar_date_range)
-    #     if data_is_missing:
-    #         logger.info("data is missing..")
-    #         print("data is missing..")
-    #         raw_data_download_dataflow_job()
-    # logger.info("Data availability check completed.")
-    # print("Data availability check completed.")
-    arg_tuples = [(z_file, table) for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL)]
+    data_is_missing = 1  # Initialize with a non-zero value
+    while data_is_missing:
+        data_is_missing = check_data_availability(co_date_range, ar_date_range)
+        if data_is_missing:
+            logger.info("data is missing..")
+            print("data is missing..")
+            raw_data_download_dataflow_job()
+    logger.info("Data availability check completed.")
+    print("Data availability check completed.")
+    arg_tuples = [(z_file, table, parsed_args.init_date) for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL)]
     with multiprocessing.Pool() as p:
         p.starmap(process, arg_tuples)
 

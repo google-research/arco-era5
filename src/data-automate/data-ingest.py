@@ -3,9 +3,6 @@ import logging
 import argparse
 from typing import Tuple, List
 
-import sys
-sys.path.append("/usr/local/google/home/dabhis/github_repo/arco-era5/src")
-
 from arco_era5 import daily_date_iterator, LoadTemporalDataForDateDoFn, GCP_DIRECTORY, UpdateSlice
 
 logging.getLogger().setLevel(logging.INFO)
