@@ -173,8 +173,8 @@ ZARR_FILES_LIST = ['gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1
                    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
                    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2']
 
-ZARR_LOCAL = ['gs://dabhis_temp/ar/8-full_37-1h-0p25deg-chunk-1-2023-3months.zarr-v3']
-BQ_LOCAL = ["grid-intelligence-sandbox.dabhis_test.full-8_37-1h-0p25deg-chunk-1-v3-2023-3month"]
+ZARR_LOCAL = ['gs://dabhis_temp/ar/11-full_37-1h-0p25deg-chunk-1-2023-3months.zarr-v3']
+BQ_LOCAL = ["grid-intelligence-sandbox.dabhis_test.full-11_37-1h-0p25deg-chunk-1-v3-2023-3month"]
 
 BQ_TABLES_LIST = ["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3",
                   "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2",
@@ -206,6 +206,11 @@ def date_range(start_date: str, end_date: str) -> t.List[datetime.datetime]:
     ]
 
 
+def replace_non_alphanumeric_with_hyphen(input_string):
+    # Use a regular expression to replace non-alphanumeric characters with hyphens
+    return re.sub(r'[^a-z0-9-]', '-', input_string)
+
+
 def subprocess_run(command: str):
     """
     Runs a subprocess with the given command and prints the output.
@@ -227,6 +232,7 @@ def subprocess_run(command: str):
             logger.error(
                 f'Failed to execute dataflow job due to {e.stderr.decode("utf-8")}'
             )
+            print(f'Failed to execute dataflow job due to {e.stderr.decode("utf-8")}')
 
 
 def raw_data_download_dataflow_job():
@@ -316,7 +322,7 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
     return 1 if data_is_missing else 0
 
 
-def convert_to_date(date_str: str) -> datetime.datetime:
+def convert_to_date(date_str: str) -> datetime.date:
     """
     Converts a date string in the format 'YYYY-MM-DD' to a datetime object.
 
@@ -326,7 +332,7 @@ def convert_to_date(date_str: str) -> datetime.datetime:
     Returns:
         datetime.datetime: A datetime object representing the input date.
     """
-    return datetime.datetime.strptime(date_str, '%Y-%m-%d')
+    return datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
 
 
 def resize_zarr_target(target_store: str, end_date: datetime, init_date: str, interval: int = 24) -> None:
@@ -342,11 +348,12 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str, in
     Returns:
         None
     """
-    print("inside resize zarr target.")
-    zf = zarr.open(target_store)
+    print("inside the file.")
     ds = xr.open_zarr(target_store)
+    print("dataset opened.")
+    zf = zarr.open(target_store)
+    print("zarr opened.")
     day_diff = end_date - convert_to_date(init_date)
-    print("day difference is :",day_diff)
     total = (day_diff.days + 1) * interval
     time = zf["time"]
     existing = time.size
@@ -383,10 +390,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, start_date: str, end_date
     """
     job_name = target_path.split('/')[-1]
     job_name = os.path.splitext(job_name)[0]
-    if '/ar/' in target_path:
-        job_name = f"zarr-data-ingestion-{job_name}"
-    else:
-        job_name = f"zarr-data-ingestion-{job_name}"
+    job_name = f"zarr-data-ingestion-{replace_non_alphanumeric_with_hyphen(job_name)}-{start_date}-to-{end_date}"
 
     command = (
         f"python /weather/config_files/data-ingest.py --output_path {target_path} -s {start_date} -e {end_date} "
@@ -419,7 +423,7 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, zarr_k
     """
     job_name = zarr_file.split('/')[-1]
     job_name = os.path.splitext(job_name)[0]
-    job_name = f"{job_name}-ingestion-into-bq"
+    job_name = f"data-ingestion-into-bq-{replace_non_alphanumeric_with_hyphen(job_name)}"
     
     command = (
         f"python weather_mv/weather-mv bq --uris {zarr_file} --output_table {table_name} --runner DataflowRunner "
@@ -432,24 +436,28 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, zarr_k
 
 
 def process_zarr_and_table(z_file: str, table: str, start_date: str, end_date: str, init_date: str):
-    logger.info(f"Resizing zarr file: {z_file} started.")
-    print(f"Resizing zarr file: {z_file} started.")
-    resize_zarr_target(z_file, end_date, init_date)
-    logger.info(f"Resizing zarr file: {z_file} completed.")
-    print(f"Resizing zarr file: {z_file} completed.")
-    logger.info(f"data ingesting for {z_file} is started.")
-    print(f"data ingesting for {z_file} is started.")
-    ingest_data_in_zarr_dataflow_job(z_file, start_date, end_date, init_date)
-    logger.info(f"data ingesting for {z_file} is completed.")
-    print(f"data ingesting for {z_file} is completed.")
-    start = f' "start_date": "{start_date}" '
-    end = f'"end_date": "{end_date}" '
-    zarr_kwargs = "'{" + f'{start},{end}' + "}'"
-    logger.info(f"data ingesting into BQ table: {table} started.")
-    print(f"data ingesting into BQ table: {table} started.")
-    ingest_data_in_bigquery_dataflow_job(z_file, table, zarr_kwargs)
-    logger.info(f"data ingesting into BQ table: {table} completed.")
-    print(f"data ingesting into BQ table: {table} completed.")
+    try:
+        logger.info(f"Resizing zarr file: {z_file} started.")
+        print(f"Resizing zarr file: {z_file} started.")
+        resize_zarr_target(z_file, end_date, init_date)
+        logger.info(f"Resizing zarr file: {z_file} completed.")
+        print(f"Resizing zarr file: {z_file} completed.")
+        logger.info(f"data ingesting for {z_file} is started.")
+        print(f"data ingesting for {z_file} is started.")
+        ingest_data_in_zarr_dataflow_job(z_file, start_date, end_date, init_date)
+        logger.info(f"data ingesting for {z_file} is completed.")
+        print(f"data ingesting for {z_file} is completed.")
+        start = f' "start_date": "{start_date}" '
+        end = f'"end_date": "{end_date}" '
+        zarr_kwargs = "'{" + f'{start},{end}' + "}'"
+        logger.info(f"data ingesting into BQ table: {table} started.")
+        print(f"data ingesting into BQ table: {table} started.")
+        ingest_data_in_bigquery_dataflow_job(z_file, table, zarr_kwargs)
+        logger.info(f"data ingesting into BQ table: {table} completed.")
+        print(f"data ingesting into BQ table: {table} completed.")
+    except Exception as e:
+        logger.error(f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
+        print(f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
 
 
 def process(z_file: str, table: str, init_date: str):
@@ -482,48 +490,56 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
 
 
 if __name__ == "__main__":
+    try:
+        parsed_args, unknown_args = parse_arguments("Parse arguments.")
 
-    parsed_args, unknown_args = parse_arguments("Parse arguments.")
+        logger.info("program is started.")
+        print("program is started.")
+        co_date_range = date_range(
+            dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
+        )
+        ar_date_range = date_range(
+            dates_data["first_day_first_prev"], dates_data["last_day_first_prev"]
+        )
+        
+        for env_var in os.environ:
+            if API_KEY_PATTERN.match(env_var):
+                api_key_value = os.environ.get(env_var)
+                API_KEY_LIST.append(api_key_value)
 
-    logger.info("program is started.")
-    print("program is started.")
-    co_date_range = date_range(
-        dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
-    )
-    ar_date_range = date_range(
-        dates_data["first_day_first_prev"], dates_data["last_day_first_prev"]
-    )
+        additional_content = ""
+        for count, secret_key in enumerate(API_KEY_LIST):
+            secret_key_value = get_secret(secret_key)
+            additional_content += f'parameters.api{count}\n\
+                api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
+
+        update_config_files(DIRECTORY, FIELD_NAME, additional_content)
+        logger.info("Raw data downloading start.")
+        print("Raw data downloading start.")
+        raw_data_download_dataflow_job()
+        logger.info("Raw data downloaded successfully.")
+        print("Raw data downloaded successfully.")
+
+        data_is_missing = 1  # Initialize with a non-zero value
+        while data_is_missing:
+            data_is_missing = check_data_availability(co_date_range, ar_date_range)
+            if data_is_missing:
+                logger.info("data is missing..")
+                print("data is missing..")
+                raw_data_download_dataflow_job()
+        logger.info("Data availability check completed.")
+        print("Data availability check completed.")
+
+
+        # for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL):
+        #     process(z_file, table, parsed_args.init_date)
+        arg_tuples = [(z_file, table, parsed_args.init_date) for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL)]
+        with multiprocessing.Pool() as p:
+            p.starmap(process, arg_tuples)
+
+        logger.info("All data ingested into BQ.")
+        print("All data ingested into BQ.")
     
-    for env_var in os.environ:
-        if API_KEY_PATTERN.match(env_var):
-            api_key_value = os.environ.get(env_var)
-            API_KEY_LIST.append(api_key_value)
-
-    additional_content = ""
-    for count, secret_key in enumerate(API_KEY_LIST):
-        secret_key_value = get_secret(secret_key)
-        additional_content += f'parameters.api{count}\n\
-            api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
-
-    update_config_files(DIRECTORY, FIELD_NAME, additional_content)
-    logger.info("Raw data downloading start.")
-    print("Raw data downloading start.")
-    raw_data_download_dataflow_job()
-    logger.info("Raw data downloaded successfully.")
-    print("Raw data downloaded successfully.")
-
-    data_is_missing = 1  # Initialize with a non-zero value
-    while data_is_missing:
-        data_is_missing = check_data_availability(co_date_range, ar_date_range)
-        if data_is_missing:
-            logger.info("data is missing..")
-            print("data is missing..")
-            raw_data_download_dataflow_job()
-    logger.info("Data availability check completed.")
-    print("Data availability check completed.")
-    arg_tuples = [(z_file, table, parsed_args.init_date) for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL)]
-    with multiprocessing.Pool() as p:
-        p.starmap(process, arg_tuples)
-
-    logger.info("All data ingested into BQ.")
-    print("All data ingested into BQ.")
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
+        print(f"An error occurred: {str(e)}")
