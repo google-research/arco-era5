@@ -3,7 +3,7 @@ import datetime
 import gcsfs
 import itertools
 import logging
-import multiprocessing
+from concurrent.futures import ThreadPoolExecutor
 import os
 import re
 import subprocess
@@ -250,14 +250,48 @@ def raw_data_download_dataflow_job():
         # f"--manifest-location {MANIFEST_LOCATION} "
     )
     local_command = (
-        f"python weather_dl/weather-dl /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_sl_hourly.cfg --runner "
+        f"weather-dl /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_sl_hourly.cfg --runner "
         f"DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
         f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 --use-local-code"
         # f"--manifest-location {MANIFEST_LOCATION} "
     )
     subprocess_run(local_command)
-    
+
+
+def data_splitting_dataflow_job(date: str):
+    """
+    Launches a Dataflow job to splitting soil & pcp weather data.
+    """
+    year = date[:4]
+    month = year + date[5:7]
+    DATASETS = ['soil', 'pcp']
+    typeOfLevel = '{' + 'typeOfLevel' + '}'
+    shortName = '{' + 'shortName' + '}'
+    zero = '{' + '0' + '}'
+    first = '{' + '1' + '}'
+    commands = []
+    for DATASET in DATASETS:
+        command = (
+            f'python weather_sp/weather-sp --input-pattern "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
+            f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
+            f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
+            f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 --job_name split-{DATASET}-data '
+            f'--sdk_container_image "gcr.io/grid-intelligence-sandbox/miniconda3-beam:weather-tools-with-aria2" --use-local-code '
+        )
+        local_command = (
+            f'weather-sp --input-pattern "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
+            f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
+            f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
+            f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 --job_name split-{DATASET}-data '
+            f'--sdk_container_image "gcr.io/grid-intelligence-sandbox/miniconda3-beam:weather-tools-with-aria2" --use-local-code '
+        )
+        commands.append(local_command)
+
+    with ThreadPoolExecutor() as tp:
+        for command in commands:
+            tp.submit(subprocess_run, command)
+
 
 def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
     """
@@ -348,11 +382,8 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str, in
     Returns:
         None
     """
-    print("inside the file.")
     ds = xr.open_zarr(target_store)
-    print("dataset opened.")
     zf = zarr.open(target_store)
-    print("zarr opened.")
     day_diff = end_date - convert_to_date(init_date)
     total = (day_diff.days + 1) * interval
     time = zf["time"]
@@ -426,7 +457,7 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, zarr_k
     job_name = f"data-ingestion-into-bq-{replace_non_alphanumeric_with_hyphen(job_name)}"
     
     command = (
-        f"python weather_mv/weather-mv bq --uris {zarr_file} --output_table {table_name} --runner DataflowRunner "
+        f"weather-mv bq --uris {zarr_file} --output_table {table_name} --runner DataflowRunner "
         f"--project {PROJECT} --region {REGION} --temp_location gs://{BUCKET}/tmp --job_name {job_name} "
         f"--use-local-code --zarr --disk_size_gb 500 --machine_type n2-highmem-4 --number_of_worker_harness_threads 1 "
         f"--zarr_kwargs {zarr_kwargs} "
@@ -520,6 +551,12 @@ if __name__ == "__main__":
         logger.info("Raw data downloaded successfully.")
         print("Raw data downloaded successfully.")
 
+        logger.info("Raw data Splitting start.")
+        print("Raw data Splitting start.")
+        data_splitting_dataflow_job(dates_data['first_day_first_prev'].strftime("%Y/%m"))
+        logger.info("Raw data Splitting successfully.")
+        print("Raw data Splitting successfully.")
+
         data_is_missing = 1  # Initialize with a non-zero value
         while data_is_missing:
             data_is_missing = check_data_availability(co_date_range, ar_date_range)
@@ -530,12 +567,9 @@ if __name__ == "__main__":
         logger.info("Data availability check completed.")
         print("Data availability check completed.")
 
-
-        # for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL):
-        #     process(z_file, table, parsed_args.init_date)
-        arg_tuples = [(z_file, table, parsed_args.init_date) for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL)]
-        with multiprocessing.Pool() as p:
-            p.starmap(process, arg_tuples)
+        with ThreadPoolExecutor(max_workers=6) as tp:
+            for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL):
+                tp.submit(process, z_file, table, parsed_args.init_date) 
 
         logger.info("All data ingested into BQ.")
         print("All data ingested into BQ.")
