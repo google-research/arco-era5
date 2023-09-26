@@ -9,6 +9,7 @@ import re
 import subprocess
 import zarr
 
+import numpy as np
 import pandas as pd
 import typing as t
 import xarray as xr
@@ -273,8 +274,8 @@ ZARR_FILES_LIST = ['gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1
                    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
                    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2']
 
-ZARR_LOCAL = ['gs://dabhis_temp/ar/11-full_37-1h-0p25deg-chunk-1-2023-3months.zarr-v3']
-BQ_LOCAL = ["grid-intelligence-sandbox.dabhis_test.full-11_37-1h-0p25deg-chunk-1-v3-2023-3month"]
+ZARR_LOCAL = ['gs://dabhis_temp/ar/14-full_37-2-level-1h-0p25deg-chunk-1-2023-3months.zarr-v3']
+BQ_LOCAL = ["grid-intelligence-sandbox.dabhis_test.full-14_37-2-level-1h-0p25deg-chunk-1-v3-2023-1day"]
 
 BQ_TABLES_LIST = ["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3",
                   "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2",
@@ -501,8 +502,43 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
     time = zf["time"]
     existing = time.size
     if existing != total:
-        time.resize(total)
-        time[slice(existing, total)] = list(range(existing, total))
+        if '/ar/' in target_store:
+            logger.info(f"Time resize for {target_store} of AR data.")
+            print(f"Time resize for {target_store} of AR data.")
+            time.resize(total)
+            time[slice(existing, total)] = list(range(existing, total))
+        else:
+            logger.info(f"Time resize for {target_store} of CO data.")
+            print(f"Time resize for {target_store} of CO data.")
+            interval = 2 if 'single-level-forecast' in target_store else 24
+
+            for dim in ["time", "valid_time"]:
+                arr = zf[dim]
+
+                attrs = dict(arr.attrs)
+
+                time_range = np.array(range(0, (day_diff.days + 1) * interval))
+
+                shape_arr = [ zf[c].size for c in ds[dim].dims ]
+                shape_arr[0] = total
+                if dim == 'time':
+                    time_range = time_range.reshape(tuple(shape_arr))
+                else:
+                    time_range = np.zeros(tuple(shape_arr))
+                
+                new = zf.array(dim, time_range,
+                    chunks = total if dim == 'time' else shape_arr,
+                    dtype = arr.dtype,
+                    compressor = arr.compressor,
+                    fill_value = arr.fill_value,
+                    order = arr.order,
+                    filters = arr.filters,
+                    overwrite = True,
+                )
+                attrs.update({ 'units': f"{12 if 'single-level-forecast' in target_store else 1} hours since {convert_to_date(init_date)}"})
+                new.attrs.update(attrs)
+
+
         logger.info(f"Consolidated Time for {target_store}.")
         print(f"Consolidated Time for {target_store}.")
         for vname, var in ds.data_vars.items():
