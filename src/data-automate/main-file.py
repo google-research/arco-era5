@@ -41,9 +41,6 @@ PRESSURELEVEL_DIR_TEMPLATE = (
     "gs://gcp-public-data-arco-era5/raw/date-variable-pressure_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/{pressure}.nc")
 AR_SINGLELEVEL_DIR_TEMPLATE = (
     "gs://gcp-public-data-arco-era5/raw/date-variable-single_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/surface.nc")
-AR_SINGLELEVEL_DIR_TEMPLATE_LOCAL = (
-    "gs://dabhis_temp/raw/date-variable-single_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/surface.nc")
-
 
 # Data Chunks
 model_level_chunks = ["dve", "tw", "o3q", "qrqs"]
@@ -262,7 +259,6 @@ ar_single_level_chunks = [
     "wave_spectral_kurtosis", "wave_spectral_peakedness",
     "wave_spectral_skewness", "zero_degree_level"]
 
-ar_single_level_chunks_local = ['2m_temperature']
 pressure_level = [1, 2, 3, 5, 7, 10, 20, 30, 50, 70, 100, 125, 150, 175, 200, 225, 250,
                   300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 775, 800, 825, 850,
                   875, 900, 925, 950, 975, 1000]
@@ -273,9 +269,6 @@ ZARR_FILES_LIST = ['gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1
                    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2',
                    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
                    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2']
-
-ZARR_LOCAL = ['gs://dabhis_temp/ar/14-full_37-2-level-1h-0p25deg-chunk-1-2023-3months.zarr-v3']
-BQ_LOCAL = ["grid-intelligence-sandbox.dabhis_test.full-14_37-2-level-1h-0p25deg-chunk-1-v3-2023-1day"]
 
 BQ_TABLES_LIST = ["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3",
                   "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2",
@@ -329,12 +322,10 @@ def subprocess_run(command: str):
             for line in iter(process.stdout.readline, b""):
                 log_message = line.decode("utf-8").strip()
                 logger.info(log_message)
-                print(log_message)
         except subprocess.CalledProcessError as e:
             logger.error(
                 f'Failed to execute dataflow job due to {e.stderr.decode("utf-8")}'
             )
-            print(f'Failed to execute dataflow job due to {e.stderr.decode("utf-8")}')
 
 
 def raw_data_download_dataflow_job():
@@ -352,16 +343,7 @@ def raw_data_download_dataflow_job():
         f"--use-local-code"
         # f"--manifest-location {MANIFEST_LOCATION} "
     )
-    local_command = (
-        f"weather-dl /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_sl_hourly.cfg "
-        f"--runner DataflowRunner "
-        f"--project {PROJECT} --region {REGION} --temp_location "
-        f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
-        f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
-        f"--use-local-code"
-        # f"--manifest-location {MANIFEST_LOCATION} "
-    )
-    subprocess_run(local_command)
+    subprocess_run(command)
 
 
 def data_splitting_dataflow_job(date: str):
@@ -387,16 +369,7 @@ def data_splitting_dataflow_job(date: str):
             f'--sdk_container_image "gcr.io/grid-intelligence-sandbox/miniconda3-beam:weather-tools-with-aria2" '
             f'--use-local-code '
         )
-        local_command = (
-            f'weather-sp --input-pattern "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
-            f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
-            f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
-            f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 '
-            f'--job_name split-{DATASET}-data '
-            f'--sdk_container_image "gcr.io/grid-intelligence-sandbox/miniconda3-beam:weather-tools-with-aria2" '
-            f'--use-local-code '
-        )
-        commands.append(local_command)
+        commands.append(command)
 
     with ThreadPoolExecutor() as tp:
         for command in commands:
@@ -445,7 +418,7 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
                 year=date.year, month=date.month, chunk=chunk))
     local_all_uri = []
     for date in ar_date_range:
-        for chunk in pressure_level_chunks + ar_single_level_chunks_local:
+        for chunk in pressure_level_chunks + ar_single_level_chunks:
             if chunk in pressure_level_chunks:
                 for pressure in pressure_level:
                     all_uri.append(
@@ -455,15 +428,15 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
                                                           pressure=pressure))
             else:
                 local_all_uri.append(
-                    AR_SINGLELEVEL_DIR_TEMPLATE_LOCAL.format(
+                    AR_SINGLELEVEL_DIR_TEMPLATE.format(
                         year=date.year, month=date.month, day=date.day, chunk=chunk))
 
     data_is_missing = False
     for path in local_all_uri:
-        print(next(PROGRESS), end="\r")
+        logger.info(f"{next(PROGRESS)}")
         if not fs.exists(path):
             data_is_missing = True
-            print(path)
+            logger.info(path)
 
     return 1 if data_is_missing else 0
 
@@ -504,12 +477,10 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
     if existing != total:
         if '/ar/' in target_store:
             logger.info(f"Time resize for {target_store} of AR data.")
-            print(f"Time resize for {target_store} of AR data.")
             time.resize(total)
             time[slice(existing, total)] = list(range(existing, total))
         else:
             logger.info(f"Time resize for {target_store} of CO data.")
-            print(f"Time resize for {target_store} of CO data.")
             interval = 2 if 'single-level-forecast' in target_store else 24
 
             for dim in ["time", "valid_time"]:
@@ -540,18 +511,15 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
 
 
         logger.info(f"Consolidated Time for {target_store}.")
-        print(f"Consolidated Time for {target_store}.")
         for vname, var in ds.data_vars.items():
             if "time" in var.dims:
                 shape = [ds[i].size for i in var.dims]
                 shape[0] = total
                 zf[vname].resize(shape)
         logger.info(f"Resized data vars of {target_store}.")
-        print(f"Resized data vars of {target_store}.")
         zarr.consolidate_metadata(zf.store)
     else:
         logger.info(f"data is already resized for {target_store}.")
-        print(f"data is already resized for {target_store}.")
 
 
 def ingest_data_in_zarr_dataflow_job(target_path: str, start_date: str, end_date: str,
@@ -585,18 +553,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, start_date: str, end_date
         f"--job_name {job_name} --number_of_worker_harness_threads 1 "
         f"--init_date {init_date}"
     )
-    command_local = (
-        f"python /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data-automate/data-ingest.py "
-        f"--output_path {target_path} -s {start_date} -e {end_date} "
-        f"--pressure_levels_group full_37 --temp_location gs://{BUCKET}/temp "
-        f"--runner DataflowRunner --project {PROJECT} --region {REGION} "
-        f"--experiments use_runner_v2 --worker_machine_type n2-highmem-16 "
-        f"--disk_size_gb 250 "
-        f"--setup_file /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py "
-        f"--job_name {job_name} --number_of_worker_harness_threads 1"
-        f" --init_date {init_date}"
-    )
-    subprocess_run(command_local)
+    subprocess_run(command)
 
 
 def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str,
@@ -618,7 +575,7 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str,
         f"data-ingestion-into-bq-{replace_non_alphanumeric_with_hyphen(job_name)}")
 
     command = (
-        f"weather-mv bq --uris {zarr_file} --output_table {table_name} "
+        f"python weather_mv/weather-mv bq --uris {zarr_file} --output_table {table_name} "
         f"--runner DataflowRunner --project {PROJECT} --region {REGION} "
         f"--temp_location gs://{BUCKET}/tmp --job_name {job_name} "
         f"--use-local-code --zarr --disk_size_gb 500 --machine_type n2-highmem-4 "
@@ -632,27 +589,20 @@ def process_zarr_and_table(z_file: str, table: str, start_date: str, end_date: s
                            init_date: str):
     try:
         logger.info(f"Resizing zarr file: {z_file} started.")
-        print(f"Resizing zarr file: {z_file} started.")
         resize_zarr_target(z_file, end_date, init_date)
         logger.info(f"Resizing zarr file: {z_file} completed.")
-        print(f"Resizing zarr file: {z_file} completed.")
         logger.info(f"data ingesting for {z_file} is started.")
-        print(f"data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, start_date, end_date, init_date)
         logger.info(f"data ingesting for {z_file} is completed.")
-        print(f"data ingesting for {z_file} is completed.")
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"
         logger.info(f"data ingesting into BQ table: {table} started.")
-        print(f"data ingesting into BQ table: {table} started.")
         ingest_data_in_bigquery_dataflow_job(z_file, table, zarr_kwargs)
         logger.info(f"data ingesting into BQ table: {table} completed.")
-        print(f"data ingesting into BQ table: {table} completed.")
     except Exception as e:
         logger.error(
             f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
-        print(f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
 
 
 def process(z_file: str, table: str, init_date: str):
@@ -692,7 +642,6 @@ if __name__ == "__main__":
         parsed_args, unknown_args = parse_arguments("Parse arguments.")
 
         logger.info("program is started.")
-        print("program is started.")
         co_date_range = date_range(
             dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
         )
@@ -713,35 +662,27 @@ if __name__ == "__main__":
 
         update_config_files(DIRECTORY, FIELD_NAME, additional_content)
         logger.info("Raw data downloading start.")
-        print("Raw data downloading start.")
         raw_data_download_dataflow_job()
         logger.info("Raw data downloaded successfully.")
-        print("Raw data downloaded successfully.")
 
         logger.info("Raw data Splitting start.")
-        print("Raw data Splitting start.")
         data_splitting_dataflow_job(
             dates_data['first_day_first_prev'].strftime("%Y/%m"))
         logger.info("Raw data Splitting successfully.")
-        print("Raw data Splitting successfully.")
 
         data_is_missing = 1  # Initialize with a non-zero value
         while data_is_missing:
             data_is_missing = check_data_availability(co_date_range, ar_date_range)
             if data_is_missing:
-                logger.info("data is missing..")
-                print("data is missing..")
+                logger.warning("data is missing..")
                 raw_data_download_dataflow_job()
         logger.info("Data availability check completed.")
-        print("Data availability check completed.")
 
         with ThreadPoolExecutor(max_workers=6) as tp:
-            for z_file, table in zip(ZARR_LOCAL, BQ_LOCAL):
+            for z_file, table in zip(ZARR_FILES_LIST, BQ_TABLES_LIST):
                 tp.submit(process, z_file, table, parsed_args.init_date)
 
         logger.info("All data ingested into BQ.")
-        print("All data ingested into BQ.")
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
-        print(f"An error occurred: {str(e)}")
