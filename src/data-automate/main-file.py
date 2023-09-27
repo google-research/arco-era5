@@ -16,6 +16,10 @@ import xarray as xr
 
 from arco_era5 import update_config_files, get_previous_month_dates, get_secret
 
+# Logger Configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # DIRECTORY = "/weather/config_files"
 DIRECTORY = "/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw"
 FIELD_NAME = "date"
@@ -41,6 +45,8 @@ PRESSURELEVEL_DIR_TEMPLATE = (
     "gs://gcp-public-data-arco-era5/raw/date-variable-pressure_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/{pressure}.nc")
 AR_SINGLELEVEL_DIR_TEMPLATE = (
     "gs://gcp-public-data-arco-era5/raw/date-variable-single_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/surface.nc")
+AR_SINGLELEVEL_DIR_TEMPLATE_LOCAL = (
+    "gs://dabhis_temp/raw/date-variable-single_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/surface.nc")
 
 # Data Chunks
 model_level_chunks = ["dve", "tw", "o3q", "qrqs"]
@@ -258,29 +264,60 @@ ar_single_level_chunks = [
     "wave_spectral_directional_width_for_wind_waves",
     "wave_spectral_kurtosis", "wave_spectral_peakedness",
     "wave_spectral_skewness", "zero_degree_level"]
-
+ar_single_level_chunks_local = ["2m_temperature"]
 pressure_level = [1, 2, 3, 5, 7, 10, 20, 30, 50, 70, 100, 125, 150, 175, 200, 225, 250,
                   300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 775, 800, 825, 850,
                   875, 900, 925, 950, 975, 1000]
 
-ZARR_FILES_LIST = ['gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
-                   'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2',
-                   'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2',
-                   'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2',
-                   'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
-                   'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2']
+ZARR_FILES_LIST = [
+    # 'gs://dabhis_temp/ar/15-full_37-1h-0p25deg-chunk-1-2023-3months.zarr-v3'
+    "gs://darshan-store/auto/model-level-wind.zarr"
+#                    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
+#                    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2',
+#                    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2',
+#                    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2',
+#                    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
+#                    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2'
+]
 
-BQ_TABLES_LIST = ["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3",
-                  "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2",
-                  "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2",
-                  "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2",
-                  "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2",
-                  "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]
-
-# Logger Configuration
-logger = logging.getLogger(__name__)
+BQ_TABLES_LIST = [
+    # "grid-intelligence-sandbox.dabhis_test.full-37-level-15-1h-0p25deg-chunk-1-v3-2023-1-month-aug-2m-temperature"
+    "grid-intelligence-sandbox.dabhis_test.model-level-wind-2023-1-month-june"
+    #               "grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3",
+    #               "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2",
+    #               "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2",
+    #               "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2",
+    #               "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2",
+    #               "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"
+                  ]
 
 dates_data = get_previous_month_dates()
+
+CO_FILES_MAPPING = { 
+'model-level-moisture' : ['dve', 'tw'],
+'model-level-wind' : ['o3q', 'qrqs'],
+'single-level-forecast' : ['rad', 'pcp_surface_cp', 'pcp_surface_crr',
+                           'pcp_surface_csf', 'pcp_surface_csfr', 'pcp_surface_es',
+                           'pcp_surface_lsf', 'pcp_surface_lsp', 'pcp_surface_lspf',
+                           'pcp_surface_lsrr', 'pcp_surface_lssfr', 'pcp_surface_ptype',
+                           'pcp_surface_rsn', 'pcp_surface_sd', 'pcp_surface_sf',
+                           'pcp_surface_smlt', 'pcp_surface_tp'],
+'single-level-reanalysis' : ['cape', 'cisst', 'sfc', 'tcol',
+                             'soil_depthBelowLandLayer_istl1',
+                             'soil_depthBelowLandLayer_istl2',
+                             'soil_depthBelowLandLayer_istl3',
+                             'soil_depthBelowLandLayer_istl4',
+                             'soil_depthBelowLandLayer_stl1',
+                             'soil_depthBelowLandLayer_stl2',
+                             'soil_depthBelowLandLayer_stl3',
+                             'soil_depthBelowLandLayer_stl4',
+                             'soil_depthBelowLandLayer_swvl1',
+                             'soil_depthBelowLandLayer_swvl2',
+                             'soil_depthBelowLandLayer_swvl3',
+                             'soil_depthBelowLandLayer_swvl4',
+                             'soil_surface_tsn'],
+'single-level-surface' : ['lnsp', 'zs']
+}
 
 
 # Functions
@@ -336,7 +373,7 @@ def raw_data_download_dataflow_job():
     job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
 
     command = (
-        f"python weather_dl/weather-dl /weather/config_files/era5_ml_dve.cfg --runner "
+        f"python weather_dl/weather-dl /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_ml_dve.cfg --runner "
         f"DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
         f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
@@ -391,17 +428,17 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
     PROGRESS = itertools.cycle("".join([c * 10 for c in "|/–-\\"]))
     fs = gcsfs.GCSFileSystem(project="grid-intelligence-sandbox")  # update with ai-for-weather
     all_uri = []
-
+    local_all_uri = []
     for date in co_date_range:
         for chunk in model_level_chunks:
             if "_" in chunk:
                 chunk_, level, var = chunk.split("_")
-                all_uri.append(
+                local_all_uri.append(
                     MODELLEVEL_DIR_VAR_TEMPLATE.format(year=date.year, month=date.month,
                                                        day=date.day, chunk=chunk_,
                                                        level=level, var=var))
                 continue
-            all_uri.append(
+            local_all_uri.append(
                 MODELLEVEL_DIR_TEMPLATE.format(
                     year=date.year, month=date.month, day=date.day, chunk=chunk))
 
@@ -416,9 +453,9 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
         all_uri.append(
             SINGLELEVEL_DIR_TEMPLATE.format(
                 year=date.year, month=date.month, chunk=chunk))
-    local_all_uri = []
+    # local_all_uri = []
     for date in ar_date_range:
-        for chunk in pressure_level_chunks + ar_single_level_chunks:
+        for chunk in pressure_level_chunks + ar_single_level_chunks_local:
             if chunk in pressure_level_chunks:
                 for pressure in pressure_level:
                     all_uri.append(
@@ -427,13 +464,13 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
                                                           day=date.day, chunk=chunk,
                                                           pressure=pressure))
             else:
-                local_all_uri.append(
+                all_uri.append(
                     AR_SINGLELEVEL_DIR_TEMPLATE.format(
                         year=date.year, month=date.month, day=date.day, chunk=chunk))
 
     data_is_missing = False
     for path in local_all_uri:
-        logger.info(f"{next(PROGRESS)}")
+        # logger.info(f"{next(PROGRESS)}")
         if not fs.exists(path):
             data_is_missing = True
             logger.info(path)
@@ -472,8 +509,10 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
     zf = zarr.open(target_store)
     day_diff = end_date - convert_to_date(init_date)
     total = (day_diff.days + 1) * interval
+    logger.info(f"total is {total}")
     time = zf["time"]
     existing = time.size
+    logger.info(f"existing is {existing}")
     if existing != total:
         if '/ar/' in target_store:
             logger.info(f"Time resize for {target_store} of AR data.")
@@ -485,18 +524,17 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
 
             for dim in ["time", "valid_time"]:
                 arr = zf[dim]
-
                 attrs = dict(arr.attrs)
-
-                time_range = np.array(range(0, (day_diff.days + 1) * interval))
-
+                time_range = np.array(range(0, (day_diff.days + 1) * interval, 12 if interval == 2 else 1))
+                logger.info(f"{time_range} for {dim}")
                 shape_arr = [ zf[c].size for c in ds[dim].dims ]
                 shape_arr[0] = total
+                logger.info(f"shape for {dim} arrays is : {shape_arr}")
                 if dim == 'time':
                     time_range = time_range.reshape(tuple(shape_arr))
                 else:
                     time_range = np.zeros(tuple(shape_arr))
-                
+                logger.info(f" updated {time_range} for {dim}")
                 new = zf.array(dim, time_range,
                     chunks = total if dim == 'time' else shape_arr,
                     dtype = arr.dtype,
@@ -506,7 +544,14 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
                     filters = arr.filters,
                     overwrite = True,
                 )
-                attrs.update({ 'units': f"{12 if 'single-level-forecast' in target_store else 1} hours since {convert_to_date(init_date)}"})
+                if 'single-level-forecast' in target_store:
+                    init_date_obj = datetime.datetime.strptime(init_date, '%Y-%m-%d')
+                    init_date_obj = init_date_obj + datetime.timedelta(hours = 6)
+                    init_date_obj = init_date_obj.strftime('%Y-%m-%dT%H:%M:%S.%f')
+                    attrs.update({ 'units': f"hours since {init_date_obj}"})
+                else:
+                    attrs.update({ 'units': f"hours since {convert_to_date(init_date)}"})
+
                 new.attrs.update(attrs)
 
 
@@ -515,7 +560,7 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
             if "time" in var.dims:
                 shape = [ds[i].size for i in var.dims]
                 shape[0] = total
-                zf[vname].resize(shape)
+                zf[vname].resize(*shape)
         logger.info(f"Resized data vars of {target_store}.")
         zarr.consolidate_metadata(zf.store)
     else:
@@ -541,18 +586,37 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, start_date: str, end_date
     job_name = (
         f"zarr-data-ingestion-{replace_non_alphanumeric_with_hyphen(job_name)}-{start_date}-to-{end_date}"
     )
+    if '/ar/' in target_path:
+        file_path = '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data-automate/update-ar-data.py'
+        logger.info(f"data ingestion for {target_path} of AR data.")
+        command = (
+            f"python {file_path} --output_path {target_path} "
+            f"-s {start_date} -e {end_date} --pressure_levels_group full_37 "
+            f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
+            f"--project {PROJECT} --region {REGION} --experiments use_runner_v2 "
+            f"--worker_machine_type n2-highmem-16 --disk_size_gb 250 "
+            f"--setup_file "
+            f"/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py "
+            f"--job_name {job_name} --number_of_worker_harness_threads 1 "
+            f"--init_date {init_date}" )
+    else:
+        file_path = '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data-automate/update-co-data.py'
+        chunks = CO_FILES_MAPPING[target_path.split('/')[-1].split('.')[0]]
+        chunks = " ".join(chunks)
+        time_per_day = 2 if 'single-level-forecast' in target_path else 24
+        logger.info(f"data ingestion for {target_path} of CO data.")
+        command = (
+            f"python {file_path} --output_path {target_path} "
+            f"-s {start_date} -e {end_date} -c {chunks} "
+            f"--time-per-day {time_per_day} "
+            f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
+            f"--project {PROJECT} --region {REGION} --experiments use_runner_v2 "
+            f"--worker_machine_type n2-highmem-16 --disk_size_gb 250 "
+            f"--setup_file "
+            f"/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py "
+            f"--job_name {job_name} --number_of_worker_harness_threads 1 "
+            f"--init_date {init_date}" )
 
-    command = (
-        f"python /weather/config_files/data-ingest.py --output_path {target_path} "
-        f"-s {start_date} -e {end_date} --pressure_levels_group full_37 "
-        f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
-        f"--project {PROJECT} --region {REGION} --experiments use_runner_v2 "
-        f"--worker_machine_type n2-highmem-16 --disk_size_gb 250 "
-        f"--setup_file "
-        f"/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py "
-        f"--job_name {job_name} --number_of_worker_harness_threads 1 "
-        f"--init_date {init_date}"
-    )
     subprocess_run(command)
 
 
