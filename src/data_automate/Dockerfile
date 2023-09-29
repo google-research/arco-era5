@@ -44,7 +44,7 @@ FROM ubuntu:latest
 # RUN pip install google-cloud-secret-manager==2.0.0
 # RUN pip install -e .
 
-
+# WIP.
 # # Set the entrypoint. and change the all code accordingly.
 # ENTRYPOINT ["python", "config_files/main-file.py"]
 

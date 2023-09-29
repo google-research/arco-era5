@@ -37,11 +37,11 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
                         help='Start date, iso format string.')
     parser.add_argument('-e', '--end_date', required=True,
                         help='End date, iso format string.')
-    parser.add_argument('-i', '--init-date', default='1900-01-01',
+    parser.add_argument('-i', '--init_date', default='1900-01-01',
                         help='Start date, iso format string.')
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
                         default=model_level_default_chunks, help='Chunks of variables to merge together.')
-    parser.add_argument('--time-per-day', type=int, default=24,
+    parser.add_argument('--time_per_day', type=int, default=24,
                         help='Timestamps Per Day.')
 
     return parser.parse_known_args()
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     date_range = [
         ts.to_pydatetime()
-        for ts in pd.date_range(start=known_args.start,end=known_args.end, freq="MS" if is_single_level else "D").to_list()
+        for ts in pd.date_range(start=known_args.start_date,end=known_args.end_date, freq="MS" if is_single_level else "D").to_list()
     ]
 
     def model_level_make_path(time: datetime.datetime, chunk: str) -> str:
