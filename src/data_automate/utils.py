@@ -9,6 +9,7 @@ import typing as t
 
 logger = logging.getLogger(__name__)
 
+
 def date_range(start_date: str, end_date: str) -> t.List[datetime.datetime]:
     """
     Generates a list of datetime objects within a given date range.

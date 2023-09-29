@@ -4,10 +4,11 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import re
 
-import typing as t
-
 from arco_era5 import update_config_files, get_previous_month_dates, get_secret
-from data_automate import check_data_availability, date_range, replace_non_alphanumeric_with_hyphen, subprocess_run, resize_zarr_target, parse_arguments, ingest_data_in_zarr_dataflow_job
+from data_automate import (
+    check_data_availability, date_range, replace_non_alphanumeric_with_hyphen,
+    subprocess_run, resize_zarr_target, parse_arguments,
+    ingest_data_in_zarr_dataflow_job)
 
 # Logger Configuration
 logging.basicConfig(level=logging.INFO)
@@ -32,14 +33,7 @@ ZARR_FILES_LIST = [
     'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
     'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2'
 ]
-BQ_TABLES_LIST = [
-    "grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3",
-    "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2",
-    "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2",
-    "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2",
-    "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2",
-    "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"
-]
+BQ_TABLES_LIST = []
 REGION_LIST = [
     'us-east1',
     'us-west4',
@@ -51,7 +45,7 @@ REGION_LIST = [
 
 dates_data = get_previous_month_dates()
 
-# Functions
+
 def raw_data_download_dataflow_job():
     """
     Launches a Dataflow job to process weather data.
@@ -60,8 +54,9 @@ def raw_data_download_dataflow_job():
     job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
 
     command = (
-        f"python weather_dl/weather-dl /usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_ml_dve.cfg --runner "
-        f"DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
+        f"python weather_dl/weather-dl "
+        f"/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_ml_dve.cfg "
+        f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
         f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
         f"--use-local-code"
@@ -119,9 +114,9 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region
         f"data-ingestion-into-bq-{replace_non_alphanumeric_with_hyphen(job_name)}")
 
     command = (
-        f"python weather_mv/weather-mv bq --uris {zarr_file} --output_table {table_name} "
-        f"--runner DataflowRunner --project {PROJECT} --region {region} "
-        f"--temp_location gs://{BUCKET}/tmp --job_name {job_name} "
+        f"python weather_mv/weather-mv bq --uris {zarr_file} --output_table "
+        f"{table_name} --runner DataflowRunner --project {PROJECT} --region "
+        f"{region} --temp_location gs://{BUCKET}/tmp --job_name {job_name} "
         f"--use-local-code --zarr --disk_size_gb 500 --machine_type n2-highmem-4 "
         f"--number_of_worker_harness_threads 1 --zarr_kwargs {zarr_kwargs} "
     )
@@ -129,8 +124,8 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region
     subprocess_run(command)
 
 
-def process_zarr_and_table(z_file: str, table: str, region: str, start_date: str, end_date: str,
-                           init_date: str):
+def process_zarr_and_table(z_file: str, table: str, region: str, start_date: str,
+                           end_date: str, init_date: str):
     try:
         logger.info(f"Resizing zarr file: {z_file} started.")
         resize_zarr_target(z_file, end_date, init_date)
@@ -202,7 +197,8 @@ if __name__ == "__main__":
         logger.info("Data availability check completed.")
 
         with ThreadPoolExecutor(max_workers=8) as tp:
-            for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST, REGION_LIST):
+            for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
+                                             REGION_LIST):
                 tp.submit(process, z_file, table, region, parsed_args.init_date)
 
         logger.info("All data ingested into BQ.")

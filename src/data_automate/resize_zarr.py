@@ -9,6 +9,7 @@ from .utils import convert_to_date
 
 logger = logging.getLogger(__name__)
 
+
 def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
                        interval: int = 24) -> None:
     """
@@ -42,8 +43,9 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
             for dim in ["time", "valid_time"]:
                 arr = zf[dim]
                 attrs = dict(arr.attrs)
-                time_range = np.array(range(0, (day_diff.days + 1) * 24, 12 if interval == 2 else 1))
-                shape_arr = [ zf[c].size for c in ds[dim].dims ]
+                time_range = np.array(range(0, (day_diff.days + 1) * 24,
+                                            12 if interval == 2 else 1))
+                shape_arr = [zf[c].size for c in ds[dim].dims]
                 shape_arr[0] = total
                 if dim == 'time':
                     time_range = time_range.reshape(tuple(shape_arr))
@@ -51,24 +53,22 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
                     time_range = np.zeros(tuple(shape_arr))
 
                 new = zf.array(dim, time_range,
-                    chunks = total if dim == 'time' else shape_arr,
-                    dtype = arr.dtype,
-                    compressor = arr.compressor,
-                    fill_value = arr.fill_value,
-                    order = arr.order,
-                    filters = arr.filters,
-                    overwrite = True,
-                )
+                               chunks=total if dim == 'time' else shape_arr,
+                               dtype=arr.dtype,
+                               compressor=arr.compressor,
+                               fill_value=arr.fill_value,
+                               order=arr.order,
+                               filters=arr.filters,
+                               overwrite=True,)
                 if 'single-level-forecast' in target_store:
                     init_date_obj = datetime.datetime.strptime(init_date, '%Y-%m-%d')
-                    init_date_obj = init_date_obj + datetime.timedelta(hours = 6)
+                    init_date_obj = init_date_obj + datetime.timedelta(hours=6)
                     init_date_obj = init_date_obj.strftime('%Y-%m-%dT%H:%M:%S.%f')
-                    attrs.update({ 'units': f"hours since {init_date_obj}"})
+                    attrs.update({'units': f"hours since {init_date_obj}"})
                 else:
-                    attrs.update({ 'units': f"hours since {convert_to_date(init_date)}"})
+                    attrs.update({'units': f"hours since {convert_to_date(init_date)}"})
 
                 new.attrs.update(attrs)
-
 
         logger.info(f"Consolidated Time for {target_store}.")
         for vname, var in ds.data_vars.items():

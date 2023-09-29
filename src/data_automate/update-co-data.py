@@ -28,6 +28,7 @@ single_level_default_chunks = [
     'soil_surface_tsn',
 ]
 
+
 def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
     parser = argparse.ArgumentParser(description=desc)
 
@@ -40,11 +41,13 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
     parser.add_argument('-i', '--init_date', default='1900-01-01',
                         help='Start date, iso format string.')
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
-                        default=model_level_default_chunks, help='Chunks of variables to merge together.')
+                        default=model_level_default_chunks,
+                        help='Chunks of variables to merge together.')
     parser.add_argument('--time_per_day', type=int, default=24,
                         help='Timestamps Per Day.')
 
     return parser.parse_known_args()
+
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
@@ -58,7 +61,8 @@ if __name__ == '__main__':
 
     date_range = [
         ts.to_pydatetime()
-        for ts in pd.date_range(start=known_args.start_date,end=known_args.end_date, freq="MS" if is_single_level else "D").to_list()
+        for ts in pd.date_range(start=known_args.start_date, end=known_args.end_date,
+                                freq="MS" if is_single_level else "D").to_list()
     ]
 
     def model_level_make_path(time: datetime.datetime, chunk: str) -> str:
@@ -79,14 +83,18 @@ if __name__ == '__main__':
 
     date_dim = ConcatDim("time", date_range)
     chunks_dim = MergeDim("chunk", known_args.chunks)
-    pattern = FilePattern(single_level_make_path if is_single_level else model_level_make_path, date_dim, chunks_dim, file_type='grib')
-    files = [ p[1] for p in pattern.items() ]
-    
+    pattern = FilePattern(single_level_make_path if
+                          is_single_level else model_level_make_path,
+                          date_dim, chunks_dim, file_type='grib')
+    files = [p[1] for p in pattern.items()]
+
     with beam.Pipeline(argv=unknown_args) as p:
         paths = (
             p
             | "Create" >> beam.Create(files)
-            | "GenerateOffset" >> GenerateOffset(init_date=known_args.init_date, is_single_level=is_single_level, timestamps_per_file=known_args.time_per_day)
+            | "GenerateOffset" >> GenerateOffset(
+                init_date=known_args.init_date, is_single_level=is_single_level,
+                timestamps_per_file=known_args.time_per_day)
             | "Reshuffle" >> beam.Reshuffle()
             | "UpdateSlice" >> COUpdateSlice(target=known_args.output_path)
         )

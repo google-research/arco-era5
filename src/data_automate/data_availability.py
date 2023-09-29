@@ -3,7 +3,11 @@ import logging
 
 import typing as t
 
-from arco_era5 import SINGLE_LEVEL_VARIABLES, MULTILEVEL_VARIABLES, PRESSURE_LEVELS_GROUPS
+from arco_era5 import (
+    SINGLE_LEVEL_VARIABLES,
+    MULTILEVEL_VARIABLES,
+    PRESSURE_LEVELS_GROUPS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +43,8 @@ single_level_chunks = [
     "pcp_surface_smlt", "pcp_surface_tp"]
 pressure_level_chunks = MULTILEVEL_VARIABLES
 ar_single_level_chunks = SINGLE_LEVEL_VARIABLES
-pressure_level = PRESSURE_LEVELS_GROUPS["full_37"] 
+pressure_level = PRESSURE_LEVELS_GROUPS["full_37"]
+
 
 def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
     """
@@ -53,7 +58,8 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
         int: 1 if data is missing, 0 if data is available.
     """
 
-    fs = gcsfs.GCSFileSystem(project="grid-intelligence-sandbox")  # update with ai-for-weather
+    fs = gcsfs.GCSFileSystem(project="grid-intelligence-sandbox")
+    # update above project with ai-for-weather
     all_uri = []
     local_all_uri = []
     for date in co_date_range:
