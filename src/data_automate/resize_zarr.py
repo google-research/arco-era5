@@ -12,8 +12,7 @@ logger = logging.getLogger(__name__)
 
 def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
                        interval: int = 24) -> None:
-    """
-    Resizes a Zarr target and consolidates metadata.
+    """Resizes a Zarr target and consolidates metadata.
 
     Args:
         target_store (str): The Zarr target store path.

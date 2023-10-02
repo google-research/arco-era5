@@ -4,14 +4,16 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import re
 
-from arco_era5 import ( update_config_files,
-                       get_previous_month_dates,
-                       get_secret,
-                       check_data_availability,
-                       date_range,
-                       replace_non_alphanumeric_with_hyphen,
-                       subprocess_run,
-                       parse_arguments)
+from arco_era5 import (
+    update_config_files,
+    get_previous_month_dates,
+    get_secret,
+    check_data_availability,
+    date_range,
+    replace_non_alphanumeric_with_hyphen,
+    subprocess_run,
+    parse_arguments_raw_to_zarr_to_bq
+    )
 from data_automate import (
     resize_zarr_target,
     ingest_data_in_zarr_dataflow_job)
@@ -54,9 +56,7 @@ dates_data = get_previous_month_dates()
 
 
 def raw_data_download_dataflow_job():
-    """
-    Launches a Dataflow job to process weather data.
-    """
+    """Launches a Dataflow job to process weather data."""
     current_day = datetime.date.today()
     job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
 
@@ -73,9 +73,7 @@ def raw_data_download_dataflow_job():
 
 
 def data_splitting_dataflow_job(date: str):
-    """
-    Launches a Dataflow job to splitting soil & pcp weather data.
-    """
+    """Launches a Dataflow job to splitting soil & pcp weather data."""
     year = date[:4]
     month = year + date[5:7]
     typeOfLevel = '{' + 'typeOfLevel' + '}'
@@ -103,8 +101,7 @@ def data_splitting_dataflow_job(date: str):
 
 def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region: str,
                                          zarr_kwargs: str) -> None:
-    """
-    Ingests data from a Zarr file into BigQuery and runs a Dataflow job.
+    """Ingests data from a Zarr file into BigQuery and runs a Dataflow job.
 
     Args:
         zarr_file (str): The Zarr file path.
@@ -163,7 +160,7 @@ def perform_data_operations(z_file: str, table: str, region: str, init_date: str
 
 if __name__ == "__main__":
     try:
-        parsed_args, unknown_args = parse_arguments("Parse arguments.")
+        parsed_args, unknown_args = parse_arguments_raw_to_zarr_to_bq("Parse arguments.")
 
         logger.info("Program is started.")
         co_date_range = date_range(
@@ -195,7 +192,7 @@ if __name__ == "__main__":
         logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
-        data_is_missing = 1  # Initialize with a non-zero value
+        data_is_missing = True  # Initialize with a non-zero value
         while data_is_missing:
             data_is_missing = check_data_availability(co_date_range, ar_date_range)
             if data_is_missing:
@@ -206,7 +203,8 @@ if __name__ == "__main__":
         with ThreadPoolExecutor(max_workers=8) as tp:
             for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
                                              REGION_LIST):
-                tp.submit(perform_data_operations, z_file, table, region, parsed_args.init_date)
+                tp.submit(perform_data_operations, z_file, table, region,
+                          parsed_args.init_date)
 
         logger.info("All data ingested into BQ.")
 

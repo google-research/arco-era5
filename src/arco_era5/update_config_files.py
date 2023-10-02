@@ -18,8 +18,6 @@ import json
 import logging
 import os
 import re
-import subprocess
-import signal
 import typing as t
 
 from google.cloud import secretmanager

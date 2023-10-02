@@ -5,6 +5,8 @@ from arco_era5 import replace_non_alphanumeric_with_hyphen, subprocess_run
 
 logger = logging.getLogger(__name__)
 
+AR_FILE_PATH = '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_ar_data.py'
+CO_FILE_PATH = '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_co_data.py'
 CO_FILES_MAPPING = {
     'model-level-moisture': ['o3q', 'qrqs'],
     'model-level-wind': ['dve', 'tw'],
@@ -35,8 +37,7 @@ CO_FILES_MAPPING = {
 def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: str,
                                      end_date: str, init_date: str, PROJECT: str,
                                      BUCKET: str, SDK_CONTAINER_IMAGE: str) -> None:
-    """
-    Ingests data into a Zarr store and runs a Dataflow job.
+    """Ingests data into a Zarr store and runs a Dataflow job.
 
     Args:
         target_path (str): The target Zarr store path.
@@ -54,12 +55,9 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
         f"zarr-data-ingestion-{replace_non_alphanumeric_with_hyphen(job_name)}-{start_date}-to-{end_date}"
     )
     if '/ar/' in target_path:
-        file_path = (
-            '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_ar_data.py'
-        )
         logger.info(f"Data ingestion for {target_path} of AR data.")
         command = (
-            f"python {file_path} --output_path {target_path} "
+            f"python {AR_FILE_PATH} --output_path {target_path} "
             f"-s {start_date} -e {end_date} --pressure_levels_group full_37 "
             f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
             f"--project {PROJECT} --region {region} --experiments use_runner_v2 "
@@ -69,15 +67,12 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--job_name {job_name} --number_of_worker_harness_threads 1 "
             f"--init_date {init_date}")
     else:
-        file_path = (
-            "/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_co_data.py"
-        )
         chunks = CO_FILES_MAPPING[target_path.split('/')[-1].split('.')[0]]
         chunks = " ".join(chunks)
         time_per_day = 2 if 'single-level-forecast' in target_path else 24
         logger.info(f"Data ingestion for {target_path} of CO data.")
         command = (
-            f"python {file_path} --output_path {target_path} "
+            f"python {CO_FILE_PATH} --output_path {target_path} "
             f"-s {start_date} -e {end_date} -c {chunks} "
             f"--time_per_day {time_per_day} "
             f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "

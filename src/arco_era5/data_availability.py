@@ -1,5 +1,7 @@
+import datetime
 import gcsfs
 import logging
+import os
 
 import typing as t
 
@@ -26,8 +28,8 @@ AR_SINGLELEVEL_DIR_TEMPLATE = (
     "gs://gcp-public-data-arco-era5/raw/date-variable-single_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/surface.nc")
 
 # Data Chunks
-model_level_chunks = ["dve", "tw", "o3q", "qrqs"]
-single_level_chunks = [
+MODEL_LEVEL_CHUNKS = ["dve", "tw", "o3q", "qrqs"]
+SINGLE_LEVEL_CHUNKS = [
     "cape", "cisst", "sfc", "tcol", "soil_depthBelowLandLayer_istl1",
     "soil_depthBelowLandLayer_istl2", "soil_depthBelowLandLayer_istl3",
     "soil_depthBelowLandLayer_istl4", "soil_depthBelowLandLayer_stl1",
@@ -41,14 +43,12 @@ single_level_chunks = [
     "pcp_surface_lsrr", "pcp_surface_lssfr", "pcp_surface_ptype",
     "pcp_surface_rsn", "pcp_surface_sd", "pcp_surface_sf",
     "pcp_surface_smlt", "pcp_surface_tp"]
-pressure_level_chunks = MULTILEVEL_VARIABLES
-ar_single_level_chunks = SINGLE_LEVEL_VARIABLES
-pressure_level = PRESSURE_LEVELS_GROUPS["full_37"]
+PRESSURE_LEVEL = PRESSURE_LEVELS_GROUPS["full_37"]
 
 
-def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
-    """
-    Checks the availability of data for a given date range.
+def check_data_availability(co_date_range: t.List[datetime.datetime],
+                            ar_date_range: t.List[datetime.datetime]) -> bool:
+    """Checks the availability of data for a given date range.
 
     Args:
         co_date_range (List[datetime.datetime]): Date range for CO data.
@@ -58,12 +58,13 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
         int: 1 if data is missing, 0 if data is available.
     """
 
-    fs = gcsfs.GCSFileSystem(project="grid-intelligence-sandbox")
+    fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT',
+                                                    "grid-intelligence-sandbox"))
     # update above project with ai-for-weather
     all_uri = []
     local_all_uri = []
     for date in co_date_range:
-        for chunk in model_level_chunks:
+        for chunk in MODEL_LEVEL_CHUNKS:
             if "_" in chunk:
                 chunk_, level, var = chunk.split("_")
                 local_all_uri.append(
@@ -75,7 +76,7 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
                 MODELLEVEL_DIR_TEMPLATE.format(
                     year=date.year, month=date.month, day=date.day, chunk=chunk))
 
-    for chunk in single_level_chunks:
+    for chunk in SINGLE_LEVEL_CHUNKS:
         if "_" in chunk:
             chunk_, level, var = chunk.split("_")
             all_uri.append(
@@ -88,9 +89,9 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
                 year=date.year, month=date.month, chunk=chunk))
 
     for date in ar_date_range:
-        for chunk in pressure_level_chunks + ar_single_level_chunks:
-            if chunk in pressure_level_chunks:
-                for pressure in pressure_level:
+        for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:
+            if chunk in MULTILEVEL_VARIABLES:
+                for pressure in PRESSURE_LEVEL:
                     all_uri.append(
                         PRESSURELEVEL_DIR_TEMPLATE.format(year=date.year,
                                                           month=date.month,
@@ -107,4 +108,4 @@ def check_data_availability(co_date_range: t.List, ar_date_range: t.List):
             data_is_missing = True
             logger.info(path)
 
-    return 1 if data_is_missing else 0
+    return True if data_is_missing else False

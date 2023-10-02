@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def date_range(start_date: str, end_date: str) -> t.List[datetime.datetime]:
-    """
-    Generates a list of datetime objects within a given date range.
+    """Generates a list of datetime objects within a given date range.
 
     Args:
         start_date (str): The start date in the format 'YYYY-MM-DD'.
@@ -33,8 +32,7 @@ def replace_non_alphanumeric_with_hyphen(input_string):
 
 
 def convert_to_date(date_str: str) -> datetime.date:
-    """
-    Converts a date string in the format 'YYYY-MM-DD' to a datetime object.
+    """Converts a date string in the format 'YYYY-MM-DD' to a datetime object.
 
     Args:
         date_str (str): The date string to convert.
@@ -46,8 +44,7 @@ def convert_to_date(date_str: str) -> datetime.date:
 
 
 def subprocess_run(command: str):
-    """
-    Runs a subprocess with the given command and prints the output.
+    """Runs a subprocess with the given command and prints the output.
 
     Args:
         command (str): The command to run.
@@ -67,7 +64,8 @@ def subprocess_run(command: str):
             )
 
 
-def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
+def parse_arguments_raw_to_zarr_to_bq(desc: str) -> t.Tuple[argparse.Namespace,
+                                                            t.List[str]]:
     """Parse command-line arguments for the data processing pipeline.
 
     Args:
@@ -79,7 +77,8 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
 
     Example:
         To parse command-line arguments, you can call this function like this:
-        >>> parsed_args, unknown_args = parse_arguments("Data Processing Pipeline")
+        >>> parsed_args, unknown_args = parse_arguments_raw_to_zarr_to_bq(
+            "Data Processing Pipeline")
     """
     parser = argparse.ArgumentParser(description=desc)
 

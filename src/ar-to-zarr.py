@@ -349,8 +349,8 @@ def main():
     """Main function for creating a Zarr dataset from NetCDF files.
 
     This function sets up the Beam pipeline and executes it to create a Zarr dataset from NetCDF files.
-    
-    
+
+
     """
     logging.getLogger().setLevel(logging.INFO)
     fs = fsspec.filesystem('gcs')
