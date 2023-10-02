@@ -4,7 +4,6 @@ __author__ = 'Matthew Willson, Alvaro Sanchez, Peter Battaglia, Stephan Hoyer, S
 
 import apache_beam as beam
 import argparse
-import datetime
 import fsspec
 import immutabledict
 import logging

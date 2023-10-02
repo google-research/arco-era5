@@ -1,18 +1,20 @@
 import apache_beam as beam
+import calendar
+import datetime
 import logging
+import os
 import subprocess
 import tempfile
-import os
-import datetime
 import xarray as xr
-import zarr as zr
-from dataclasses import dataclass
+import zarr
+
 from contextlib import contextmanager
-import calendar
+from dataclasses import dataclass
+from typing import List, Tuple
 
 logger = logging.getLogger(__name__)
 
-variable_dict = {
+VARIABLE_DICT = {
     'dve': ['d', 'vo'], # model-level-wind
     'tw': ['t', 'w'],
     'o3q': ['q', 'o3', 'clwc', 'ciwc', 'cc'], # model-level-moisture
@@ -55,7 +57,7 @@ variable_dict = {
     'pcp_surface_tp': ['tp']
 }
 
-def convert_to_date(date_str: str, format: str = '%Y-%m-%d'):
+def convert_to_date(date_str: str, format: str = '%Y-%m-%d') -> datetime.datetime:
     return datetime.datetime.strptime(date_str, format)
 
 def copy(src: str, dst: str):
@@ -95,7 +97,7 @@ class GenerateOffset(beam.PTransform):
         days_diff = start_date - convert_to_date(self.init_date)
         start = days_diff.days * self.timestamps_per_file
         end = start + self.timestamps_per_file * (calendar.monthrange(start_date.year, start_date.month)[1] if self.is_single_level else 1)
-        return url, slice(start, end), variable_dict[chunk]
+        return url, slice(start, end), VARIABLE_DICT[chunk]
 
     def expand(self, pcoll: beam.PCollection) -> beam.PCollection:
         return pcoll | beam.Map(self.apply)
@@ -106,9 +108,9 @@ class UpdateSlice(beam.PTransform):
 
     target: str
 
-    def apply(self, file_slice):
+    def apply(self, file_slice: Tuple[str, slice, List[str]]):
         url, region, vars = file_slice
-        zf = zr.open(self.target)
+        zf = zarr.open(self.target)
         with opener(url) as file:
             logger.info(f"Opened {url}")
             ds = xr.open_dataset(file, engine='cfgrib')
