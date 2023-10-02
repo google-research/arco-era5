@@ -1,7 +1,7 @@
 import logging
 import os
 
-from .utils import replace_non_alphanumeric_with_hyphen, subprocess_run
+from arco_era5 import replace_non_alphanumeric_with_hyphen, subprocess_run
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +55,9 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
     )
     if '/ar/' in target_path:
         file_path = (
-            '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update-ar-data.py'
+            '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_ar_data.py'
         )
-        logger.info(f"data ingestion for {target_path} of AR data.")
+        logger.info(f"Data ingestion for {target_path} of AR data.")
         command = (
             f"python {file_path} --output_path {target_path} "
             f"-s {start_date} -e {end_date} --pressure_levels_group full_37 "
@@ -70,12 +70,12 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--init_date {init_date}")
     else:
         file_path = (
-            "/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update-co-data.py"
+            "/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_co_data.py"
         )
         chunks = CO_FILES_MAPPING[target_path.split('/')[-1].split('.')[0]]
         chunks = " ".join(chunks)
         time_per_day = 2 if 'single-level-forecast' in target_path else 24
-        logger.info(f"data ingestion for {target_path} of CO data.")
+        logger.info(f"Data ingestion for {target_path} of CO data.")
         command = (
             f"python {file_path} --output_path {target_path} "
             f"-s {start_date} -e {end_date} -c {chunks} "

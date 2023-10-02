@@ -5,7 +5,7 @@ import zarr
 import numpy as np
 import xarray as xr
 
-from .utils import convert_to_date
+from arco_era5 import convert_to_date
 
 logger = logging.getLogger(__name__)
 
@@ -79,4 +79,4 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
         logger.info(f"Resized data vars of {target_store}.")
         zarr.consolidate_metadata(zf.store)
     else:
-        logger.info(f"data is already resized for {target_store}.")
+        logger.info(f"Data is already resized for {target_store}.")

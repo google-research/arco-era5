@@ -107,7 +107,7 @@ Example usage:
       --no_use_public_ips  \
       --network=$NETWORK \
       --subnetwork=regions/$REGION/subnetworks/$SUBNET \
-      --job_name $USER-ar-zarr-full \
+      --job_name ar-zarr-full \
       --number_of_worker_harness_threads 20
 """
 

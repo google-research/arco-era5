@@ -4,10 +4,16 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import re
 
-from arco_era5 import update_config_files, get_previous_month_dates, get_secret
+from arco_era5 import ( update_config_files,
+                       get_previous_month_dates,
+                       get_secret,
+                       check_data_availability,
+                       date_range,
+                       replace_non_alphanumeric_with_hyphen,
+                       subprocess_run,
+                       parse_arguments)
 from data_automate import (
-    check_data_availability, date_range, replace_non_alphanumeric_with_hyphen,
-    subprocess_run, resize_zarr_target, parse_arguments,
+    resize_zarr_target,
     ingest_data_in_zarr_dataflow_job)
 
 # Logger Configuration
@@ -25,6 +31,7 @@ SDK_CONTAINER_IMAGE = os.environ.get("SDK_CONTAINER_IMAGE")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
 
+SPLITTING_DATASETS = ['soil', 'pcp']
 ZARR_FILES_LIST = [
     'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
     'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2',
@@ -71,13 +78,12 @@ def data_splitting_dataflow_job(date: str):
     """
     year = date[:4]
     month = year + date[5:7]
-    DATASETS = ['soil', 'pcp']
     typeOfLevel = '{' + 'typeOfLevel' + '}'
     shortName = '{' + 'shortName' + '}'
     zero = '{' + '0' + '}'
     first = '{' + '1' + '}'
     commands = []
-    for DATASET in DATASETS:
+    for DATASET in SPLITTING_DATASETS:
         command = (
             f'python weather_sp/weather-sp --input-pattern '
             f' "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
@@ -130,22 +136,22 @@ def process_zarr_and_table(z_file: str, table: str, region: str, start_date: str
         logger.info(f"Resizing zarr file: {z_file} started.")
         resize_zarr_target(z_file, end_date, init_date)
         logger.info(f"Resizing zarr file: {z_file} completed.")
-        logger.info(f"data ingesting for {z_file} is started.")
+        logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
                                          PROJECT, BUCKET, SDK_CONTAINER_IMAGE)
-        logger.info(f"data ingesting for {z_file} is completed.")
+        logger.info(f"Data ingesting for {z_file} is completed.")
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"
-        logger.info(f"data ingesting into BQ table: {table} started.")
+        logger.info(f"Data ingesting into BQ table: {table} started.")
         ingest_data_in_bigquery_dataflow_job(z_file, table, region, zarr_kwargs)
-        logger.info(f"data ingesting into BQ table: {table} completed.")
+        logger.info(f"Data ingesting into BQ table: {table} completed.")
     except Exception as e:
         logger.error(
             f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
 
 
-def process(z_file: str, table: str, region: str, init_date: str):
+def perform_data_operations(z_file: str, table: str, region: str, init_date: str):
     # Function to process a single pair of z_file and table
     if '/ar/' in z_file:
         process_zarr_and_table(z_file, table, region, dates_data["first_day_first_prev"],
@@ -159,7 +165,7 @@ if __name__ == "__main__":
     try:
         parsed_args, unknown_args = parse_arguments("Parse arguments.")
 
-        logger.info("program is started.")
+        logger.info("Program is started.")
         co_date_range = date_range(
             dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
         )
@@ -188,18 +194,19 @@ if __name__ == "__main__":
             dates_data['first_day_first_prev'].strftime("%Y/%m"))
         logger.info("Raw data Splitting successfully.")
 
+        logger.info("Data availability check started.")
         data_is_missing = 1  # Initialize with a non-zero value
         while data_is_missing:
             data_is_missing = check_data_availability(co_date_range, ar_date_range)
             if data_is_missing:
-                logger.warning("data is missing..")
+                logger.warning("Data is missing.")
                 raw_data_download_dataflow_job()
         logger.info("Data availability check completed.")
 
         with ThreadPoolExecutor(max_workers=8) as tp:
             for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
                                              REGION_LIST):
-                tp.submit(process, z_file, table, region, parsed_args.init_date)
+                tp.submit(perform_data_operations, z_file, table, region, parsed_args.init_date)
 
         logger.info("All data ingested into BQ.")
 

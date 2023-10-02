@@ -7,7 +7,7 @@ import unittest
 
 from unittest.mock import patch, MagicMock
 
-from fetch import (
+from arco_era5 import (
     new_config_file,
     get_month_range,
     get_previous_month_dates,
