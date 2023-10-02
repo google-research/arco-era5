@@ -120,7 +120,7 @@ setup(
     python_requires='>3.8, <3.11',
     install_requires=[
         'apache_beam[gcp]==2.40.0',
-        'pangeo-forge-recipes==0.10.2',
+        'pangeo-forge-recipes==0.9.1',
         'pandas',
         'gcsfs',
         'cfgrib',

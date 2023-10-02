@@ -19,7 +19,7 @@ variable_dict = {
     'qrqs': ['crwc', 'cswc'],
     'lnsp': ['lnsp'], # single-level-surface
     'zs': ['z'],
-    'cape': ['p79.162', 'p80.162'], # single-level-reanalysis
+    'cape': ['cape', 'p79.162', 'p80.162'], # single-level-reanalysis
     'cisst': ['siconc', 'sst', 'skt'],
     'sfc': ['z', 'sp', 'tcwv', 'msl', 'tcc', 'u10', 'v10', 't2m', 'd2m', 'lcc', 'mcc', 'hcc', 'u100', 'v100'],
     'tcol': ['tclw', 'tciw', 'tcw', 'tcwv', 'tcrw', 'tcsw'],

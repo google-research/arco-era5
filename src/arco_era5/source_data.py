@@ -567,13 +567,42 @@ def get_pressure_levels_arg(pressure_levels_group: str):
 
 
 class LoadTemporalDataForDateDoFn(beam.DoFn):
+    """A Beam DoFn for loading temporal data for a specific date.
+    This class is responsible for loading temporal data for a given date, including both single-level and multi-level variables.
+    Args:
+        data_path (str): The path to the data source.
+        start_date (str): The start date in ISO format (YYYY-MM-DD).
+        pressure_levels_group (str): The group label for the set of pressure levels.
+    Methods:
+        process(args): Loads temporal data for a specific date and yields it with an xarray_beam key.
+    Example:
+        >>> data_path = "gs://your-bucket/data/"
+        >>> start_date = "2023-09-01"
+        >>> pressure_levels_group = "weatherbench_13"
+        >>> loader = LoadTemporalDataForDateDoFn(data_path, start_date, pressure_levels_group)
+        >>> for result in loader.process((2023, 9, 11)):
+        ...     key, dataset = result
+        ...     print(f"Loaded data for key: {key}")
+        ...     print(dataset)
+    """
     def __init__(self, data_path, start_date, pressure_levels_group):
+        """Initialize the LoadTemporalDataForDateDoFn.
+        Args:
+            data_path (str): The path to the data source.
+            start_date (str): The start date in ISO format (YYYY-MM-DD).
+            pressure_levels_group (str): The group label for the set of pressure levels.
+        """
         self.data_path = data_path
         self.start_date = start_date
         self.pressure_levels_group = pressure_levels_group
 
     def process(self, args):
-        """Loads temporal data for a day, with an xarray_beam key for it."""
+        """Load temporal data for a day, with an xarray_beam key for it.
+        Args:
+            args (tuple): A tuple containing the year, month, and day.
+        Yields:
+            tuple: A tuple containing an xarray_beam key and the loaded dataset.
+        """
         year, month, day = args
         logging.info("Loading NetCDF files for %d-%d-%d", year, month, day)
 
@@ -595,7 +624,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
             # Make sure we print the date as part of the error for easier debugging
             # if something goes wrong. Note "from e" will also raise the details of the
             # original exception.
-            raise Exception(f"Error loading {year}-{month}-{day}") from e
+            raise RuntimeError(f"Error loading {year}-{month}-{day}") from e
 
         # It is crucial to actually "load" as otherwise we get a pickle error.
         single_level_vars = single_level_vars.load()
