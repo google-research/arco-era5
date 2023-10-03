@@ -5,7 +5,7 @@ import os
 
 import typing as t
 
-from arco_era5 import (
+from .source_data import (
     SINGLE_LEVEL_VARIABLES,
     MULTILEVEL_VARIABLES,
     PRESSURE_LEVELS_GROUPS,
@@ -46,13 +46,11 @@ SINGLE_LEVEL_CHUNKS = [
 PRESSURE_LEVEL = PRESSURE_LEVELS_GROUPS["full_37"]
 
 
-def check_data_availability(co_date_range: t.List[datetime.datetime],
-                            ar_date_range: t.List[datetime.datetime]) -> bool:
+def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
     """Checks the availability of data for a given date range.
 
     Args:
-        co_date_range (List[datetime.datetime]): Date range for CO data.
-        ar_date_range (List[datetime.datetime]): Date range for AR data.
+        data_date_range (List[datetime.datetime]): Date range for CO data.
 
     Returns:
         int: 1 if data is missing, 0 if data is available.
@@ -62,33 +60,32 @@ def check_data_availability(co_date_range: t.List[datetime.datetime],
                                                     "grid-intelligence-sandbox"))
     # update above project with ai-for-weather
     all_uri = []
-    local_all_uri = []
-    for date in co_date_range:
+    for date in data_date_range:
         for chunk in MODEL_LEVEL_CHUNKS:
             if "_" in chunk:
                 chunk_, level, var = chunk.split("_")
-                local_all_uri.append(
+                all_uri.append(
                     MODELLEVEL_DIR_VAR_TEMPLATE.format(year=date.year, month=date.month,
                                                        day=date.day, chunk=chunk_,
                                                        level=level, var=var))
                 continue
-            local_all_uri.append(
+            all_uri.append(
                 MODELLEVEL_DIR_TEMPLATE.format(
                     year=date.year, month=date.month, day=date.day, chunk=chunk))
-
+    single_date = data_date_range[0]
     for chunk in SINGLE_LEVEL_CHUNKS:
         if "_" in chunk:
             chunk_, level, var = chunk.split("_")
             all_uri.append(
                 SINGLELEVEL_DIR_VAR_TEMPLATE.format(
-                    year=date.year, month=date.month, chunk=chunk_, level=level,
-                    var=var))
+                    year=single_date.year, month=single_date.month, chunk=chunk_,
+                    level=level, var=var))
             continue
         all_uri.append(
             SINGLELEVEL_DIR_TEMPLATE.format(
-                year=date.year, month=date.month, chunk=chunk))
+                year=single_date.year, month=single_date.month, chunk=chunk))
 
-    for date in ar_date_range:
+    for date in data_date_range:
         for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:
             if chunk in MULTILEVEL_VARIABLES:
                 for pressure in PRESSURE_LEVEL:
@@ -103,7 +100,7 @@ def check_data_availability(co_date_range: t.List[datetime.datetime],
                         year=date.year, month=date.month, day=date.day, chunk=chunk))
 
     data_is_missing = False
-    for path in local_all_uri:
+    for path in all_uri:
         if not fs.exists(path):
             data_is_missing = True
             logger.info(path)

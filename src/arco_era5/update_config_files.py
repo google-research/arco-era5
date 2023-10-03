@@ -40,21 +40,14 @@ class ConfigArgs(t.TypedDict):
     function.
 
     Attributes:
-        co_file (bool): True if the configuration file is a 'CO' type file, False
-                        otherwise.
         year_wise_date (bool): True if the configuration file contains 'year',
                                 'month' and 'day', False otherwise.
-        first_day_first_prev (datetime.date): The first day of the first previous month.
-        last_day_first_prev (datetime.date): The last day of the first previous month.
         first_day_third_prev (datetime.date): The first day of the third previous month.
         last_day_third_prev (datetime.date): The last day of the third previous month.
         sl_year (str): The year of the third previous month in 'YYYY' format.
         sl_month (str): The month of the third previous month in 'MM' format.
     """
-    co_file: bool
     year_wise_date: bool
-    first_day_first_prev: datetime.date
-    last_day_first_prev: datetime.date
     first_day_third_prev: datetime.date
     last_day_third_prev: datetime.date
     sl_year: str
@@ -65,15 +58,11 @@ class MonthDates(t.TypedDict):
     """A class representing the first and third previous month's dates.
 
     Attributes:
-        first_day_first_prev (datetime.date): The first day of the first previous month.
-        last_day_first_prev (datetime.date): The last day of the first previous month.
         first_day_third_prev (datetime.date): The first day of the third previous month.
         last_day_third_prev (datetime.date): The last day of the third previous month.
         sl_year (str): The year of the third previous month in 'YYYY' format.
         sl_month (str): The month of the third previous month in 'MM' format.
     """
-    first_day_first_prev: datetime.date
-    last_day_first_prev: datetime.date
     first_day_third_prev: datetime.date
     last_day_third_prev: datetime.date
     sl_year: str
@@ -94,10 +83,7 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
     """
 
     # Unpack the values from config_args dictionary
-    co_file = config_args["co_file"]
     year_wise_date = config_args["year_wise_date"]
-    first_day_first_prev = config_args["first_day_first_prev"]
-    last_day_first_prev = config_args["last_day_first_prev"]
     first_day_third_prev = config_args["first_day_third_prev"]
     last_day_third_prev = config_args["last_day_third_prev"]
     sl_year = config_args["sl_year"]
@@ -111,12 +97,8 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
         config.set("selection", "month", sl_month)
         config.set("selection", "day", "all")
     else:
-        if co_file:
-            config.set("selection", field_name,
-                       f"{first_day_first_prev}/to/{last_day_first_prev}")
-        else:
-            config.set("selection", field_name,
-                       f"{first_day_third_prev}/to/{last_day_third_prev}")
+        config.set("selection", field_name,
+                    f"{first_day_third_prev}/to/{last_day_third_prev}")
 
     sections_list = additional_content.split("\n\n")
     for section in sections_list[:-1]:
@@ -153,10 +135,6 @@ def get_previous_month_dates() -> MonthDates:
 
     Returns:
         dict: A dictionary containing the following key-value pairs:
-            - 'first_day_first_prev': The first day of the first previous month
-                                        (datetime.date).
-            - 'last_day_first_prev': The last day of the first previous month
-                                        (datetime.date).
             - 'first_day_third_prev': The first day of the third previous month
                                         (datetime.date).
             - 'last_day_third_prev': The last day of the third previous month
@@ -169,15 +147,11 @@ def get_previous_month_dates() -> MonthDates:
     # Calculate the correct previous month considering months from 1 to 12
     prev_month = today.month + 10 if today.month < 3 else today.month - 2
     third_prev_month = today.replace(month=prev_month)
-    first_prev_month = today.replace(month=today.month)
     first_day_third_prev, last_day_third_prev = get_month_range(third_prev_month)
-    first_day_first_prev, last_day_first_prev = get_month_range(first_prev_month)
     first_date_third_prev = first_day_third_prev
     sl_year, sl_month = str(first_date_third_prev)[:4], str(first_date_third_prev)[5:7]
 
     return {
-        'first_day_first_prev': first_day_first_prev,
-        'last_day_first_prev': last_day_first_prev,
         'first_day_third_prev': first_day_third_prev,
         'last_day_third_prev': last_day_third_prev,
         'sl_year': sl_year,
@@ -197,20 +171,16 @@ def update_config_files(directory: str, field_name: str,
     """
     dates_data = get_previous_month_dates()
     config_args = {
-        "first_day_first_prev": dates_data['first_day_first_prev'],
-        "last_day_first_prev": dates_data['last_day_first_prev'],
         "first_day_third_prev": dates_data['first_day_third_prev'],
         "last_day_third_prev": dates_data['last_day_third_prev'],
         "sl_year": dates_data['sl_year'],
         "sl_month": dates_data['sl_month'],
     }
     for filename in os.listdir(directory):
-        config_args["year_wise_date"] = config_args["co_file"] = False
+        config_args["year_wise_date"] = False
         if filename.endswith(".cfg"):
             if "lnsp" in filename or "zs" in filename or "sfc" in filename:
                 config_args["year_wise_date"] = True
-            if "hourly" in filename:
-                config_args["co_file"] = True
             config_file = os.path.join(directory, filename)
             # Pass the data as keyword arguments to the new_config_file function
             new_config_file(config_file, field_name, additional_content,

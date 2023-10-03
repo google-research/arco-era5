@@ -22,8 +22,7 @@ from data_automate import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# DIRECTORY = "/weather/config_files"
-DIRECTORY = "/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw"
+DIRECTORY = "/arco-era5/raw"
 FIELD_NAME = "date"
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
@@ -61,8 +60,7 @@ def raw_data_download_dataflow_job():
     job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
 
     command = (
-        f"python weather_dl/weather-dl "
-        f"/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/raw/era5_ml_dve.cfg "
+        f"python /weather/weather_dl/weather-dl /arco-era5/raw/*.cfg "
         f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
         f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
@@ -83,7 +81,7 @@ def data_splitting_dataflow_job(date: str):
     commands = []
     for DATASET in SPLITTING_DATASETS:
         command = (
-            f'python weather_sp/weather-sp --input-pattern '
+            f'python /weather/weather_sp/weather-sp --input-pattern '
             f' "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
             f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
             f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
@@ -117,7 +115,7 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region
         f"data-ingestion-into-bq-{replace_non_alphanumeric_with_hyphen(job_name)}")
 
     command = (
-        f"python weather_mv/weather-mv bq --uris {zarr_file} --output_table "
+        f"python /weather/weather_mv/weather-mv bq --uris {zarr_file} --output_table "
         f"{table_name} --runner DataflowRunner --project {PROJECT} --region "
         f"{region} --temp_location gs://{BUCKET}/tmp --job_name {job_name} "
         f"--use-local-code --zarr --disk_size_gb 500 --machine_type n2-highmem-4 "
@@ -127,8 +125,9 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region
     subprocess_run(command)
 
 
-def process_zarr_and_table(z_file: str, table: str, region: str, start_date: str,
-                           end_date: str, init_date: str):
+def perform_data_operations(z_file: str, table: str, region: str, start_date: str,
+                            end_date: str, init_date: str):
+    # Function to process a single pair of z_file and table
     try:
         logger.info(f"Resizing zarr file: {z_file} started.")
         resize_zarr_target(z_file, end_date, init_date)
@@ -148,26 +147,13 @@ def process_zarr_and_table(z_file: str, table: str, region: str, start_date: str
             f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
 
 
-def perform_data_operations(z_file: str, table: str, region: str, init_date: str):
-    # Function to process a single pair of z_file and table
-    if '/ar/' in z_file:
-        process_zarr_and_table(z_file, table, region, dates_data["first_day_first_prev"],
-                               dates_data["last_day_first_prev"], init_date)
-    else:
-        process_zarr_and_table(z_file, table, region, dates_data["first_day_third_prev"],
-                               dates_data["last_day_third_prev"], init_date)
-
-
 if __name__ == "__main__":
     try:
         parsed_args, unknown_args = parse_arguments_raw_to_zarr_to_bq("Parse arguments.")
 
         logger.info("Program is started.")
-        co_date_range = date_range(
+        data_date_range = date_range(
             dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
-        )
-        ar_date_range = date_range(
-            dates_data["first_day_first_prev"], dates_data["last_day_first_prev"]
         )
 
         for env_var in os.environ:
@@ -188,13 +174,13 @@ if __name__ == "__main__":
 
         logger.info("Raw data Splitting start.")
         data_splitting_dataflow_job(
-            dates_data['first_day_first_prev'].strftime("%Y/%m"))
+            dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
         data_is_missing = True  # Initialize with a non-zero value
         while data_is_missing:
-            data_is_missing = check_data_availability(co_date_range, ar_date_range)
+            data_is_missing = check_data_availability(data_date_range)
             if data_is_missing:
                 logger.warning("Data is missing.")
                 raw_data_download_dataflow_job()
@@ -204,7 +190,8 @@ if __name__ == "__main__":
             for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
                                              REGION_LIST):
                 tp.submit(perform_data_operations, z_file, table, region,
-                          parsed_args.init_date)
+                          dates_data["first_day_third_prev"],
+                          dates_data["last_day_third_prev"], parsed_args.init_date)
 
         logger.info("All data ingested into BQ.")
 

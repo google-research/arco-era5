@@ -5,8 +5,8 @@ from arco_era5 import replace_non_alphanumeric_with_hyphen, subprocess_run
 
 logger = logging.getLogger(__name__)
 
-AR_FILE_PATH = '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_ar_data.py'
-CO_FILE_PATH = '/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/src/data_automate/update_co_data.py'
+AR_FILE_PATH = '/arco-era5/src/data_automate/update_ar_data.py'
+CO_FILE_PATH = '/arco-era5/src/data_automate/update_co_data.py'
 CO_FILES_MAPPING = {
     'model-level-moisture': ['o3q', 'qrqs'],
     'model-level-wind': ['dve', 'tw'],
@@ -62,8 +62,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
             f"--project {PROJECT} --region {region} --experiments use_runner_v2 "
             f"--worker_machine_type n2-highmem-32 --disk_size_gb 250 "
-            f"--setup_file "
-            f"/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py "
+            f"--setup_file /arco-era5/setup.py "
             f"--job_name {job_name} --number_of_worker_harness_threads 1 "
             f"--init_date {init_date}")
     else:
@@ -78,8 +77,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
             f"--project {PROJECT} --region {region} --experiments use_runner_v2 "
             f"--worker_machine_type n2-highmem-8 --disk_size_gb 250 "
-            f"--setup_file "
-            f"/usr/local/google/home/dabhis/github_repo/arco-new/arco-era5/setup.py "
+            f"--setup_file /arco-era5/setup.py "
             f"--job_name {job_name} --number_of_worker_harness_threads 1 "
             f"--sdk_container_image {SDK_CONTAINER_IMAGE} "
             f"--init_date {init_date}")
