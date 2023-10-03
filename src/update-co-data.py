@@ -8,6 +8,7 @@ import apache_beam as beam
 from arco_era5 import GenerateOffset, COUpdateSlice, GCP_DIRECTORY
 
 logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 model_level_default_chunks = ['dve', 'tw']
 single_level_default_chunks = [
@@ -41,7 +42,6 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
     return parser.parse_known_args()
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)
     known_args, unknown_args = parse_args('Convert Era 5 Model Level data to Zarr')
 
     is_single_level = "single" in known_args.output

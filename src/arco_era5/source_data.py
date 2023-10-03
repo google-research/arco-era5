@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import typing as t
 import xarray as xr
-import xarray_beam as xb
+import xarray_beam as xbeam
 
 TIME_RESOLUTION_HOURS = 1
 
@@ -567,7 +567,8 @@ def get_pressure_levels_arg(pressure_levels_group: str):
 
 class LoadTemporalDataForDateDoFn(beam.DoFn):
     """A Beam DoFn for loading temporal data for a specific date.
-    This class is responsible for loading temporal data for a given date, including both single-level and multi-level variables.
+
+    This class is responsible for loading temporal data for a given date, including both single-level and pressure-level variables.
     Args:
         data_path (str): The path to the data source.
         start_date (str): The start date in ISO format (YYYY-MM-DD).
@@ -633,7 +634,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
         dataset = align_coordinates(dataset)
         offsets = {"latitude": 0, "longitude": 0, "level": 0,
                    "time": offset_along_time_axis(self.start_date, year, month, day)}
-        key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
+        key = xbeam.Key(offsets, vars=set(dataset.data_vars.keys()))
         logging.info("Finished loading NetCDF files for %s-%s-%s", year, month, day)
         yield key, dataset
         dataset.close()

@@ -1,7 +1,12 @@
 import apache_beam as beam
-from arco_era5 import daily_date_iterator, LoadTemporalDataForDateDoFn, GCP_DIRECTORY, ARUpdateSlice
-import logging
+from arco_era5 import (
+    daily_date_iterator, 
+    LoadTemporalDataForDateDoFn, 
+    GCP_DIRECTORY, 
+    ARUpdateSlice,
+)
 import argparse
+import logging
 from typing import Tuple, List
 
 logging.getLogger().setLevel(logging.INFO)
