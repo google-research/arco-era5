@@ -372,11 +372,11 @@ def _read_nc_dataset(gpath_file):
         # and: https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation#ERA5:datadocumentation-Dataupdatefrequency  # pylint: disable=line-too-long
         # for further details.
 
-        all_dims_except_time = tuple(set(dataarray.dims) - {"time", "expver"})
+        all_dims_except_time_and_expver = tuple(set(dataarray.dims) - {"time", "expver"})
         # Should have only trailing nans.
-        a = dataarray.sel(expver=1).isnull().any(dim=all_dims_except_time)
+        a = dataarray.sel(expver=1).isnull().any(dim=all_dims_except_time_and_expver)
         # Should having only leading nans.
-        b = dataarray.sel(expver=5).isnull().any(dim=all_dims_except_time)
+        b = dataarray.sel(expver=5).isnull().any(dim=all_dims_except_time_and_expver)
         disjoint_nans = bool((a ^ b).all().variable.values)
         assert disjoint_nans, "The nans are not disjoint in expver=1 vs 5"
         dataarray = dataarray.sel(expver=1).combine_first(dataarray.sel(expver=5))
