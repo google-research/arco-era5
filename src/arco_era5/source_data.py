@@ -14,9 +14,10 @@ import numpy as np
 import pandas as pd
 import typing as t
 import xarray as xr
-import xarray_beam as xbeam
+import xarray_beam as xb
 
 TIME_RESOLUTION_HOURS = 1
+HOURS_PER_DAY = 24
 
 GCP_DIRECTORY = "gs://gcp-public-data-arco-era5/raw"
 
@@ -336,7 +337,6 @@ _VARIABLE_TO_ERA5_FILE_NAME = {
     "geopotential_at_surface": "geopotential"
 }
 
-HOURS_PER_DAY = 24
 
 def _read_nc_dataset(gpath_file):
     """Read a .nc NetCDF dataset from a cloud storage path and disk.
@@ -347,8 +347,8 @@ def _read_nc_dataset(gpath_file):
     Returns:
         xarray.DataArray: The loaded NetCDF dataset.
 
-    This function reads a NetCDF dataset from a cloud storage path and combines data from ERA5 and ERA5T
-    versions if necessary.
+    This function reads a NetCDF dataset from a cloud storage path and combines data
+    from ERA5 and ERA5T versions if necessary.
 
     Example:
         >>> data = _read_nc_dataset("gs://bucket/data/era5_data.nc")
@@ -398,9 +398,11 @@ def read_single_level_vars(year, month, day, variables=SINGLE_LEVEL_VARIABLES,
         root_path (str): Root directory where the NetCDF files are located.
 
     Returns:
-        xarray.Dataset: A dataset containing the requested single-level variables for the given date.
+        xarray.Dataset: A dataset containing the requested single-level
+        variables for the given date.
 
-    This function reads single-level variables from NetCDF files for a specific date and returns them as an xarray.Dataset.
+    This function reads single-level variables from NetCDF files for a specific date
+    and returns them as an xarray.Dataset.
 
     Example:
         >>> date_data = read_single_level_vars(2023, 9, 11, ["temperature", "humidity"])
@@ -435,12 +437,15 @@ def read_multilevel_vars(year,
         root_path (str): Root directory where the NetCDF files are located.
 
     Returns:
-        xarray.Dataset: A dataset containing the requested multilevel variables for the given date.
+        xarray.Dataset: A dataset containing the requested multilevel variables for
+        the given date.
 
-    This function reads multilevel variables from NetCDF files for a specific date and returns them as an xarray.Dataset.
+    This function reads multilevel variables from NetCDF files for a specific date and
+    returns them as an xarray.Dataset.
 
     Example:
-        >>> date_data = read_multilevel_vars(2023, 9, 11, ["temperature", "humidity"], [1000, 850, 500])
+        >>> date_data = read_multilevel_vars(2023, 9, 11, ["temperature", "humidity"],
+        [1000, 850, 500])
     """
     root_path = pathlib.Path(root_path)
     output = {}
@@ -485,7 +490,8 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
     # have to download the data files to get this into.
     var_attrs_dict = {}
     for variables, template, rename_dict in [
-        (SINGLE_LEVEL_VARIABLES, SINGLE_LEVEL_SUBDIR_TEMPLATE, _VARIABLE_TO_ERA5_FILE_NAME),
+        (SINGLE_LEVEL_VARIABLES, SINGLE_LEVEL_SUBDIR_TEMPLATE,
+         _VARIABLE_TO_ERA5_FILE_NAME),
         (MULTILEVEL_VARIABLES, MULTILEVEL_SUBDIR_TEMPLATE, {}),
     ]:
         for variable in variables:
@@ -504,7 +510,8 @@ def get_var_attrs_dict(root_path=GCP_DIRECTORY):
 
 def daily_date_iterator(start_date: str, end_date: str
                         ) -> t.Iterable[t.Tuple[int, int, int]]:
-    """Iterate through all (year, month, day) tuples between start_date and end_date (inclusive).
+    """Iterate through all (year, month, day) tuples between start_date and
+    end_date (inclusive).
 
     Args:
         start_date (str): The start date in ISO format (YYYY-MM-DD).
@@ -536,7 +543,8 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
     Returns:
         xr.Dataset: The dataset with aligned coordinates.
 
-    This function removes non-index coordinates and downcasts latitude and longitude coordinates to float32.
+    This function removes non-index coordinates and downcasts latitude and longitude
+    coordinates to float32.
     """
 
     # It's possible to have coordinate metadata for coordinates which aren't
@@ -560,6 +568,7 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
         longitude=dataset["longitude"].astype(np.float32))
 
     return dataset
+
 
 def get_pressure_levels_arg(pressure_levels_group: str):
     return PRESSURE_LEVELS_GROUPS[pressure_levels_group]
@@ -634,7 +643,7 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
         dataset = align_coordinates(dataset)
         offsets = {"latitude": 0, "longitude": 0, "level": 0,
                    "time": offset_along_time_axis(self.start_date, year, month, day)}
-        key = xbeam.Key(offsets, vars=set(dataset.data_vars.keys()))
+        key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
         logging.info("Finished loading NetCDF files for %s-%s-%s", year, month, day)
         yield key, dataset
         dataset.close()
@@ -649,6 +658,7 @@ def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> 
         year=year, month=month, day=day) - pd.Timestamp(start_date)
     return time_delta.days * HOURS_PER_DAY // TIME_RESOLUTION_HOURS
 
+
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
     """Parse command-line arguments for the data processing pipeline.
 
@@ -656,7 +666,8 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
         desc (str): A description of the command-line interface.
 
     Returns:
-        tuple: A tuple containing the parsed arguments as a namespace and a list of unknown arguments.
+        tuple: A tuple containing the parsed arguments as a namespace and a list of
+        unknown arguments.
 
     Example:
         To parse command-line arguments, you can call this function like this:

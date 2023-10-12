@@ -12,17 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import apache_beam as beam
 import datetime
 import logging
-import xarray as xr
 import zarr
 
-from arco_era5 import HOURS_PER_DAY
-from dataclasses import dataclass
+import apache_beam as beam
+import typing as t
+import xarray as xr
 import xarray_beam as xb
 
+from dataclasses import dataclass
+
+from .source_data import HOURS_PER_DAY
+
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class UpdateSlice(beam.PTransform):
@@ -30,10 +34,11 @@ class UpdateSlice(beam.PTransform):
     target: str
     init_date: str
 
-    def apply(self, key: xb.Key, ds: xr.Dataset):
+    def apply(self, key: xb.Key, ds: xr.Dataset) -> None:
         """Generate region slice and update zarr array directly"""
         offset = key.offsets['time']
-        date = datetime.datetime.strptime(self.init_date, '%Y-%m-%d') + datetime.timedelta(days=offset / HOURS_PER_DAY)
+        date = (datetime.datetime.strptime(self.init_date, '%Y-%m-%d') +
+                datetime.timedelta(days=offset / HOURS_PER_DAY))
         zf = zarr.open(self.target)
         region = slice(offset, offset + HOURS_PER_DAY)
         for vname in ds.data_vars:

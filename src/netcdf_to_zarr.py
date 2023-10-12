@@ -16,12 +16,12 @@ Example usage:
 
     Generate zarr store from start_date with data
 
-    python src/netcdf_to_zarr.py \
-      --output_path="gs://gcp-public-data-arco-era5/ar/$USER-1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" \
+  python src/netcdf_to_zarr.py \
+      --output_path="gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \
-      --start_date '1959-01-01' \
-      --end_date '2021-12-31' \
+      --start_date '1940-01-01' \
+      --end_date '2023-01-01' \
       --runner DataflowRunner \
       --project $PROJECT \
       --region $REGION \
@@ -32,7 +32,7 @@ Example usage:
       --no_use_public_ips  \
       --network=$NETWORK \
       --subnetwork=regions/$REGION/subnetworks/$SUBNET \
-      --job_name $USER-ar-zarr-full \
+      --job_name ar-zarr-full \
       --number_of_worker_harness_threads 20
 
     Generate zarr store from init_date and fill data from start_date. Default init_date will be 1900-01-01
@@ -96,8 +96,6 @@ Example usage:
       --subnetwork=regions/$REGION/subnetworks/$SUBNET \
       --job_name $USER-ar-zarr-full \
       --number_of_worker_harness_threads 20
-    ```
-
 """
 
 # TODO(alvarosg): Make this pipeline resumable in case of error in the middle
@@ -352,8 +350,8 @@ def main():
 
     pipeline_args.extend(['--save_main_session', 'True'])
 
-    if fs.exists(known_args.output_path):
-        raise ValueError(f"{known_args.output_path} already exists")
+    # if fs.exists(known_args.output_path):
+    #     raise ValueError(f"{known_args.output_path} already exists")
 
     num_steps_per_day = HOURS_PER_DAY // TIME_RESOLUTION_HOURS
     if num_steps_per_day % known_args.time_chunk_size != 0:
