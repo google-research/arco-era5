@@ -45,8 +45,6 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
 
     return parser.parse_known_args()
 
-    return parser.parse_known_args()
-
 if __name__ == '__main__':
     known_args, unknown_args = parse_args('Convert Era 5 Model Level data to Zarr')
 
