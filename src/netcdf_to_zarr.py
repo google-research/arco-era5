@@ -350,8 +350,8 @@ def main():
 
     pipeline_args.extend(['--save_main_session', 'True'])
 
-    # if fs.exists(known_args.output_path):
-    #     raise ValueError(f"{known_args.output_path} already exists")
+    if fs.exists(known_args.output_path):
+        raise ValueError(f"{known_args.output_path} already exists")
 
     num_steps_per_day = HOURS_PER_DAY // TIME_RESOLUTION_HOURS
     if num_steps_per_day % known_args.time_chunk_size != 0:

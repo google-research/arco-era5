@@ -30,12 +30,18 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class UpdateSlice(beam.PTransform):
+    """A Beam PTransform to write zarr arrays from the raw grib files and time offset."""
 
     target: str
     init_date: str
 
     def apply(self, key: xb.Key, ds: xr.Dataset) -> None:
-        """Generate region slice and update zarr array directly"""
+        """A method to write zarr arrays from the raw grib files and time offset.
+
+        Args:
+            key (xb.Key): offset dict for dimensions.
+            ds (xr.Dataset): Merged dataset for a single day.
+        """
         offset = key.offsets['time']
         date = (datetime.datetime.strptime(self.init_date, '%Y-%m-%d') +
                 datetime.timedelta(days=offset / HOURS_PER_DAY))

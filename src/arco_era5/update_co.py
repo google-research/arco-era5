@@ -85,10 +85,24 @@ VARIABLE_DICT: t.Dict[str, t.List[str]] = {
 
 
 def convert_to_date(date_str: str, format: str = '%Y-%m-%d') -> datetime.datetime:
+    """A method to convert date string into datetime format.
+
+    Args:
+        date (str): string date in %Y-%m-%d format.
+
+    Returns:
+        datetime: datetime generated from string date.
+    """
     return datetime.datetime.strptime(date_str, format)
 
 
 def copy(src: str, dst: str) -> None:
+    """A method for generating the offset along with time dimension.
+
+    Args:
+        src (str): The cloud storage path to the grib file.
+        dst (str): A temp location to copy the file.
+    """
     cmd = 'gcloud alpha storage cp'
     try:
         subprocess.run(cmd.split() + [src, dst], check=True, capture_output=True,
@@ -101,6 +115,11 @@ def copy(src: str, dst: str) -> None:
 
 @contextmanager
 def opener(fname: str) -> t.Any:
+    """A method to copy remote file into temp.
+
+    Args:
+        url (str): The cloud storage path to the grib file.
+    """
     _, suffix = os.path.splitext(fname)
     with tempfile.NamedTemporaryFile(suffix=suffix) as ntf:
         tmp_name = ntf.name
@@ -109,7 +128,19 @@ def opener(fname: str) -> t.Any:
         yield tmp_name
 
 
-def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[str], is_single_level: bool = False):
+def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[str], is_single_level: bool = False) -> t.List[str]:
+    """A method for generating the url using the combination of chunks and time range.
+
+    Args:
+        start (str): starting date for data files.
+        end (str): last date for data files.
+        root_path (str): raw file url prefix.
+        chunks: (t.List(str)): List of chunks to process.
+        is_single_level: (bool): Is the call for single level or model level
+
+    Returns:
+        t.List: List of file urls to process.
+    """
     input_paths = []
     for time, chunk in product(pd.date_range(start, end, freq="MS" if is_single_level else "D"), chunks):
         if is_single_level:
@@ -128,13 +159,21 @@ def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[st
 
 @dataclass
 class GenerateOffset(beam.PTransform):
+    """A Beam PTransform for generating the offset along with time dimension."""
 
     init_date: str = '1900-01-01'
     timestamps_per_file: int = 24
     is_single_level: bool = False
 
     def apply(self, url: str) -> t.Tuple[str, slice, t.List[str]]:
-        # generate start offset
+        """A method for generating the offset along with time dimension.
+
+        Args:
+            url (str): The cloud storage path to the grib file.
+
+        Returns:
+            t.Tuple: url with included variables and time offset.
+        """
         file_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
         int_date, chunk = file_name.split('_hres_')
         if "_" in chunk:
@@ -155,11 +194,18 @@ class GenerateOffset(beam.PTransform):
 
 @dataclass
 class UpdateSlice(beam.PTransform):
+    """A Beam PTransform to write zarr arrays from the raw grib files and time offset."""
 
     target: str
 
-    def apply(self, file_slice: t.Tuple[str, slice, t.List[str]]) -> None:
-        url, region, vars = file_slice
+    def apply(self, url: str, region: slice, vars: t.List[str]) -> None:
+        """A method to write zarr arrays from the raw grib files and time offset.
+
+        Args:
+            url (str): The cloud storage path to the grib file.
+            region (slice): start and stop offset for time dimension.
+            vars (t.List): List of variables to extract from the file.
+        """
         zf = zarr.open(self.target)
         with opener(url) as file:
             logger.info(f"Opened {url}")
@@ -174,4 +220,4 @@ class UpdateSlice(beam.PTransform):
             del ds
 
     def expand(self, pcoll: beam.PCollection) -> beam.PCollection:
-        return pcoll | beam.Map(self.apply)
+        return pcoll | beam.MapTuple(self.apply)
