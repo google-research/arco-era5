@@ -1,0 +1,3 @@
+# START CRON JOB
+5 10 * * * /opt/conda/envs/weather-tools-with-arco-era5/bin/python /arco-era5/src/raw-to-zarr-to-bq.py  > /var/log/cron.log 2>&1
+# END CRON JOB

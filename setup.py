@@ -121,6 +121,7 @@ setup(
     install_requires=[
         "google-cloud-secret-manager==2.0.0",
         'apache_beam[gcp]==2.40.0',
+        'numcodecs==0.11.0',
         'pangeo-forge-recipes==0.9.1',
         'pandas',
         'gcsfs',

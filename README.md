@@ -67,7 +67,7 @@ _Updated on 2023-08-23_
 3. [x] **Phase 2**: Produce an Analysis-Ready corpus
    1. [ ] Update GCP CPDs documentation.
    2. [ ] Create walkthrough notebooks.
-4. WIP **Phase 3**: Automatic dataset updates, data is back-fillable.
+4. [x] **Phase 3**: Automatic dataset updates, data is back-fillable.
 5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
 6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
     1. [ ] Regrid datasets to lat/long grids.
@@ -77,7 +77,7 @@ _Updated on 2023-08-23_
 
 ## Data Description
 
-As of 2023-08-29, all data spans the dates `1940-01-01/to/2023-05-31` (inclusive).
+As of 2023-10-13, all data spans the dates `1940-01-01/to/2023-07-31` (inclusive).
 
 Whenever possible, we have chosen to represent parameters by their native grid resolution.
 See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
@@ -98,7 +98,7 @@ ml_wind = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `Spectral Harmonic Coefficients`
   ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
-* _Size_: 305.89 TiB
+* _Size_: 974.14 TiB
 
 <details>
 <summary>Data summary table</summary>
@@ -130,7 +130,7 @@ ml_moisture = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 2045.97 TiB
+* _Size_: 2252.61 TiB
 
 
 <details>
@@ -164,7 +164,7 @@ ml_surface = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `Spectral Harmonic Coefficients`
   ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
-* _Size_: 3.23 TiB
+* _Size_: 3.55 TiB
 
 
 <details>
@@ -405,6 +405,75 @@ You can also discover available command line options by invoking the script with
 python src/model-levels-to-zarr.py --help
 ```
 
+### Automating dataset Updates in zarr and BigQuery
+This feature is works in 4 parts.
+ 1. Acquiring raw data from CDS, facilitated by [`weather-dl`](https://weather-tools.readthedocs.io/en/latest/weather_dl/README.html) tool.
+ 2. Splitting raw data using [`weather-sp`](https://weather-tools.readthedocs.io/en/latest/weather_sp/README.html).
+ 3. Ingest this splitted data into a zarr file.
+ 4. Ingest this data into BigQuery with the assistance of the [`weather-mv`](https://weather-tools.readthedocs.io/en/latest/weather_mv/README.html).
+
+#### How to Run.
+1. Set up a Cloud project with sufficient permissions to use cloud storage (such as [GCS](https://cloud.google.com/storage)) and a Beam runner (such as [Dataflow](https://cloud.google.com/dataflow)).
+    > Note: Other cloud systems should work too, such as S3 and Elastic Map Reduce. However, these are untested. If you
+    > experience an error here, please let us know by [filing an issue](https://github.com/google/weather-tools/issues).
+2. Acquire one or more licenses from [Copernicus](https://cds.climate.copernicus.eu/user/register?destination=/api-how-to).
+    > Recommended: Download configs allow users to specify multiple API keys in a single data request via
+    > ["parameter subsections"](https://weather-tools.readthedocs.io/en/latest/Configuration.html#subsections). We
+    > highly recommend that institutions pool licenses together for faster downloads.
+3. Add the all CDS licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
+    > NOTE: for every API_KEY there must be unique secret-key.
+
+4. Update this all variable in [docker-file](Dockerfile).
+    * `PROJECT` 
+    * `REGION`
+    * `BUCKET`
+    * `SDK_CONTAINER_IMAGE`
+    * `MANIFEST_LOCATION`
+    * `API_KEY_*`
+    > Here, API_KEY_* is access of [secret-manager key](https://cloud.google.com/secret-manager) and it's value is looks like this :: projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1
+
+   > NOTE: API_KEY is must follow this format: `API_KEY_*`. here * is any value.
+
+5. Create docker image for this.
+
+```
+export PROJECT_ID=<your-project-here>
+export REPO=<repo> eg:arco-era5-raw-to-zarr-to-bq
+
+gcloud builds submit . --tag "gcr.io/$PROJECT_ID/$REPO:latest" 
+```
+
+6. Create a VM using above created docker-image
+```
+export ZONE=<zone> eg: us-central1-a
+export SERVICE_ACCOUNT=<service account> # Let's keep this as Compute Engine Default Service Account
+export IMAGE_PATH=<container-image-path> # The above created image-path
+
+gcloud compute instances create-with-container arco-era5-raw-to-zarr-to-bq \ --project=$PROJECT_ID \
+--zone=$ZONE \
+--machine-type=n2-standard-4 \
+--network-interface=network-tier=PREMIUM,subnet=default \
+--maintenance-policy=MIGRATE \
+--provisioning-model=STANDARD \
+--service-account=$SERVICE_ACCOUNT \
+--scopes=https://www.googleapis.com/auth/cloud-platform \
+--image=projects/cos-cloud/global/images/cos-stable-109-17800-0-45 \
+--boot-disk-size=200GB \
+--boot-disk-type=pd-balanced \
+--boot-disk-device-name=arco-era5-raw-to-zarr-to-bq \
+--container-image=$IMAGE_PATH \
+--container-restart-policy=on-failure \
+--container-tty \
+--no-shielded-secure-boot \
+--shielded-vtpm \
+--shielded-integrity-monitoring \
+--labels=goog-ec-src=vm_add-gcloud,container-vm=cos-stable-109-17800-0-45 \
+--metadata-from-file=startup-script=start-up.sh
+```
+
+7. Once VM created the script will execute on `7th day of every month` as this is default set in the [cron-file](cron-file) and you can see the logs after Connect SSH of the VM.
+> Log will be shown at this(`/var/log/cron.log`) file.
+> For better Connect SSH after 5-10 minutes of VM creation. 
 ### Making the dataset "High Resolution" & beyond...
 
 This phase of the project is under active development! If you would like to lend a hand in any way, please check out our

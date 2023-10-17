@@ -57,7 +57,7 @@ def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
     """
 
     fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT',
-                                                    "grid-intelligence-sandbox"))
+                                                    'ai-for-weather'))
     # update above project with ai-for-weather
     all_uri = []
     for date in data_date_range:
@@ -95,6 +95,8 @@ def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
                                                           day=date.day, chunk=chunk,
                                                           pressure=pressure))
             else:
+                if chunk == 'geopotential_at_surface':
+                    chunk = 'geopotential'
                 all_uri.append(
                     AR_SINGLELEVEL_DIR_TEMPLATE.format(
                         year=date.year, month=date.month, day=date.day, chunk=chunk))

@@ -58,7 +58,7 @@ def subprocess_run(command: str):
         try:
             for line in iter(process.stdout.readline, b""):
                 log_message = line.decode("utf-8").strip()
-                if "Failed" in log_message:
+                if "Failed" in log_message or 'JOB_STATE_CANCELLING' in log_message:
                     sys.exit(f'Stopping subprocess as {log_message}')
                 logger.info(log_message)
         except subprocess.CalledProcessError as e:

@@ -5,14 +5,15 @@ import os
 import re
 
 from arco_era5 import (
-    update_config_files,
+    update_config_file,
     get_previous_month_dates,
     get_secret,
     check_data_availability,
     date_range,
     replace_non_alphanumeric_with_hyphen,
     subprocess_run,
-    parse_arguments_raw_to_zarr_to_bq
+    parse_arguments_raw_to_zarr_to_bq,
+    remove_licenses_from_directory
     )
 from data_automate import (
     resize_zarr_target,
@@ -28,7 +29,8 @@ PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
 SDK_CONTAINER_IMAGE = os.environ.get("SDK_CONTAINER_IMAGE")
-# MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
+MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
+PYTHON_PATH = os.environ.get("PYTHON_PATH")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
 
@@ -47,8 +49,8 @@ REGION_LIST = [
     'us-west4',
     'us-central1',
     'us-east4',
-    'us-west1',
-    'us-east7',
+    'us-east1',
+    'us-west4',
 ]
 
 dates_data = get_previous_month_dates()
@@ -60,12 +62,11 @@ def raw_data_download_dataflow_job():
     job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
 
     command = (
-        f"python /weather/weather_dl/weather-dl /arco-era5/raw/*.cfg "
+        f"{PYTHON_PATH} /weather/weather_dl/weather-dl /arco-era5/raw/*.cfg "
         f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
         f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
-        f"--use-local-code"
-        # f"--manifest-location {MANIFEST_LOCATION} "
+        f"--use-local-code --manifest-location {MANIFEST_LOCATION} "
     )
     subprocess_run(command)
 
@@ -81,14 +82,13 @@ def data_splitting_dataflow_job(date: str):
     commands = []
     for DATASET in SPLITTING_DATASETS:
         command = (
-            f'python /weather/weather_sp/weather-sp --input-pattern '
+            f'{PYTHON_PATH} /weather/weather_sp/weather-sp --input-pattern '
             f' "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
             f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
             f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
             f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 '
-            f'--job_name split-{DATASET}-data '
-            f'--sdk_container_image "gcr.io/grid-intelligence-sandbox/miniconda3-beam:weather-tools-with-aria2" '
-            f'--use-local-code '
+            f'--job_name split-{DATASET}-data-{month} '
+            f'--sdk_container_image {SDK_CONTAINER_IMAGE} --use-local-code '
         )
         commands.append(command)
 
@@ -109,20 +109,21 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region
     Returns:
         None
     """
-    job_name = zarr_file.split('/')[-1]
-    job_name = os.path.splitext(job_name)[0]
-    job_name = (
-        f"data-ingestion-into-bq-{replace_non_alphanumeric_with_hyphen(job_name)}")
+    if '/ar/' in zarr_file:
+        job_name = zarr_file.split('/')[-1]
+        job_name = os.path.splitext(job_name)[0]
+        job_name = (
+            f"data-ingestion-into-bq-{replace_non_alphanumeric_with_hyphen(job_name)}")
 
-    command = (
-        f"python /weather/weather_mv/weather-mv bq --uris {zarr_file} --output_table "
-        f"{table_name} --runner DataflowRunner --project {PROJECT} --region "
-        f"{region} --temp_location gs://{BUCKET}/tmp --job_name {job_name} "
-        f"--use-local-code --zarr --disk_size_gb 500 --machine_type n2-highmem-4 "
-        f"--number_of_worker_harness_threads 1 --zarr_kwargs {zarr_kwargs} "
-    )
+        command = (
+            f"{PYTHON_PATH} /weather/weather_mv/weather-mv bq --uris {zarr_file} "
+            f"--output_table {table_name} --runner DataflowRunner --project {PROJECT} "
+            f"--region {region} --temp_location gs://{BUCKET}/tmp --job_name {job_name} "
+            f"--use-local-code --zarr --disk_size_gb 500 --machine_type n2-highmem-4 "
+            f"--number_of_worker_harness_threads 1 --zarr_kwargs {zarr_kwargs} "
+        )
 
-    subprocess_run(command)
+        subprocess_run(command)
 
 
 def perform_data_operations(z_file: str, table: str, region: str, start_date: str,
@@ -134,7 +135,8 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         logger.info(f"Resizing zarr file: {z_file} completed.")
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         PROJECT, BUCKET, SDK_CONTAINER_IMAGE)
+                                         PROJECT, BUCKET, SDK_CONTAINER_IMAGE,
+                                         PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
@@ -167,7 +169,7 @@ if __name__ == "__main__":
             additional_content += f'parameters.api{count}\n\
                 api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
 
-        update_config_files(DIRECTORY, FIELD_NAME, additional_content)
+        update_config_file(DIRECTORY, FIELD_NAME, additional_content)
         logger.info("Raw data downloading start.")
         raw_data_download_dataflow_job()
         logger.info("Raw data downloaded successfully.")
@@ -186,6 +188,8 @@ if __name__ == "__main__":
                 raw_data_download_dataflow_job()
         logger.info("Data availability check completed.")
 
+        remove_licenses_from_directory(DIRECTORY, len(API_KEY_LIST))
+        logger.info("All licenses remove from the config file.")
         with ThreadPoolExecutor(max_workers=8) as tp:
             for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
                                              REGION_LIST):

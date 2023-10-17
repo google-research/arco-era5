@@ -98,7 +98,7 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
         config.set("selection", "day", "all")
     else:
         config.set("selection", field_name,
-                    f"{first_day_third_prev}/to/{last_day_third_prev}")
+                   f"{first_day_third_prev}/to/{last_day_third_prev}")
 
     sections_list = additional_content.split("\n\n")
     for section in sections_list[:-1]:
@@ -159,8 +159,8 @@ def get_previous_month_dates() -> MonthDates:
     }
 
 
-def update_config_files(directory: str, field_name: str,
-                        additional_content: str) -> None:
+def update_config_file(directory: str, field_name: str,
+                       additional_content: str) -> None:
     """Update the configuration files in the specified directory.
 
     Parameters:
@@ -202,3 +202,36 @@ def get_secret(secret_key: str) -> dict:
     payload = response.payload.data.decode("UTF-8")
     secret_dict = json.loads(payload)
     return secret_dict
+
+
+def remove_license_from_config_file(config_file_path: str, num_licenses: int) -> None:
+    """Remove licenses from a configuration file.
+
+    Args:
+        config_file_path (str): The path to the configuration file from
+        which licenses will be removed.
+        num_licenses (int): The number of licenses to remove from the file.
+
+    """
+    config = configparser.ConfigParser()
+    config.read(config_file_path)
+    for license_number in range(num_licenses):
+        section_name = f'parameters.api{license_number}'
+        config.remove_section(section_name)
+    with open(config_file_path, "w") as file:
+        config.write(file, space_around_delimiters=False)
+
+
+def remove_licenses_from_directory(directory_path: str, num_licenses: int) -> None:
+    """Remove licenses from all configuration files in a directory.
+
+    Args:
+        directory_path (str): The path to the directory containing configuration files.
+        num_licenses (int): The number of licenses to remove from each
+        configuration file.
+
+    """
+    for filename in os.listdir(directory_path):
+        if filename.endswith(".cfg"):
+            config_file_path = os.path.join(directory_path, filename)
+            remove_license_from_config_file(config_file_path, num_licenses)

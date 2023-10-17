@@ -36,7 +36,8 @@ CO_FILES_MAPPING = {
 
 def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: str,
                                      end_date: str, init_date: str, PROJECT: str,
-                                     BUCKET: str, SDK_CONTAINER_IMAGE: str) -> None:
+                                     BUCKET: str, SDK_CONTAINER_IMAGE: str,
+                                     PYTHON_PATH: str) -> None:
     """Ingests data into a Zarr store and runs a Dataflow job.
 
     Args:
@@ -57,7 +58,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
     if '/ar/' in target_path:
         logger.info(f"Data ingestion for {target_path} of AR data.")
         command = (
-            f"python {AR_FILE_PATH} --output_path {target_path} "
+            f"{PYTHON_PATH} {AR_FILE_PATH} --output_path {target_path} "
             f"-s {start_date} -e {end_date} --pressure_levels_group full_37 "
             f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
             f"--project {PROJECT} --region {region} --experiments use_runner_v2 "
@@ -71,7 +72,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
         time_per_day = 2 if 'single-level-forecast' in target_path else 24
         logger.info(f"Data ingestion for {target_path} of CO data.")
         command = (
-            f"python {CO_FILE_PATH} --output_path {target_path} "
+            f"{PYTHON_PATH} {CO_FILE_PATH} --output_path {target_path} "
             f"-s {start_date} -e {end_date} -c {chunks} "
             f"--time_per_day {time_per_day} "
             f"--temp_location gs://{BUCKET}/temp --runner DataflowRunner "
