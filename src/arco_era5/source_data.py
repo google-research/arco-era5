@@ -591,7 +591,8 @@ def get_pressure_levels_arg(pressure_levels_group: str):
 class LoadTemporalDataForDateDoFn(beam.DoFn):
     """A Beam DoFn for loading temporal data for a specific date.
 
-    This class is responsible for loading temporal data for a given date, including both single-level and pressure-level variables.
+    This class is responsible for loading temporal data for a given date, including both
+    single-level and pressure-level variables.
     Args:
         data_path (str): The path to the data source.
         start_date (str): The start date in ISO format (YYYY-MM-DD).

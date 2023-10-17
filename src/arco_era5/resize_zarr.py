@@ -28,7 +28,22 @@ logger = logging.getLogger(__name__)
 
 def consolidate_metadata(url: str, existing: str, total: str,
                          metadata_key: str = '.zmetadata',
-                         overwrite_time_chunk: bool = True):
+                         overwrite_time_chunk: bool = True) -> None:
+    """
+    Consolidates metadata in a Zarr dataset by updating the 'total' value in the metadata
+    and optionally preserving the 'time' chunk information.
+
+    Args:
+        url (str): The URL of the Zarr dataset.
+        existing (str): The existing value of 'time' to be replaced.
+        total (str): The new value of 'time' to be replace with the existing one.
+        metadata_key (str): The key for the metadata file (default is '.zmetadata').
+        overwrite_time_chunk (bool): If True, the 'time' chunk information will be overwritten,
+            otherwise, it will be preserved.
+
+    Returns:
+        None
+    """
     metadata_path = f"{url}/{metadata_key}"
     fs = GCSFileSystem()
     with fs.open(metadata_path) as f:
@@ -44,6 +59,15 @@ def consolidate_metadata(url: str, existing: str, total: str,
 
 
 def gather_coordinate_dimensions(group: zarr.Group) -> t.List[str]:
+    """
+    Gather and return a list of unique coordinate dimensions found in a Zarr-store.
+
+    Args:
+        group (zarr.Group): The Zarr store to inspect.
+
+    Returns:
+        List[str]: A list of unique coordinate dimensions found in the store.
+    """
     return set(
         itertools.chain(*(group[var].attrs.get("_ARRAY_DIMENSIONS", []) for var in group)))
 
@@ -64,17 +88,17 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
     TIME_DIMS = ["time", "valid_time"]
     zf = zarr.open(target_store)
     data_vars = list(set(zf.keys()) - gather_coordinate_dimensions(zf))
-    
+
     day_diff = end_date - convert_to_date(init_date)
     interval = 2 if 'single-level-forecast' in target_store else 24
     total = (day_diff.days + 1) * interval
-    time = zf["time"]
-    existing = time.size
+    zf_time = zf["time"]
+    existing = zf_time.size
 
     if existing != total:
         if '/ar/' in target_store:
             logger.info(f"Time resize for {target_store} of AR data.")
-            time.append(list(range(existing, total)))
+            zf_time.append(list(range(existing, total)))
         else:
             logger.info(f"Time resize for {target_store} of CO data.")
 
@@ -85,8 +109,8 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
                 shape_arr = [zf[c].size for c in zf[dim].attrs["_ARRAY_DIMENSIONS"]]
                 if dim == 'valid_time' and interval == 2:
                     data = []
-                    for t in time_range:
-                        d = list(range(t, t + 19))
+                    for time in time_range:
+                        d = list(range(time, time + 19))
                         data.append(d)
                     shape_arr[0] = 1
                     time_range = data

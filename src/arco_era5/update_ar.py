@@ -17,7 +17,6 @@ import logging
 import zarr
 
 import apache_beam as beam
-import typing as t
 import xarray as xr
 import xarray_beam as xb
 

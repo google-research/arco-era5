@@ -128,7 +128,8 @@ def opener(fname: str) -> t.Any:
         yield tmp_name
 
 
-def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[str], is_single_level: bool = False) -> t.List[str]:
+def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[str],
+                         is_single_level: bool = False) -> t.List[str]:
     """A method for generating the url using the combination of chunks and time range.
 
     Args:
@@ -147,7 +148,7 @@ def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[st
             url = f"{root_path}/{SINGLE_LEVEL_SUBDIR_TEMPLATE.format(year=time.year, month=time.month, day=time.day, chunk=chunk)}"
         else:
             url = f"{root_path}/{MODELLEVEL_SUBDIR_TEMPLATE.format(year=time.year, month=time.month, day=time.day, chunk=chunk)}"
-        
+
         if '_' in chunk:
             chunk_, level, var = chunk.split('_')
             url = url.replace(chunk, chunk_)

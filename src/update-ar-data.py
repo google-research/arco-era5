@@ -26,6 +26,7 @@ from arco_era5 import (
 
 logging.getLogger().setLevel(logging.INFO)
 
+
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
     parser = argparse.ArgumentParser(description=desc)
 
@@ -42,12 +43,15 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
 
     return parser.parse_known_args()
 
+
 known_args, pipeline_args = parse_arguments("Update Data Slice")
 
 with beam.Pipeline(argv=pipeline_args) as p:
     path = (
         p
         | "CreateDayIterator" >> beam.Create(daily_date_iterator(known_args.start_date, known_args.end_date))
-        | "LoadDataForDay" >> beam.ParDo(LoadTemporalDataForDateDoFn(data_path=GCP_DIRECTORY, start_date=known_args.init_date, pressure_levels_group=known_args.pressure_levels_group))
+        | "LoadDataForDay" >> beam.ParDo(LoadTemporalDataForDateDoFn(
+            data_path=GCP_DIRECTORY, start_date=known_args.init_date,
+            pressure_levels_group=known_args.pressure_levels_group))
         | "UpdateSlice" >> ARUpdateSlice(target=known_args.output_path, init_date=known_args.init_date)
     )
