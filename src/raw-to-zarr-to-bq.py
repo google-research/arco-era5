@@ -1,3 +1,16 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import datetime
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -5,19 +18,18 @@ import os
 import re
 
 from arco_era5 import (
-    update_config_file,
-    get_previous_month_dates,
-    get_secret,
     check_data_availability,
     date_range,
-    replace_non_alphanumeric_with_hyphen,
-    subprocess_run,
+    ingest_data_in_zarr_dataflow_job,
+    get_previous_month_dates,
+    get_secret,
     parse_arguments_raw_to_zarr_to_bq,
-    remove_licenses_from_directory
-    )
-from data_automate import (
+    remove_licenses_from_directory,
+    replace_non_alphanumeric_with_hyphen,
     resize_zarr_target,
-    ingest_data_in_zarr_dataflow_job)
+    subprocess_run,
+    update_config_file,
+    )
 
 # Logger Configuration
 logging.basicConfig(level=logging.INFO)

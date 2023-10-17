@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # pylint: disable=line-too-long
-r"""Create a single Zarr dataset from ERA5 NetCDF files.
-
+"""
 While this pipeline is intended as a one off on the full data, it should be
 possible to make some simple edits to the pipeline to append data for
 subsequent years by:
@@ -27,9 +26,10 @@ subsequent years by:
 
 Example usage:
 
-    Generate zarr store from start_date with data
+    Create a single Zarr dataset from ERA5 NetCDF files
 
-  python src/netcdf_to_zarr.py \
+    ```
+    python src/netcdf_to_zarr.py \
       --output_path="gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \
@@ -47,6 +47,7 @@ Example usage:
       --subnetwork=regions/$REGION/subnetworks/$SUBNET \
       --job_name ar-zarr-full \
       --number_of_worker_harness_threads 20
+    ```
 
     Generate zarr store from init_date and fill data from start_date. Default init_date will be 1900-01-01
 
@@ -109,6 +110,7 @@ Example usage:
       --subnetwork=regions/$REGION/subnetworks/$SUBNET \
       --job_name ar-zarr-full \
       --number_of_worker_harness_threads 20
+    ```
 """
 
 # TODO(alvarosg): Make this pipeline resumable in case of error in the middle

@@ -1,12 +1,25 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import logging
 import os
 
-from arco_era5 import replace_non_alphanumeric_with_hyphen, subprocess_run
+from .utils import replace_non_alphanumeric_with_hyphen, subprocess_run
 
 logger = logging.getLogger(__name__)
 
-AR_FILE_PATH = '/arco-era5/src/data_automate/update_ar_data.py'
-CO_FILE_PATH = '/arco-era5/src/data_automate/update_co_data.py'
+AR_FILE_PATH = '/arco-era5/src/update-ar-data.py'
+CO_FILE_PATH = '/arco-era5/src/update-co-data.py'
 CO_FILES_MAPPING = {
     'model-level-moisture': ['o3q', 'qrqs'],
     'model-level-wind': ['dve', 'tw'],

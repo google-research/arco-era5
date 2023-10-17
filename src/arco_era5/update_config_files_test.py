@@ -11,7 +11,7 @@ from .update_config_files import (
     new_config_file,
     get_month_range,
     get_previous_month_dates,
-    update_config_files,
+    update_config_file,
     get_secret,
 )
 
@@ -95,7 +95,7 @@ class TestFetchFunctions(unittest.TestCase):
 
     def test_update_config_files(self):
         # Test update_config_files function
-        update_config_files(
+        update_config_file(
             self.temp_dir.name, "date", self.additional_content)
 
     @patch("update_config_files.secretmanager.SecretManagerServiceClient")

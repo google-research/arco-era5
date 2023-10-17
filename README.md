@@ -193,7 +193,7 @@ sl_reanalysis = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 81.07 TiB
+* _Size_: 89.26 TiB
 
 
 <details>
@@ -260,7 +260,7 @@ sl_forecasts = xr.open_zarr(
 * _Steps_: `0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 70.94 TiB
+* _Size_: 78.10 TiB
  
 <details>
 <summary>Data summary table</summary>
@@ -303,7 +303,7 @@ ar_full_37_1h = xr.open_zarr(
 
 * _Times_: `00/to/23`
 * _Levels_: `1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000`
-* _Size_: 486.03 TiB
+* _Size_: 3009.74 TiB
 
 
 <details>
