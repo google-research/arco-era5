@@ -430,9 +430,17 @@ This feature is works in 4 parts.
     * `SDK_CONTAINER_IMAGE`
     * `MANIFEST_LOCATION`
     * `API_KEY_*`
-    > Here, API_KEY_* is access of [secret-manager key](https://cloud.google.com/secret-manager) and it's value is looks like this :: projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1
-
-   > NOTE: API_KEY is must follow this format: `API_KEY_*`. here * is any value.
+    * `BQ_TABLES_LIST`
+    * `REGION_LIST` 
+    
+    > Here, API_KEY_* is access of [secret-manager key](https://cloud.google.com/secret-manager) and it's value is looks like this :: ```projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1```  
+    > NOTE: API_KEY is must follow this format: `API_KEY_*`. here * is any value.  
+    > Here, `BQ_TABLES_LIST` is list of the BigQuery table in which data is ingested and it's value is like this :: 
+    ```'["PROJECT.DATASET.TABLE1", "PROJECT.DATASET.TABLE2", ..., "PROJECT.DATASET.TABLE6"]'```.  
+    > Here, `REGION_LIST` is list of the GCP_region in which the job of ingestion will run :: 
+    ```'["us-east1", "us-west4",..., "us-west2"]'```.  
+    > size of `BQ_TABLES_LIST` and `REGION_LIST` must be 6 as total 6 zarr file processed in the current pipeline.  
+   
 
 5. Create docker image for this.
 

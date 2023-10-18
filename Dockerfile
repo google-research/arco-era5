@@ -52,8 +52,8 @@ ENV MANIFEST_LOCATION='fs://manifest?projectId=anthromet-ingestion'
 ENV API_KEY_1='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_1/versions/1'
 ENV API_KEY_2='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_2/versions/1'
 ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
-ENV BQ_TABLES_LIST = '["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3", "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2", "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2", "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2", "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2", "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]'
-ENV REGION_LIST = '["us-east1", "us-west4", "us-central1", "us-east4", "us-east1", "us-west4"]'
+ENV BQ_TABLES_LIST='["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3", "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2", "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2", "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2", "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2", "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]'
+ENV REGION_LIST='["us-east1", "us-west4", "us-central1", "us-east4", "us-east1", "us-west4"]'
 
 RUN apt-get update && apt-get -y install cron vim
 COPY cron-file /etc/cron.d/crontab
