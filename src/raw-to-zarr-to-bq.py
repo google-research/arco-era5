@@ -41,7 +41,6 @@ FIELD_NAME = "date"
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
-SDK_CONTAINER_IMAGE = os.environ.get("SDK_CONTAINER_IMAGE")
 MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
 PYTHON_PATH = os.environ.get("PYTHON_PATH")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
@@ -71,8 +70,7 @@ def raw_data_download_dataflow_job():
         f"{PYTHON_PATH} /weather/weather_dl/weather-dl /arco-era5/raw/*.cfg "
         f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
-        f"--sdk_container_image {SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
-        f"--use-local-code --manifest-location {MANIFEST_LOCATION} "
+        f"--experiment use_runner_v2 --use-local-code --manifest-location {MANIFEST_LOCATION} "
     )
     subprocess_run(command)
 
@@ -93,8 +91,7 @@ def data_splitting_dataflow_job(date: str):
             f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
             f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
             f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 '
-            f'--job_name split-{DATASET}-data-{month} '
-            f'--sdk_container_image {SDK_CONTAINER_IMAGE} --use-local-code '
+            f'--job_name split-{DATASET}-data-{month} --use-local-code '
         )
         commands.append(command)
 
@@ -141,8 +138,7 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         logger.info(f"Resizing zarr file: {z_file} completed.")
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         PROJECT, BUCKET, SDK_CONTAINER_IMAGE,
-                                         PYTHON_PATH)
+                                         PROJECT, BUCKET, PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '

@@ -15,24 +15,10 @@
 import configparser
 import datetime
 import json
-import logging
 import os
-import re
 import typing as t
 
 from google.cloud import secretmanager
-
-DIRECTORY = "/weather/config_files"
-FIELD_NAME = "date"
-PROJECT = os.environ.get("PROJECT")
-REGION = os.environ.get("REGION")
-BUCKET = os.environ.get("BUCKET")
-SDK_CONTAINER_IMAGE = os.environ.get("SDK_CONTAINER_IMAGE")
-MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
-API_KEY_PATTERN = re.compile(r'^API_KEY_\d+$')
-API_KEY_LIST = []
-
-logger = logging.getLogger(__name__)
 
 
 class ConfigArgs(t.TypedDict):

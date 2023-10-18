@@ -427,7 +427,6 @@ This feature is works in 4 parts.
     * `PROJECT` 
     * `REGION`
     * `BUCKET`
-    * `SDK_CONTAINER_IMAGE`
     * `MANIFEST_LOCATION`
     * `API_KEY_*`
     * `BQ_TABLES_LIST`
