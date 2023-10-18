@@ -18,10 +18,7 @@ FROM continuumio/miniconda3:latest
 # Update miniconda
 RUN conda update conda -y
 
-# remove below line at last
-COPY . /arco-era5
-
-# Create conda env using environment.yml
+# Clone the weather-tools and create conda env using environment.yml of weather-tools.
 ARG weather_tools_git_rev=main
 RUN git clone https://github.com/google/weather-tools.git /weather
 WORKDIR /weather
@@ -39,11 +36,11 @@ RUN pip install -e .
 RUN apt-get update -y
 RUN gcloud components install alpha --quiet
 
-# add whole arco-era5 into a docker-image.
-# ARG arco_era5_git_rev=bq-automate # change branch name
-# RUN git clone https://github.com/google-research/arco-era5.git /arco-era5
+# Clone the arco-era5 and add dependency into the environment.
+ARG arco_era5_git_rev=bq-automate
+RUN git clone https://github.com/google-research/arco-era5.git /arco-era5
 WORKDIR /arco-era5
-# RUN git checkout "${arco_era5_git_rev}"
+RUN git checkout "${arco_era5_git_rev}"
 RUN pip install -e .
 
 # remove this variables at last
@@ -55,6 +52,8 @@ ENV MANIFEST_LOCATION='fs://manifest?projectId=anthromet-ingestion'
 ENV API_KEY_1='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_1/versions/1'
 ENV API_KEY_2='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_2/versions/1'
 ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
+ENV BQ_TABLES_LIST = '["grid-intelligence-sandbox.dabhis_test.full_37-1h-0p25deg-chunk-1-v3", "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2", "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2", "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2", "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2", "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]'
+ENV REGION_LIST = '["us-east1", "us-west4", "us-central1", "us-east4", "us-east1", "us-west4"]'
 
 RUN apt-get update && apt-get -y install cron vim
 COPY cron-file /etc/cron.d/crontab

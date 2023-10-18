@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
+import json
 import logging
-from concurrent.futures import ThreadPoolExecutor
 import os
 import re
 
+from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
     check_data_availability,
     date_range,
@@ -55,15 +56,8 @@ ZARR_FILES_LIST = [
     'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
     'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2'
 ]
-BQ_TABLES_LIST = []
-REGION_LIST = [
-    'us-east1',
-    'us-west4',
-    'us-central1',
-    'us-east4',
-    'us-east1',
-    'us-west4',
-]
+BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
+REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 
 dates_data = get_previous_month_dates()
 

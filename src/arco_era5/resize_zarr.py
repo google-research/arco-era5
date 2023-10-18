@@ -21,7 +21,7 @@ import numpy as np
 import typing as t
 
 from gcsfs import GCSFileSystem
-from arco_era5 import convert_to_date
+from .utils import convert_to_date
 
 logger = logging.getLogger(__name__)
 
