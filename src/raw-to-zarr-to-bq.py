@@ -143,9 +143,10 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"
-        logger.info(f"Data ingesting into BQ table: {table} started.")
-        ingest_data_in_bigquery_dataflow_job(z_file, table, region, zarr_kwargs)
-        logger.info(f"Data ingesting into BQ table: {table} completed.")
+        # TODO(dabhis): Find a way to ingest AR data into BQ.
+        # logger.info(f"Data ingesting into BQ table: {table} started.")
+        # ingest_data_in_bigquery_dataflow_job(z_file, table, region, zarr_kwargs)
+        # logger.info(f"Data ingesting into BQ table: {table} completed.")
     except Exception as e:
         logger.error(
             f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
