@@ -423,7 +423,7 @@ This feature is works in 4 parts.
 3. Add the all CDS licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
     > NOTE: for every API_KEY there must be unique secret-key.
 
-4. Update this all variable in [docker-file](Dockerfile).
+4. Update this all variable in [docker-file](data_automate/Dockerfile).
     * `PROJECT` 
     * `REGION`
     * `BUCKET`
@@ -441,7 +441,7 @@ This feature is works in 4 parts.
     > size of `BQ_TABLES_LIST` and `REGION_LIST` must be 6 as total 6 zarr file processed in the current pipeline.  
    
 
-5. Create docker image for this.
+5. Create docker image from this dockerfile.
 
 ```
 export PROJECT_ID=<your-project-here>
@@ -478,7 +478,7 @@ gcloud compute instances create-with-container arco-era5-raw-to-zarr-to-bq \ --p
 --metadata-from-file=startup-script=start-up.sh
 ```
 
-7. Once VM created the script will execute on `7th day of every month` as this is default set in the [cron-file](cron-file) and you can see the logs after Connect SSH of the VM.
+7. Once VM created the script will execute on `7th day of every month` as this is default set in the [cron-file](data_automate/cron-file) and you can see the logs after Connect SSH of the VM.
 > Log will be shown at this(`/var/log/cron.log`) file.
 > For better Connect SSH after 5-10 minutes of VM creation. 
 ### Making the dataset "High Resolution" & beyond...
