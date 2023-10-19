@@ -29,14 +29,6 @@ from .update_co import generate_input_paths
 logger = logging.getLogger(__name__)
 
 # File Templates
-MODELLEVEL_DIR_VAR_TEMPLATE = (
-    "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/{year:04d}/{year:04d}{month:02d}{day:02d}_hres_{chunk}.grb2_{level}_{var}.grib")
-MODELLEVEL_DIR_TEMPLATE = (
-    "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/{year:04d}/{year:04d}{month:02d}{day:02d}_hres_{chunk}.grb2")
-SINGLELEVEL_DIR_VAR_TEMPLATE = (
-    "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year:04d}/{year:04d}{month:02d}_hres_{chunk}.grb2_{level}_{var}.grib")
-SINGLELEVEL_DIR_TEMPLATE = (
-    "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year:04d}/{year:04d}{month:02d}_hres_{chunk}.grb2")
 PRESSURELEVEL_DIR_TEMPLATE = (
     "gs://gcp-public-data-arco-era5/raw/date-variable-pressure_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/{pressure}.nc")
 AR_SINGLELEVEL_DIR_TEMPLATE = (
