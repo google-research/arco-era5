@@ -19,10 +19,12 @@ import os
 import typing as t
 
 from .source_data import (
+    GCP_DIRECTORY,
     SINGLE_LEVEL_VARIABLES,
     MULTILEVEL_VARIABLES,
     PRESSURE_LEVELS_GROUPS,
 )
+from .update_co import generate_input_paths
 
 logger = logging.getLogger(__name__)
 
@@ -69,34 +71,11 @@ def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
         int: 1 if data is missing, 0 if data is available.
     """
 
-    fs = gcsfs.GCSFileSystem(project=os.environ.get('PROJECT',
-                                                    'ai-for-weather'))
-    # update above project with ai-for-weather
-    all_uri = []
-    for date in data_date_range:
-        for chunk in MODEL_LEVEL_CHUNKS:
-            if "_" in chunk:
-                chunk_, level, var = chunk.split("_")
-                all_uri.append(
-                    MODELLEVEL_DIR_VAR_TEMPLATE.format(year=date.year, month=date.month,
-                                                       day=date.day, chunk=chunk_,
-                                                       level=level, var=var))
-                continue
-            all_uri.append(
-                MODELLEVEL_DIR_TEMPLATE.format(
-                    year=date.year, month=date.month, day=date.day, chunk=chunk))
-    single_date = data_date_range[0]
-    for chunk in SINGLE_LEVEL_CHUNKS:
-        if "_" in chunk:
-            chunk_, level, var = chunk.split("_")
-            all_uri.append(
-                SINGLELEVEL_DIR_VAR_TEMPLATE.format(
-                    year=single_date.year, month=single_date.month, chunk=chunk_,
-                    level=level, var=var))
-            continue
-        all_uri.append(
-            SINGLELEVEL_DIR_TEMPLATE.format(
-                year=single_date.year, month=single_date.month, chunk=chunk))
+    fs = gcsfs.GCSFileSystem()
+    start_date = data_date_range[0].strftime("%Y/%m/%d")
+    end_date = data_date_range[-1].strftime("%Y/%m/%d")
+    all_uri = generate_input_paths(start_date, end_date, GCP_DIRECTORY, MODEL_LEVEL_CHUNKS)
+    all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, SINGLE_LEVEL_CHUNKS, True))
 
     for date in data_date_range:
         for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:

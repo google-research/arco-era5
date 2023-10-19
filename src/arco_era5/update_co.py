@@ -21,13 +21,14 @@ import tempfile
 import zarr
 
 import apache_beam as beam
-import pandas as pd
 import typing as t
 import xarray as xr
 
 from contextlib import contextmanager
 from dataclasses import dataclass
 from itertools import product
+
+from .utils import date_range
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[st
         t.List: List of file urls to process.
     """
     input_paths = []
-    for time, chunk in product(pd.date_range(start, end, freq="MS" if is_single_level else "D"), chunks):
+    for time, chunk in product(date_range(start, end, freq="MS" if is_single_level else "D"), chunks):
         if is_single_level:
             url = f"{root_path}/{SINGLE_LEVEL_SUBDIR_TEMPLATE.format(year=time.year, month=time.month, day=time.day, chunk=chunk)}"
         else:

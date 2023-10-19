@@ -138,7 +138,7 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         logger.info(f"Resizing zarr file: {z_file} completed.")
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         PROJECT, BUCKET, PYTHON_PATH)
+                                         project=PROJECT, bucket=BUCKET, python_path=PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '

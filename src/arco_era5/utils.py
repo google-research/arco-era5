@@ -24,7 +24,7 @@ import typing as t
 logger = logging.getLogger(__name__)
 
 
-def date_range(start_date: str, end_date: str) -> t.List[datetime.datetime]:
+def date_range(start_date: str, end_date: str, freq: str = "D") -> t.List[datetime.datetime]:
     """Generates a list of datetime objects within a given date range.
 
     Args:
@@ -36,7 +36,7 @@ def date_range(start_date: str, end_date: str) -> t.List[datetime.datetime]:
     """
     return [
         ts.to_pydatetime()
-        for ts in pd.date_range(start=start_date, end=end_date, freq="D").to_list()
+        for ts in pd.date_range(start=start_date, end=end_date, freq=freq).to_list()
     ]
 
 
