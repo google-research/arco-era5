@@ -156,7 +156,7 @@ if __name__ == "__main__":
     try:
         parsed_args, unknown_args = parse_arguments_raw_to_zarr_to_bq("Parse arguments.")
 
-        logger.info("Program is started.")
+        logger.info(f"Automatic update for ARCO-ERA5 started for {dates_data['sl_month']}.")
         data_date_range = date_range(
             dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
         )
@@ -171,28 +171,29 @@ if __name__ == "__main__":
             secret_key_value = get_secret(secret_key)
             additional_content += f'parameters.api{count}\n\
                 api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
-
+        logger.info("Config file updation started.")
         update_config_file(DIRECTORY, FIELD_NAME, additional_content)
-        logger.info("Raw data downloading start.")
+        logger.info("Config file updation completed.")
+        logger.info("Raw data downloading started.")
         raw_data_download_dataflow_job()
         logger.info("Raw data downloaded successfully.")
 
-        logger.info("Raw data Splitting start.")
+        logger.info("Raw data Splitting started.")
         data_splitting_dataflow_job(
             dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
-        data_is_missing = True  # Initialize with a non-zero value
+        data_is_missing = True
         while data_is_missing:
             data_is_missing = check_data_availability(data_date_range)
             if data_is_missing:
                 logger.warning("Data is missing.")
                 raw_data_download_dataflow_job()
-        logger.info("Data availability check completed.")
+        logger.info("Data availability check completed successfully.")
 
         remove_licenses_from_directory(DIRECTORY, len(API_KEY_LIST))
-        logger.info("All licenses remove from the config file.")
+        logger.info("All licenses removed from the config file.")
         with ThreadPoolExecutor(max_workers=8) as tp:
             for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
                                              REGION_LIST):
@@ -200,7 +201,6 @@ if __name__ == "__main__":
                           dates_data["first_day_third_prev"],
                           dates_data["last_day_third_prev"], parsed_args.init_date)
 
-        logger.info("All data ingested into BQ.")
-
+        logger.info(f"Automatic update for ARCO-ERA5 completed for {dates_data['sl_month']}.")
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")

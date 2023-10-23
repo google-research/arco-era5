@@ -40,8 +40,16 @@ def date_range(start_date: str, end_date: str, freq: str = "D") -> t.List[dateti
     ]
 
 
-def replace_non_alphanumeric_with_hyphen(input_string):
-    # Use a regular expression to replace non-alphanumeric characters with hyphens
+def replace_non_alphanumeric_with_hyphen(input_string: str) -> str:
+    """
+    Replace non-alphanumeric characters with hyphens in the input string.
+
+    Args:
+        input_string (str): The input string to process.
+
+    Returns:
+        str: The processed string with non-alphanumeric characters replaced by hyphens.
+    """
     return re.sub(r'[^a-z0-9-]', '-', input_string)
 
 

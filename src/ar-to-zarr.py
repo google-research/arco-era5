@@ -26,10 +26,10 @@ subsequent years by:
 
 Example usage:
 
-    Create a single Zarr dataset from ERA5 NetCDF files
+    Create a single Zarr dataset from ERA5 NetCDF files.
 
     ```
-    python src/netcdf_to_zarr.py \
+    python src/ar-to-zarr.py \
       --output_path="gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \
@@ -49,10 +49,10 @@ Example usage:
       --number_of_worker_harness_threads 20
     ```
 
-    Generate zarr store from init_date and fill data from start_date. Default init_date will be 1900-01-01
+    Generate zarr store from init_date and fill data from start_date. Default init_date will be 1900-01-01.
 
     ```
-    python src/netcdf_to_zarr.py \
+    python src/ar-to-zarr.py \
       --output_path="gs://gcp-public-data-arco-era5/ar/$USER-1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \
@@ -78,7 +78,7 @@ Example usage:
     will be loaded.
 
     ```
-    python src/netcdf_to_zarr.py \
+    python src/ar-to-zarr.py \
       --output_path="gs://gcp-public-data-arco-era5/ar/$USER-1959-2022-full_37-1h-0p25deg-chunk-1.zarr-v2" \
       --pressure_levels_group="full_37" \
       --time_chunk_size=1 \

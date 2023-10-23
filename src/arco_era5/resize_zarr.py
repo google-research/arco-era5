@@ -25,6 +25,8 @@ from .utils import convert_to_date
 
 logger = logging.getLogger(__name__)
 
+TIME_DIMS = ["time", "valid_time"]
+
 
 def consolidate_metadata(url: str, existing: str, total: str,
                          metadata_key: str = '.zmetadata',
@@ -36,7 +38,7 @@ def consolidate_metadata(url: str, existing: str, total: str,
     Args:
         url (str): The URL of the Zarr dataset.
         existing (str): The existing value of 'time' to be replaced.
-        total (str): The new value of 'time' to be replace with the existing one.
+        total (str): The new value of 'time' to be replaced with the existing one.
         metadata_key (str): The key for the metadata file (default is '.zmetadata').
         overwrite_time_chunk (bool): If True, the 'time' chunk information will be overwritten,
             otherwise, it will be preserved.
@@ -85,7 +87,6 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
     Returns:
         None
     """
-    TIME_DIMS = ["time", "valid_time"]
     zf = zarr.open(target_store)
     data_vars = list(set(zf.keys()) - gather_coordinate_dimensions(zf))
 
@@ -97,11 +98,8 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
 
     if existing != total:
         if '/ar/' in target_store:
-            logger.info(f"Time resize for {target_store} of AR data.")
             zf_time.append(list(range(existing, total)))
         else:
-            logger.info(f"Time resize for {target_store} of CO data.")
-
             for dim in TIME_DIMS:
                 arr = zf[dim]
                 attrs = dict(arr.attrs)
@@ -115,36 +113,37 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
                     shape_arr[0] = 1
                     time_range = data
 
-                new = zf.array(dim, time_range,
-                               chunks=shape_arr if dim == 'valid_time' and interval == 2 else total,
-                               dtype=arr.dtype,
-                               compressor=arr.compressor,
-                               fill_value=arr.fill_value,
-                               order=arr.order,
-                               filters=arr.filters,
-                               overwrite=True,)
+                new = zf.array(
+                    dim,
+                    time_range,
+                    chunks=shape_arr if dim == 'valid_time' and interval == 2 else total,
+                    dtype=arr.dtype,
+                    compressor=arr.compressor,
+                    fill_value=arr.fill_value,
+                    order=arr.order,
+                    filters=arr.filters,
+                    overwrite=True,
+                )
                 init_date_obj = init_date
                 if interval == 2:
-                    init_date_obj = datetime.datetime.strptime(init_date_obj, '%Y-%m-%d')
-                    + datetime.timedelta(hours=6)
+                    init_date_obj = datetime.datetime.strptime(init_date_obj, '%Y-%m-%d') + datetime.timedelta(hours=6)
 
                 attrs.update({'units': f"hours since {init_date_obj}"})
                 new.attrs.update(attrs)
 
-        logger.info(f"Consolidated Time for {target_store}.")
+        logger.info(f"Time Consolidated for {target_store}.")
         for vname in data_vars:
             var = zf[vname]
             if "time" in var.attrs["_ARRAY_DIMENSIONS"]:
                 shape = list(var.shape)
                 shape[0] = total
                 zf[vname].resize(*shape)
-        logger.info(f"Resized data vars of {target_store}.")
+        logger.info(f"All data vars of {target_store} are resized.")
 
-        if '/ar' in target_store:
-            consolidate_metadata(target_store, existing, total,
-                                 overwrite_time_chunk=False)
+        if '/ar/' in target_store:
+            consolidate_metadata(target_store, existing, total, overwrite_time_chunk=False)
         else:
             consolidate_metadata(target_store, existing, total)
-        logger.info(f"Consolidation of {target_store} is done.")
+        logger.info(f"Consolidation of {target_store} is completed.")
     else:
         logger.info(f"Data is already resized for {target_store}.")

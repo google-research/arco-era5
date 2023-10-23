@@ -14,7 +14,6 @@
 import datetime
 import gcsfs
 import logging
-import os
 
 import typing as t
 

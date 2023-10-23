@@ -396,7 +396,7 @@ From here, we provide examples of how to run the recipes at the top of each scri
 
 ```shell
 pydoc src/single-levels-to-zarr.py
-pydoc src/netcdf_to_zarr.py
+pydoc src/ar-to-zarr.py
 ```
 
 You can also discover available command line options by invoking the script with `-h/--help`:
@@ -410,17 +410,14 @@ This feature is works in 4 parts.
  1. Acquiring raw data from CDS, facilitated by [`weather-dl`](https://weather-tools.readthedocs.io/en/latest/weather_dl/README.html) tool.
  2. Splitting raw data using [`weather-sp`](https://weather-tools.readthedocs.io/en/latest/weather_sp/README.html).
  3. Ingest this splitted data into a zarr file.
- 4. Ingest this data into BigQuery with the assistance of the [`weather-mv`](https://weather-tools.readthedocs.io/en/latest/weather_mv/README.html).
+ 4. Ingest [`AR`](gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3) data into BigQuery with the assistance of the [`weather-mv`](https://weather-tools.readthedocs.io/en/latest/weather_mv/README.html).
 
 #### How to Run.
 1. Set up a Cloud project with sufficient permissions to use cloud storage (such as [GCS](https://cloud.google.com/storage)) and a Beam runner (such as [Dataflow](https://cloud.google.com/dataflow)).
     > Note: Other cloud systems should work too, such as S3 and Elastic Map Reduce. However, these are untested. If you
     > experience an error here, please let us know by [filing an issue](https://github.com/google/weather-tools/issues).
 2. Acquire one or more licenses from [Copernicus](https://cds.climate.copernicus.eu/user/register?destination=/api-how-to).
-    > Recommended: Download configs allow users to specify multiple API keys in a single data request via
-    > ["parameter subsections"](https://weather-tools.readthedocs.io/en/latest/Configuration.html#subsections). We
-    > highly recommend that institutions pool licenses together for faster downloads.
-3. Add the all CDS licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
+3. Add the all `Copernicus` licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
     > NOTE: for every API_KEY there must be unique secret-key.
 
 4. Update this all variable in [docker-file](data_automate/Dockerfile).
@@ -440,8 +437,9 @@ This feature is works in 4 parts.
     ```'["us-east1", "us-west4",..., "us-west2"]'```.  
     > size of `BQ_TABLES_LIST` and `REGION_LIST` must be 6 as total 6 zarr file processed in the current pipeline.  
    
+5. update this all changes into 1 github branch and update `main` of this line(`ARG arco_era5_git_rev=main`) with that branch-name of the [docker-file](data_automate/Dockerfile).
 
-5. Create docker image from this dockerfile.
+6. Create docker image.
 
 ```
 export PROJECT_ID=<your-project-here>
@@ -450,7 +448,7 @@ export REPO=<repo> eg:arco-era5-raw-to-zarr-to-bq
 gcloud builds submit . --tag "gcr.io/$PROJECT_ID/$REPO:latest" 
 ```
 
-6. Create a VM using above created docker-image
+7. Create a VM using above created docker-image
 ```
 export ZONE=<zone> eg: us-central1-a
 export SERVICE_ACCOUNT=<service account> # Let's keep this as Compute Engine Default Service Account
@@ -478,9 +476,9 @@ gcloud compute instances create-with-container arco-era5-raw-to-zarr-to-bq \ --p
 --metadata-from-file=startup-script=start-up.sh
 ```
 
-7. Once VM created the script will execute on `7th day of every month` as this is default set in the [cron-file](data_automate/cron-file) and you can see the logs after Connect SSH of the VM.
+8. Once VM is created, the script will execute on `7th day of every month` as this is default set in the [cron-file](data_automate/cron-file).Also you can see the logs after connecting to VM through SSH.
 > Log will be shown at this(`/var/log/cron.log`) file.
-> For better Connect SSH after 5-10 minutes of VM creation. 
+> Better if we SSH after 5-10 minutes of VM creation. 
 ### Making the dataset "High Resolution" & beyond...
 
 This phase of the project is under active development! If you would like to lend a hand in any way, please check out our

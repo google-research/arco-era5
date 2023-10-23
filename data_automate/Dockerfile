@@ -43,15 +43,15 @@ WORKDIR /arco-era5
 RUN git checkout "${arco_era5_git_rev}"
 RUN pip install -e .
 
-ENV PROJECT='PROJECT'
-ENV REGION='REGION'
-ENV BUCKET='BUCKET_NAME'
-ENV MANIFEST_LOCATION='xxxx'
+ENV PROJECT='<PROJECT_ID>''
+ENV REGION='<REGION>'
+ENV BUCKET='<BUCKET_NAME>'
+ENV MANIFEST_LOCATION='fs://manifest?projectId=PROJECT_ID'
 ENV API_KEY_1='projects/PROJECT/secrets/SECRET_NAME/versions/1'
 ENV API_KEY_2='projects/PROJECT/secrets/SECRET_NAME/versions/1'
-ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
 ENV BQ_TABLES_LIST='["xxx", "yyyy"]'
 ENV REGION_LIST='["xxx", "yyyy"]'
+ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
 
 RUN apt-get update && apt-get -y install cron vim
 COPY cron-file /etc/cron.d/crontab
