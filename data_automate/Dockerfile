@@ -43,7 +43,7 @@ WORKDIR /arco-era5
 RUN git checkout "${arco_era5_git_rev}"
 RUN pip install -e .
 
-ENV PROJECT='<PROJECT_ID>''
+ENV PROJECT='<PROJECT_ID>'
 ENV REGION='<REGION>'
 ENV BUCKET='<BUCKET_NAME>'
 ENV MANIFEST_LOCATION='fs://manifest?projectId=PROJECT_ID'
