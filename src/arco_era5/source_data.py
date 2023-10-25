@@ -696,9 +696,6 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='Start date, iso format string.')
     parser.add_argument('-e', "--end_date", default='2020-01-02',
                         help='End date, iso format string.')
-    parser.add_argument('--find-missing', action='store_true', default=False,
-                        help='Print all paths to missing input data.')
-    # implementation of above flag is pending.
     parser.add_argument("--pressure_levels_group", type=str, default="weatherbench_13",
                         help="Group label for the set of pressure levels to use.")
     parser.add_argument("--time_chunk_size", type=int, required=True,
