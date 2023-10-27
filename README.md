@@ -420,7 +420,7 @@ This feature is works in 4 parts.
 3. Add the all `Copernicus` licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
     > NOTE: for every API_KEY there must be unique secret-key.
 
-4. Update this all variable in [docker-file](data_automate/Dockerfile).
+4. Update all of these variable in [docker-file](data_automate/Dockerfile).
     * `PROJECT` 
     * `REGION`
     * `BUCKET`
@@ -437,9 +437,7 @@ This feature is works in 4 parts.
     ```'["us-east1", "us-west4",..., "us-west2"]'```.  
     > size of `BQ_TABLES_LIST` and `REGION_LIST` must be 6 as total 6 zarr file processed in the current pipeline.  
    
-5. update this all changes into 1 github branch and update `main` of this line(`ARG arco_era5_git_rev=main`) with that branch-name of the [docker-file](data_automate/Dockerfile).
-
-6. Create docker image.
+5. Create docker image.
 
 ```
 export PROJECT_ID=<your-project-here>

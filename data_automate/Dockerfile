@@ -37,7 +37,7 @@ RUN apt-get update -y
 RUN gcloud components install alpha --quiet
 
 # Clone the arco-era5 and add dependency into the environment.
-ARG arco_era5_git_rev=bq-automate
+ARG arco_era5_git_rev=main
 RUN git clone https://github.com/google-research/arco-era5.git /arco-era5
 WORKDIR /arco-era5
 RUN git checkout "${arco_era5_git_rev}"
