@@ -429,13 +429,13 @@ This feature is works in 4 parts.
     * `BQ_TABLES_LIST`
     * `REGION_LIST` 
     
-    > Here, API_KEY_* is access of [secret-manager key](https://cloud.google.com/secret-manager) and it's value is looks like this :: ```projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1```  
-    > NOTE: API_KEY is must follow this format: `API_KEY_*`. here * is any value.  
-    > Here, `BQ_TABLES_LIST` is list of the BigQuery table in which data is ingested and it's value is like this :: 
+     > * In case of multiple API keys, API_KEY must follow this format: `API_KEY_*`. here * can be numeric value i.e. 1, 2. 
+    > * API_KEY_* value is the resource name of [secret-manager key](https://cloud.google.com/secret-manager) and it's value looks like this :: ```projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1```  
+    > * `BQ_TABLES_LIST` is list of the BigQuery table in which data is ingested and it's value is like this :: 
     ```'["PROJECT.DATASET.TABLE1", "PROJECT.DATASET.TABLE2", ..., "PROJECT.DATASET.TABLE6"]'```.  
-    > Here, `REGION_LIST` is list of the GCP_region in which the job of ingestion will run :: 
+    > * `REGION_LIST` is list of the GCP_region in which the job of ingestion will run :: 
     ```'["us-east1", "us-west4",..., "us-west2"]'```.  
-    > size of `BQ_TABLES_LIST` and `REGION_LIST` must be 6 as total 6 zarr file processed in the current pipeline.  
+    > * Size of `BQ_TABLES_LIST` and `REGION_LIST` must be **6** as total 6 zarr file processed in the current pipeline and also, data ingestion in Bigquery are corresponding to `ZARR_FILES_LIST` of [raw-to-zarr-to-bq.py](/arco-era5/src/raw-to-zarr-to-bq.py) so add table name in `BQ_TABLES_LIST` accordingly.
    
 5. Create docker image.
 
