@@ -38,7 +38,8 @@ Examples:
 
     Perform the conversion for the moisture dataset...
     ```
-    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr gs://$BUCKET/ml-moist-cache/ \
+    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr \
+     gs://$BUCKET/ml-moist-cache/ \
      --start 1979-01-01 \
      --end 2021-08-31 \
      --chunks o3q qrqs \
@@ -57,7 +58,8 @@ Examples:
     ```
     Perform the conversion for the wind dataset...
     ```
-    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-wind.zarr gs://$BUCKET/ml-wind-cache/ \
+    python src/model-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/model-level-wind.zarr \
+     gs://$BUCKET/ml-wind-cache/ \
      --start 1979-01-01 \
      --end 2021-08-31 \
      --chunks dve tw \

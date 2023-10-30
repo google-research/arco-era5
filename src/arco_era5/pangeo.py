@@ -46,6 +46,7 @@ def normalize_path(path: str) -> str:
     parsed_output = parse.urlparse(path)
     return f'{parsed_output.netloc}{parsed_output.path}'
 
+
 def check_url(url):
     """Check if a given URL has the 'gs' scheme (Google Cloud Storage).
 
@@ -63,6 +64,7 @@ def check_url(url):
     """
     parsed_gcs_path = parse.urlparse(url)
     return parsed_gcs_path.scheme == 'gs'
+
 
 def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         parsed_args: argparse.Namespace, other_args: t.List[str]):
@@ -82,7 +84,7 @@ def run(make_path: t.Callable[..., str], date_range: t.List[datetime.datetime],
         >>> run(make_path_function, date_range_list, parsed_arguments, other_arguments)
     """
 
-    if parsed_args.local_run and ( check_url(parsed_args.output) or check_url(parsed_args.temp) ):
+    if parsed_args.local_run and (check_url(parsed_args.output) or check_url(parsed_args.temp)):
         raise ValueError("'output' and 'temp' path must be local path.")
 
     date_dim = ConcatDim("time", date_range)
@@ -161,9 +163,10 @@ def parse_args(desc: str, default_chunks: t.List[str]) -> t.Tuple[argparse.Names
 
     Example:
         To parse command-line arguments, you can call this function like this:
-        >>> parsed_args, unknown_args = parse_args("Zarr conversion pipeline", ["time:1", "latitude:180", "longitude:360"])
+        >>> parsed_args, unknown_args = parse_args("Zarr conversion pipeline", ["time:1",
+        "latitude:180", "longitude:360"])
     """
-    
+
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('output', type=str, help='Path to output Zarr in Cloud bucket.')

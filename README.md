@@ -67,7 +67,7 @@ _Updated on 2023-08-23_
 3. [x] **Phase 2**: Produce an Analysis-Ready corpus
    1. [ ] Update GCP CPDs documentation.
    2. [ ] Create walkthrough notebooks.
-4. WIP **Phase 3**: Automatic dataset updates, data is back-fillable.
+4. [x] **Phase 3**: Automatic dataset updates, data is back-fillable.
 5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
 6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
     1. [ ] Regrid datasets to lat/long grids.
@@ -77,7 +77,7 @@ _Updated on 2023-08-23_
 
 ## Data Description
 
-As of 2023-08-29, all data spans the dates `1940-01-01/to/2023-05-31` (inclusive).
+As of 2023-10-13, all data spans the dates `1940-01-01/to/2023-07-31` (inclusive).
 
 Whenever possible, we have chosen to represent parameters by their native grid resolution.
 See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
@@ -98,7 +98,7 @@ ml_wind = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `Spectral Harmonic Coefficients`
   ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
-* _Size_: 305.89 TiB
+* _Size_: 974.14 TiB
 
 <details>
 <summary>Data summary table</summary>
@@ -130,7 +130,7 @@ ml_moisture = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 2045.97 TiB
+* _Size_: 2252.61 TiB
 
 
 <details>
@@ -164,7 +164,7 @@ ml_surface = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `Spectral Harmonic Coefficients`
   ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
-* _Size_: 3.23 TiB
+* _Size_: 3.55 TiB
 
 
 <details>
@@ -193,7 +193,7 @@ sl_reanalysis = xr.open_zarr(
 * _Times_: `00/to/23`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 81.07 TiB
+* _Size_: 89.26 TiB
 
 
 <details>
@@ -260,7 +260,7 @@ sl_forecasts = xr.open_zarr(
 * _Steps_: `0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18`
 * _Grid_: `N320`,
   a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 70.94 TiB
+* _Size_: 78.10 TiB
  
 <details>
 <summary>Data summary table</summary>
@@ -303,7 +303,7 @@ ar_full_37_1h = xr.open_zarr(
 
 * _Times_: `00/to/23`
 * _Levels_: `1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000`
-* _Size_: 486.03 TiB
+* _Size_: 3009.74 TiB
 
 
 <details>
@@ -396,7 +396,7 @@ From here, we provide examples of how to run the recipes at the top of each scri
 
 ```shell
 pydoc src/single-levels-to-zarr.py
-pydoc src/netcdf_to_zarr.py
+pydoc src/ar-to-zarr.py
 ```
 
 You can also discover available command line options by invoking the script with `-h/--help`:
@@ -405,6 +405,78 @@ You can also discover available command line options by invoking the script with
 python src/model-levels-to-zarr.py --help
 ```
 
+### Automating dataset Updates in zarr and BigQuery
+This feature is works in 4 parts.
+ 1. Acquiring raw data from CDS, facilitated by [`weather-dl`](https://weather-tools.readthedocs.io/en/latest/weather_dl/README.html) tool.
+ 2. Splitting raw data using [`weather-sp`](https://weather-tools.readthedocs.io/en/latest/weather_sp/README.html).
+ 3. Ingest this splitted data into a zarr file.
+ 4. [**WIP**] Ingest [`AR`](gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3) data into BigQuery with the assistance of the [`weather-mv`](https://weather-tools.readthedocs.io/en/latest/weather_mv/README.html).
+
+#### How to Run.
+1. Set up a Cloud project with sufficient permissions to use cloud storage (such as [GCS](https://cloud.google.com/storage)) and a Beam runner (such as [Dataflow](https://cloud.google.com/dataflow)).
+    > Note: Other cloud systems should work too, such as S3 and Elastic Map Reduce. However, these are untested. If you
+    > experience an error here, please let us know by [filing an issue](https://github.com/google/weather-tools/issues).
+2. Acquire one or more licenses from [Copernicus](https://cds.climate.copernicus.eu/user/register?destination=/api-how-to).
+3. Add the all `Copernicus` licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
+    > NOTE: for every API_KEY there must be unique secret-key.
+
+4. Update all of these variable in [docker-file](data_automate/Dockerfile).
+    * `PROJECT` 
+    * `REGION`
+    * `BUCKET`
+    * `MANIFEST_LOCATION`
+    * `API_KEY_*`
+    * `BQ_TABLES_LIST`
+    * `REGION_LIST` 
+    
+     > * In case of multiple API keys, API_KEY must follow this format: `API_KEY_*`. here * can be numeric value i.e. 1, 2. 
+    > * API_KEY_* value is the resource name of [secret-manager key](https://cloud.google.com/secret-manager) and it's value looks like this :: ```projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1```  
+    > * `BQ_TABLES_LIST` is list of the BigQuery table in which data is ingested and it's value is like this :: 
+    ```'["PROJECT.DATASET.TABLE1", "PROJECT.DATASET.TABLE2", ..., "PROJECT.DATASET.TABLE6"]'```.  
+    > * `REGION_LIST` is list of the GCP_region in which the job of ingestion will run :: 
+    ```'["us-east1", "us-west4",..., "us-west2"]'```.  
+    > * Size of `BQ_TABLES_LIST` and `REGION_LIST` must be **6** as total 6 zarr file processed in the current pipeline and also, data ingestion in Bigquery are corresponding to `ZARR_FILES_LIST` of [raw-to-zarr-to-bq.py](/arco-era5/src/raw-to-zarr-to-bq.py) so add table name in `BQ_TABLES_LIST` accordingly.
+   
+5. Create docker image.
+
+```
+export PROJECT_ID=<your-project-here>
+export REPO=<repo> eg:arco-era5-raw-to-zarr-to-bq
+
+gcloud builds submit . --tag "gcr.io/$PROJECT_ID/$REPO:latest" 
+```
+
+7. Create a VM using above created docker-image
+```
+export ZONE=<zone> eg: us-central1-a
+export SERVICE_ACCOUNT=<service account> # Let's keep this as Compute Engine Default Service Account
+export IMAGE_PATH=<container-image-path> # The above created image-path
+
+gcloud compute instances create-with-container arco-era5-raw-to-zarr-to-bq \ --project=$PROJECT_ID \
+--zone=$ZONE \
+--machine-type=n2-standard-4 \
+--network-interface=network-tier=PREMIUM,subnet=default \
+--maintenance-policy=MIGRATE \
+--provisioning-model=STANDARD \
+--service-account=$SERVICE_ACCOUNT \
+--scopes=https://www.googleapis.com/auth/cloud-platform \
+--image=projects/cos-cloud/global/images/cos-stable-109-17800-0-45 \
+--boot-disk-size=200GB \
+--boot-disk-type=pd-balanced \
+--boot-disk-device-name=arco-era5-raw-to-zarr-to-bq \
+--container-image=$IMAGE_PATH \
+--container-restart-policy=on-failure \
+--container-tty \
+--no-shielded-secure-boot \
+--shielded-vtpm \
+--shielded-integrity-monitoring \
+--labels=goog-ec-src=vm_add-gcloud,container-vm=cos-stable-109-17800-0-45 \
+--metadata-from-file=startup-script=start-up.sh
+```
+
+8. Once VM is created, the script will execute on `7th day of every month` as this is default set in the [cron-file](data_automate/cron-file).Also you can see the logs after connecting to VM through SSH.
+> Log will be shown at this(`/var/log/cron.log`) file.
+> Better if we SSH after 5-10 minutes of VM creation. 
 ### Making the dataset "High Resolution" & beyond...
 
 This phase of the project is under active development! If you would like to lend a hand in any way, please check out our

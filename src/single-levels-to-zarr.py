@@ -16,7 +16,8 @@ r"""Convert Surface level Era 5 Data to an unprocessed Zarr dataset.
 Examples:
     Check if there's any missing data:
     ```
-    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr \
+     gs://$BUCKET/an-cache/ \
      --start 1979-01-01 \
      --end 2021-08-31 \
      --target-chunk '{"time": 1}' \
@@ -36,7 +37,8 @@ Examples:
 
     Perform the conversion for the reanalysis dataset...
     ```
-    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr gs://$BUCKET/an-cache/ \
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr \
+     gs://$BUCKET/an-cache/ \
      --start 1979-01-01 \
      --end 2021-08-31 \
      --target-chunk '{"time": 1}' \
@@ -54,7 +56,8 @@ Examples:
 
     Perform the conversion for the forecast dataset...
     ```
-    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr gs://$BUCKET/fc-cache/ \
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr \
+     gs://$BUCKET/fc-cache/ \
      --start 1979-01-01 \
      --end 2021-08-31 \
      --chunks rad pcp_surface_cp pcp_surface_crr pcp_surface_csf pcp_surface_csfr pcp_surface_es pcp_surface_lsf \
@@ -75,7 +78,8 @@ Examples:
 
     Perform the conversion for the surface dataset...
     ```
-    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-surface.zarr gs://$BUCKET/sfc-cache/ \
+    python src/single-levels-to-zarr.py gs://gcp-public-data-arco-era5/co/single-level-surface.zarr \
+     gs://$BUCKET/sfc-cache/ \
      --start 1979-01-01 \
      --end 2021-08-31 \
      --chunks lnsp zs \
@@ -115,7 +119,8 @@ if __name__ == "__main__":
         Returns:
             str: The generated path to the ERA5 data.
 
-        This function generates a path to ERA5 data based on the provided timestamp and variable chunk. It handles cases where chunks have been manually split into one-variable files.
+        This function generates a path to ERA5 data based on the provided timestamp and variable chunk. It handles
+        cases where chunks have been manually split into one-variable files.
 
         Example:
             >>> import datetime
@@ -138,7 +143,6 @@ if __name__ == "__main__":
             f"gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/"
             f"{time.year:04d}/{time.year:04d}{time.month:02d}_hres_{chunk}.grb2"
         )
-
 
     default_chunks = [
         'cape', 'cisst', 'sfc', 'tcol',

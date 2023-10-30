@@ -7,11 +7,11 @@ import unittest
 
 from unittest.mock import patch, MagicMock
 
-from fetch import (
+from .update_config_files import (
     new_config_file,
     get_month_range,
     get_previous_month_dates,
-    update_config_files,
+    update_config_file,
     get_secret,
 )
 
@@ -31,14 +31,11 @@ class TestFetchFunctions(unittest.TestCase):
                 time=00/to/23\nparam=138/155\n"
             )
         self.config_args = {
-            "first_day_first_prev": datetime.date(2023, 7, 1),
-            "last_day_first_prev": datetime.date(2023, 7, 31),
             "first_day_third_prev": datetime.date(2023, 5, 1),
             "last_day_third_prev": datetime.date(2023, 5, 31),
             "sl_year": "2023",
             "sl_month": "05",
-            'single_level_file': False,
-            'co_file': False
+            "year_wise_date": False
             }
         self.additional_content = "[parameters.test]\napi_url=test_url\napi_key=\
             test_key\n\n"
@@ -69,24 +66,8 @@ class TestFetchFunctions(unittest.TestCase):
         self.assertEqual(config.get(section_name, 'api_key'),
                          section_api_key)
 
-    def test_new_config_file_with_co_file(self):
-        self.config_args["co_file"] = True
-        self.config_args["single_level_file"] = False
-
-        new_config_file(
-            self.config_file, "date", self.additional_content, self.config_args)
-
-        config = configparser.ConfigParser()
-        config.read(self.config_file)
-
-        self.assertEqual(
-            config.get('selection', 'date'),
-            f'{self.config_args["first_day_first_prev"]}/to/{self.config_args["last_day_first_prev"]}'
-            )
-
     def test_new_config_file_with_single_level_file(self):
-        self.config_args["co_file"] = False
-        self.config_args["single_level_file"] = True
+        self.config_args["year_wise_date"] = True
 
         new_config_file(
             self.config_file, "date", self.additional_content, self.config_args)
@@ -107,8 +88,6 @@ class TestFetchFunctions(unittest.TestCase):
     def test_get_previous_month_dates(self):
         # Test get_previous_month_dates function
         prev_month_data = get_previous_month_dates()
-        self.assertIn("first_day_first_prev", prev_month_data)
-        self.assertIn("last_day_first_prev", prev_month_data)
         self.assertIn("first_day_third_prev", prev_month_data)
         self.assertIn("last_day_third_prev", prev_month_data)
         self.assertIn("sl_year", prev_month_data)
@@ -116,10 +95,10 @@ class TestFetchFunctions(unittest.TestCase):
 
     def test_update_config_files(self):
         # Test update_config_files function
-        update_config_files(
+        update_config_file(
             self.temp_dir.name, "date", self.additional_content)
 
-    @patch("fetch.secretmanager.SecretManagerServiceClient")
+    @patch("update_config_files.secretmanager.SecretManagerServiceClient")
     def test_get_secret_success(self, mock_secretmanager):
         secret_data = {
             "api_url": "https://example.com/api",
@@ -134,7 +113,7 @@ class TestFetchFunctions(unittest.TestCase):
         result = get_secret(secret_key)
         self.assertEqual(result, secret_data)
 
-    @patch("fetch.secretmanager.SecretManagerServiceClient")
+    @patch("update_config_files.secretmanager.SecretManagerServiceClient")
     def test_get_secret_failure(self, mock_secretmanager):
         mock_secretmanager.return_value.access_secret_version.side_effect = (
             Exception("Error retrieving secret"))

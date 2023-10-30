@@ -591,7 +591,8 @@ def get_pressure_levels_arg(pressure_levels_group: str):
 class LoadTemporalDataForDateDoFn(beam.DoFn):
     """A Beam DoFn for loading temporal data for a specific date.
 
-    This class is responsible for loading temporal data for a given date, including both single-level and pressure-level variables.
+    This class is responsible for loading temporal data for a given date, including both
+    single-level and pressure-level variables.
     Args:
         data_path (str): The path to the data source.
         start_date (str): The start date in ISO format (YYYY-MM-DD).
@@ -695,8 +696,6 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='Start date, iso format string.')
     parser.add_argument('-e', "--end_date", default='2020-01-02',
                         help='End date, iso format string.')
-    parser.add_argument('--find-missing', action='store_true', default=False,
-                        help='Print all paths to missing input data.')  # implementation pending
     parser.add_argument("--pressure_levels_group", type=str, default="weatherbench_13",
                         help="Group label for the set of pressure levels to use.")
     parser.add_argument("--time_chunk_size", type=int, required=True,

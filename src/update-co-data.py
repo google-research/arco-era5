@@ -1,8 +1,21 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import logging
 import argparse
 from typing import List, Tuple
 import apache_beam as beam
-from arco_era5 import GenerateOffset, COUpdateSlice, GCP_DIRECTORY, daily_date_iterator, generate_input_paths
+from arco_era5 import GenerateOffset, COUpdateSlice, GCP_DIRECTORY, generate_input_paths
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -26,6 +39,7 @@ single_level_default_chunks = [
     'soil_surface_tsn',
 ]
 
+
 def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
     parser = argparse.ArgumentParser(description=desc)
 
@@ -45,6 +59,7 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
 
     return parser.parse_known_args()
 
+
 if __name__ == '__main__':
     known_args, unknown_args = parse_args('Convert Era 5 Model Level data to Zarr')
 
@@ -54,13 +69,16 @@ if __name__ == '__main__':
         if known_args.chunks == model_level_default_chunks:
             known_args.chunks = single_level_default_chunks
 
-    files = generate_input_paths(known_args.start_date, known_args.end_date, GCP_DIRECTORY, known_args.chunks, is_single_level=is_single_level)
-    
+    files = generate_input_paths(known_args.start_date, known_args.end_date, GCP_DIRECTORY,
+                                 known_args.chunks, is_single_level=is_single_level)
+
     with beam.Pipeline(argv=unknown_args) as p:
         paths = (
             p
             | "Create" >> beam.Create(files)
-            | "GenerateOffset" >> GenerateOffset(init_date=known_args.init_date, is_single_level=is_single_level, timestamps_per_file=known_args.time_per_day)
+            | "GenerateOffset" >> GenerateOffset(
+                init_date=known_args.init_date, is_single_level=is_single_level,
+                timestamps_per_file=known_args.time_per_day)
             | "Reshuffle" >> beam.Reshuffle()
             | "UpdateSlice" >> COUpdateSlice(target=known_args.output_path)
         )
