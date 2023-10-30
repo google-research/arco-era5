@@ -143,7 +143,8 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"
-        # TODO(dabhis): Find a way to ingest AR data into BQ.
+        # TODO([#414](https://github.com/google/weather-tools/issues/414)): Faster ingestion into BQ by converting 
+        # the chunk into pd.Dataframe
         # logger.info(f"Data ingesting into BQ table: {table} started.")
         # ingest_data_in_bigquery_dataflow_job(z_file, table, region, zarr_kwargs)
         # logger.info(f"Data ingesting into BQ table: {table} completed.")
