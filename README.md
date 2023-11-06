@@ -54,7 +54,7 @@ _Updated on 2023-08-23_
 
 | Location       | Type            | Description                                                                   |
 |----------------|-----------------|-------------------------------------------------------------------------------|
-| `$BUCEKT/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
+| `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 | `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/ar/`  | Analysis Ready  | An ML-ready, unified (surface & atmospheric) version of the data in Zarr.     |
 | `$BUCKET/hr/`  | High Resolution | Similar to `ar/`, but all 137 model levels are translated to pressure levels. |
