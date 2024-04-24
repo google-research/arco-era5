@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from .avro_to_bq import avro_to_bq_func
 from .data_availability import check_data_availability
 from .ingest_data_in_zarr import ingest_data_in_zarr_dataflow_job
 from .pangeo import run, parse_args

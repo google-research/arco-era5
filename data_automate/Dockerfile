@@ -37,21 +37,26 @@ RUN apt-get update -y
 RUN gcloud components install alpha --quiet
 
 # Clone the arco-era5 and add dependency into the environment.
-ARG arco_era5_git_rev=main
+ARG arco_era5_git_rev='avro-bq'
 RUN git clone https://github.com/google-research/arco-era5.git /arco-era5
 WORKDIR /arco-era5
 RUN git checkout "${arco_era5_git_rev}"
 RUN pip install -e .
 
-ENV PROJECT='<PROJECT_ID>'
-ENV REGION='<REGION>'
-ENV BUCKET='<BUCKET_NAME>'
-ENV MANIFEST_LOCATION='fs://manifest?projectId=PROJECT_ID'
-ENV API_KEY_1='projects/PROJECT/secrets/SECRET_NAME/versions/1'
-ENV API_KEY_2='projects/PROJECT/secrets/SECRET_NAME/versions/1'
-ENV BQ_TABLES_LIST='["xxx", "yyyy"]'
-ENV REGION_LIST='["xxx", "yyyy"]'
+ENV PROJECT='anthromet-ingestion'
+ENV REGION='us-west3'
+ENV BUCKET='dabhis_temp'
+ENV SDK_CONTAINER_IMAGE="gcr.io/grid-intelligence-sandbox/miniconda3-beam:weather-tools-with-aria2"
+ENV MANIFEST_LOCATION='fs://manifest?projectId=anthromet-ingestion'
+ENV API_KEY_1='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_1/versions/1'
+ENV API_KEY_2='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_2/versions/1'
 ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
+ENV BQ_TABLES_LIST='["gcp-public-data-era5.era5.ar-era5-v0", "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2", "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2", "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2", "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2", "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]'
+ENV REGION_LIST='["us-east1", "us-west4", "us-central1", "us-east4", "us-east1", "us-west4"]'
+ENV AR_RAW_AVRO_FILE='gs://gcp-public-data-era5/ar-raw-avro'
+ENV ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE='gcr.io/grid-intelligence-sandbox/era5:latest'
+ENV ZARR_AVRO_CONVERSION_NETWORK='arco-era5'
+ENV ZARR_AVRO_CONVERSION_SUBNET='regions/us-central1/subnetworks/arco-era5-subnet'
 
 RUN apt-get update && apt-get -y install cron vim
 COPY cron-file /etc/cron.d/crontab
