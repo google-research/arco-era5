@@ -1,15 +1,18 @@
 import datetime
 import numpy as np
 import typing as t
+import logging
 
 from concurrent.futures import ThreadPoolExecutor
 from gcsfs import GCSFileSystem
 from google.cloud import bigquery
 from math import ceil
 
+logger = logging.getLogger(__name__)
+
 def load_data(uris: np.ndarray, table: str, project: str):
     
-    print(f"Started for {uris[0]}:{uris[-1]} files.")
+    logger.info(f"Started for {uris[0]}:{uris[-1]} files.")
 
     client = bigquery.Client(project)
 
@@ -24,11 +27,11 @@ def load_data(uris: np.ndarray, table: str, project: str):
     )
 
     load_job.result()
-    print(f"Loaded {uris[0]}:{uris[-1]} files.")
+    logger.info(f"Loaded {uris[0]}:{uris[-1]} files.")
 
 def load_files(files: t.List[str], total: int, table: str, skip: int = 10000, project: str = "grid-intelligence-sandbox"):
     total_jobs = ceil(total / skip)
-    print(f"Performing {total_jobs} Load Jobs.")
+    logger.info(f"Performing {total_jobs} Load Jobs.")
     with ThreadPoolExecutor(max_workers=100) as executor:
         for file in np.array_split(files, total_jobs):
             executor.submit(load_data, file, table, project)
@@ -68,6 +71,7 @@ def avro_to_bq_func(input_path: str, month: str, table_name: str, project: str):
         c_files = fs.ls(f"{input_path}/{month}/", prefix='ar-')
         files = [ f"gs://{file}" for file in c_files ]
 
-    print(f"{total} files found for {month}")
+    logger.info(f"{total} files found for {month}.")
 
     load_files(files, total, table=table_name, project=project)
+    logger.info(f"load jobs are completed.")

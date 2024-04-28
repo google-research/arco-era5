@@ -13,8 +13,8 @@
 # limitations under the License.
 from .avro_to_bq import avro_to_bq_func
 from .data_availability import check_data_availability
+from .ingest_data_in_bq import ingest_data_in_bigquery_dataflow_job
 from .ingest_data_in_zarr import ingest_data_in_zarr_dataflow_job
-from .pangeo import run, parse_args
 from .resize_zarr import resize_zarr_target
 from .source_data import (
     GCP_DIRECTORY,

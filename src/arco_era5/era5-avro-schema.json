@@ -1,0 +1,1989 @@
+{
+    "type": "record",
+    "name": "era5",
+    "fields": [
+        {
+            "name": "100m_u_component_of_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "100m_v_component_of_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "10m_u_component_of_neutral_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "10m_u_component_of_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "10m_v_component_of_neutral_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "10m_v_component_of_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "10m_wind_gust_since_previous_post_processing",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "2m_dewpoint_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "2m_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "air_density_over_the_oceans",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "angle_of_sub_gridscale_orography",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "anisotropy_of_sub_gridscale_orography",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "benjamin_feir_index",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "boundary_layer_dissipation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "boundary_layer_height",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "charnock",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "clear_sky_direct_solar_radiation_at_surface",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "cloud_base_height",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "coefficient_of_drag_with_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "convective_available_potential_energy",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "convective_inhibition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "convective_precipitation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "convective_rain_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "convective_snowfall",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "convective_snowfall_rate_water_equivalent",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "downward_uv_radiation_at_the_surface",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "duct_base_height",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "eastward_gravity_wave_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "eastward_turbulent_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "evaporation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "forecast_albedo",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "forecast_logarithm_of_surface_roughness_for_heat",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "forecast_surface_roughness",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "fraction_of_cloud_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "free_convective_velocity_over_the_oceans",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "friction_velocity",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "geopotential",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "geopotential_at_surface",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "gravity_wave_dissipation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "high_cloud_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "high_vegetation_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "ice_temperature_layer_1",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "ice_temperature_layer_2",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "ice_temperature_layer_3",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "ice_temperature_layer_4",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "instantaneous_10m_wind_gust",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "instantaneous_eastward_turbulent_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "instantaneous_large_scale_surface_precipitation_fraction",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "instantaneous_moisture_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "instantaneous_northward_turbulent_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "instantaneous_surface_sensible_heat_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "k_index",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_bottom_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_depth",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_ice_depth",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_ice_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_mix_layer_depth",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_mix_layer_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_shape_factor",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "lake_total_layer_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "land_sea_mask",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "large_scale_precipitation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "large_scale_precipitation_fraction",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "large_scale_rain_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "large_scale_snowfall",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "large_scale_snowfall_rate_water_equivalent",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "latitude",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "leaf_area_index_high_vegetation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "leaf_area_index_low_vegetation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "level",
+            "type": [
+                "long",
+                "null"
+            ]
+        },
+        {
+            "name": "longitude",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "low_cloud_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "low_vegetation_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "maximum_2m_temperature_since_previous_post_processing",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "maximum_individual_wave_height",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "maximum_total_precipitation_rate_since_previous_post_processing",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_boundary_layer_dissipation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_convective_precipitation_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_convective_snowfall_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_direction_of_total_swell",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_direction_of_wind_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_eastward_gravity_wave_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_eastward_turbulent_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_evaporation_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_gravity_wave_dissipation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_large_scale_precipitation_fraction",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_large_scale_precipitation_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_large_scale_snowfall_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_northward_gravity_wave_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_northward_turbulent_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_period_of_total_swell",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_period_of_wind_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_potential_evaporation_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_runoff_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_sea_level_pressure",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_snow_evaporation_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_snowfall_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_snowmelt_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_square_slope_of_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_sub_surface_runoff_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_direct_short_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_direct_short_wave_radiation_flux_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_downward_long_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_downward_long_wave_radiation_flux_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_downward_short_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_downward_short_wave_radiation_flux_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_downward_uv_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_latent_heat_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_net_long_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_net_long_wave_radiation_flux_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_net_short_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_net_short_wave_radiation_flux_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_runoff_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_surface_sensible_heat_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_top_downward_short_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_top_net_long_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_top_net_long_wave_radiation_flux_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_top_net_short_wave_radiation_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_top_net_short_wave_radiation_flux_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_total_precipitation_rate",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_vertical_gradient_of_refractivity_inside_trapping_layer",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_vertically_integrated_moisture_divergence",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_direction",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_direction_of_first_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_direction_of_second_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_direction_of_third_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_based_on_first_moment",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_based_on_first_moment_for_swell",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_based_on_first_moment_for_wind_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_based_on_second_moment_for_swell",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_based_on_second_moment_for_wind_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_of_first_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_of_second_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_wave_period_of_third_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "mean_zero_crossing_wave_period",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "medium_cloud_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "minimum_2m_temperature_since_previous_post_processing",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "minimum_total_precipitation_rate_since_previous_post_processing",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "minimum_vertical_gradient_of_refractivity_inside_trapping_layer",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "model_bathymetry",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "near_ir_albedo_for_diffuse_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "near_ir_albedo_for_direct_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "normalized_energy_flux_into_ocean",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "normalized_energy_flux_into_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "normalized_stress_into_ocean",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "northward_gravity_wave_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "northward_turbulent_surface_stress",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "ocean_surface_stress_equivalent_10m_neutral_wind_direction",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "ocean_surface_stress_equivalent_10m_neutral_wind_speed",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "ozone_mass_mixing_ratio",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "peak_wave_period",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "period_corresponding_to_maximum_individual_wave_height",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "potential_evaporation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "potential_vorticity",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "precipitation_type",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "runoff",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "sea_ice_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "sea_surface_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "significant_height_of_combined_wind_waves_and_swell",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "significant_height_of_total_swell",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "significant_height_of_wind_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "significant_wave_height_of_first_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "significant_wave_height_of_second_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "significant_wave_height_of_third_swell_partition",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "skin_reservoir_content",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "skin_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "slope_of_sub_gridscale_orography",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "snow_albedo",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "snow_density",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "snow_depth",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "snow_evaporation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "snowfall",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "snowmelt",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "soil_temperature_level_1",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "soil_temperature_level_2",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "soil_temperature_level_3",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "soil_temperature_level_4",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "soil_type",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "specific_cloud_ice_water_content",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "specific_cloud_liquid_water_content",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "specific_humidity",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "standard_deviation_of_filtered_subgrid_orography",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "standard_deviation_of_orography",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "sub_surface_runoff",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_latent_heat_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_net_solar_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_net_solar_radiation_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_net_thermal_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_net_thermal_radiation_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_pressure",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_runoff",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_sensible_heat_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_solar_radiation_downward_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_solar_radiation_downwards",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_thermal_radiation_downward_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "surface_thermal_radiation_downwards",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "temperature_of_snow_layer",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "time",
+            "type": [
+                {
+                    "type": "long",
+                    "logicalType": "timestamp-millis"
+                },
+                "null"
+            ]
+        },
+        {
+            "name": "toa_incident_solar_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "top_net_solar_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "top_net_solar_radiation_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "top_net_thermal_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "top_net_thermal_radiation_clear_sky",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_cloud_cover",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_cloud_ice_water",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_cloud_liquid_water",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_ozone",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_rain_water",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_snow_water",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_supercooled_liquid_water",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_water",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_column_water_vapour",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_precipitation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_sky_direct_solar_radiation_at_surface",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "total_totals_index",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "trapping_layer_base_height",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "trapping_layer_top_height",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "type_of_high_vegetation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "type_of_low_vegetation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "u_component_of_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "u_component_stokes_drift",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "uv_visible_albedo_for_diffuse_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "uv_visible_albedo_for_direct_radiation",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "v_component_of_wind",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "v_component_stokes_drift",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_cloud_frozen_water_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_cloud_liquid_water_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_geopotential_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_kinetic_energy_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_mass_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_moisture_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_ozone_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_thermal_energy_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_divergence_of_total_energy_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_cloud_frozen_water_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_cloud_liquid_water_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_geopotential_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_heat_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_kinetic_energy_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_mass_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_ozone_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_total_energy_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_eastward_water_vapour_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_energy_conversion",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_kinetic_energy",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_mass_of_atmosphere",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_mass_tendency",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_cloud_frozen_water_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_cloud_liquid_water_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_geopotential_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_heat_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_kinetic_energy_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_mass_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_ozone_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_total_energy_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_northward_water_vapour_flux",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_potential_and_internal_energy",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_potential_internal_and_latent_energy",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_temperature",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_thermal_energy",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_integral_of_total_energy",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertical_velocity",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "vertically_integrated_moisture_divergence",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "volumetric_soil_water_layer_1",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "volumetric_soil_water_layer_2",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "volumetric_soil_water_layer_3",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "volumetric_soil_water_layer_4",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "wave_spectral_directional_width",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "wave_spectral_directional_width_for_swell",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "wave_spectral_directional_width_for_wind_waves",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "wave_spectral_kurtosis",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "wave_spectral_peakedness",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "wave_spectral_skewness",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "zero_degree_level",
+            "type": [
+                "float",
+                "null"
+            ]
+        },
+        {
+            "name": "data_import_time",
+            "type": [
+                {
+                    "type": "long",
+                    "logicalType": "timestamp-millis"
+                },
+                "null"
+            ]
+        },
+        {
+            "name": "data_uri",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        {
+            "name": "data_first_step",
+            "type": [
+                {
+                    "type": "long",
+                    "logicalType": "timestamp-millis"
+                },
+                "null"
+            ]
+        },
+        {
+            "name": "geo_point",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        {
+            "name": "geo_polygon",
+            "type": [
+                "string",
+                "null"
+            ]
+        }
+    ]
+}

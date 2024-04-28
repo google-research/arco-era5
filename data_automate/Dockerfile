@@ -18,6 +18,10 @@ FROM continuumio/miniconda3:latest
 # Update miniconda
 RUN conda update conda -y
 
+# Add the mamba solver for faster builds
+RUN conda install -n base conda-libmamba-solver
+RUN conda config --set solver libmamba
+
 # Clone the weather-tools and create conda env using environment.yml of weather-tools.
 ARG weather_tools_git_rev=main
 RUN git clone https://github.com/google/weather-tools.git /weather
@@ -46,7 +50,7 @@ RUN pip install -e .
 ENV PROJECT='anthromet-ingestion'
 ENV REGION='us-west3'
 ENV BUCKET='dabhis_temp'
-ENV SDK_CONTAINER_IMAGE="gcr.io/grid-intelligence-sandbox/miniconda3-beam:weather-tools-with-aria2"
+ENV SDK_CONTAINER_IMAGE="gcr.io/grid-intelligence-sandbox/arco-era5:model"
 ENV MANIFEST_LOCATION='fs://manifest?projectId=anthromet-ingestion'
 ENV API_KEY_1='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_1/versions/1'
 ENV API_KEY_2='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_2/versions/1'
@@ -54,7 +58,7 @@ ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
 ENV BQ_TABLES_LIST='["gcp-public-data-era5.era5.ar-era5-v0", "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2", "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2", "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2", "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2", "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]'
 ENV REGION_LIST='["us-east1", "us-west4", "us-central1", "us-east4", "us-east1", "us-west4"]'
 ENV AR_RAW_AVRO_FILE='gs://gcp-public-data-era5/ar-raw-avro'
-ENV ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE='gcr.io/grid-intelligence-sandbox/era5:latest'
+ENV ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE='gcr.io/gcp-public-data-era5/era5:latest'
 ENV ZARR_AVRO_CONVERSION_NETWORK='arco-era5'
 ENV ZARR_AVRO_CONVERSION_SUBNET='regions/us-central1/subnetworks/arco-era5-subnet'
 

@@ -25,7 +25,8 @@ import xarray_beam as xbeam
 
 from apache_beam.utils import retry
 from xarray.core.utils import ensure_us_time_resolution
-from .utils import replace_non_alphanumeric_with_hyphen
+from arco_era5 import replace_non_alphanumeric_with_hyphen
+
 logger = logging.getLogger(__name__)
 
 input_chunks = {"time": 1, "level": 1, "latitude": 200, "longitude": 400}
@@ -232,7 +233,7 @@ def run_pipeline(ds: xr.Dataset, month: str, input_chunks: t.Dict, output: str, 
 
     ds = ds.sel(time=month)
 
-    avro_scheam = json.load(open("era5-avro-schema.json"))
+    avro_scheam = json.load(open("/arco-era5/src/arco_era5/era5-avro-schema.json"))
 
     with beam.Pipeline(argv=pipeline_args) as p:
         _ = (
@@ -249,14 +250,7 @@ if __name__ == "__main__":
     known_args, pipeline_args = parse_arguments("Update Data Slice")
 
     ds, _ = xbeam.open_zarr(known_args.uri)
-
     month = known_args.month
-    print(f"Started For {month}")
 
     pipeline_args.extend(['--job_name', f"ar-avro-generation-{replace_non_alphanumeric_with_hyphen(month)}", '--save_main_session'])
-
-    run_pipeline(ds, month, input_chunks=known_args.input_chunks, output=known_args.output, pipeline_args=pipeline_args)
-
-    print(f"Done For {month}")
-    
-
+    run_pipeline(ds, month, input_chunks, output=known_args.output, pipeline_args=pipeline_args)

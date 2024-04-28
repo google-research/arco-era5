@@ -49,7 +49,7 @@ CO_FILES_MAPPING = {
 
 def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: str,
                                      end_date: str, init_date: str, project: str,
-                                     bucket: str, python_path: str) -> None:
+                                     bucket: str, python_path: str, sdk_container_image: str) -> None:
     """Ingests data into a Zarr store and runs a Dataflow job.
 
     Args:
@@ -58,6 +58,12 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
         start_date (str): The start date in the format 'YYYY-MM-DD'.
         end_date (str): The end date in the format 'YYYY-MM-DD'.
         init_date (str): The initial date of the zarr store in the format of str.
+        project (str): The Google Cloud project ID in which this Dataflow job executed.
+        bucket (str): The Google Cloud Storage bucket where the temparory data is located.
+        python_path (str): The executable python path of the Docker container.
+        sdk_container_image (str): The Docker container image URI for the Dataflow SDK harness,
+         which includes the necessary dependencies and runtime environment for executing the 
+         Dataflow job.
 
     Returns:
         None
@@ -92,6 +98,6 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--worker_machine_type n2-highmem-8 --disk_size_gb 250 "
             f"--setup_file /arco-era5/setup.py "
             f"--job_name {job_name} --number_of_worker_harness_threads 1 "
-            f"--init_date {init_date}")
+            f"--init_date {init_date} --sdk_container_image {sdk_container_image} ")
 
     subprocess_run(command)

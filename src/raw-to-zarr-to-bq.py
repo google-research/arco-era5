@@ -19,9 +19,9 @@ import re
 
 from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
-    avro_to_bq_func,
     check_data_availability,
     date_range,
+    ingest_data_in_bigquery_dataflow_job,
     ingest_data_in_zarr_dataflow_job,
     get_previous_month_dates,
     get_secret,
@@ -41,10 +41,11 @@ FIELD_NAME = "date"
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
+SDK_CONTAINER_IMAGE = os.environ.get("SDK_CONTAINER_IMAGE")
 MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
 PYTHON_PATH = os.environ.get("PYTHON_PATH")
 AR_RAW_AVRO_FILE = os.environ.get("AR_RAW_AVRO_FILE")  # Reference: "gs://gcp-public-data-era5/ar-raw-avro"
-ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE = os.environ.get("ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE")  # Reference: gcr.io/grid-intelligence-sandbox/era5:latest
+ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE = os.environ.get("ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE")  # Reference: gcr.io/gcp-public-data-era5/era5:latest
 ZARR_AVRO_CONVERSION_NETWORK = os.environ.get("ZARR_AVRO_CONVERSION_NETWORK", "")  # Reference: arco-era5
 ZARR_AVRO_CONVERSION_SUBNET = os.environ.get("ZARR_AVRO_CONVERSION_SUBNET", "")  # Reference: regions/us-central1/subnetworks/arco-era5-subnet
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
@@ -59,7 +60,7 @@ ZARR_FILES_LIST = [
     'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
     'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2'
 ]
-BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST")) # "gcp-public-data-era5.era5.ar-era5-v0" aatlu j set karvanu for the AR.
+BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 
 ZARR_TO_AVRO_FILE_PATH = '/arco-era5/src/arco_era5/zarr_to_avro.py'
@@ -101,46 +102,10 @@ def data_splitting_dataflow_job(date: str):
         )
         commands.append(command)
 
-    with ThreadPoolExecutor() as tp:
+    with ThreadPoolExecutor(max_workers=4) as tp:
         for command in commands:
             tp.submit(subprocess_run, command)
 
-
-def ingest_data_in_bigquery_dataflow_job(zarr_file: str, data_process_month: str,
-                                         data_process_year: str, avro_file: str,
-                                         table_name: str) -> None:
-    """Ingests data of zarr file to BigQuery through AVRO file conversion.
-
-    Args:
-        zarr_file (str): The input zarr file path.
-        data_process_month (str): Month of the data which needs to convert.
-        data_process_year (str): Year of the data which needs to convert.
-        avro_file (str): The output avro file path.
-        table_name (str): The name of the BigQuery table.
-
-    Returns:
-        None
-    """
-    logger.info(f"Data conversion of {z_file} to AVRO file is : {avro_file} started.")
-
-    month_year = f'{data_process_year}/{data_process_month}'
-
-    command = (
-        f"{PYTHON_PATH} {ZARR_TO_AVRO_FILE_PATH} -i {zarr_file} -m {month_year} -o {avro_file} "
-        f"--temp_location gs://{BUCKET}/temp "
-        f"--runner DataflowRunner --project gcp-public-data-era5 --region us-central1 "
-        f"--sdk_container_image {ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE} "
-        f"--experiments use_runner_v2 --disk_size_gb 300 --machine_type n1-highmem-4 "
-        f"--no_use_public_ips --network {ZARR_AVRO_CONVERSION_NETWORK} "
-        f"--subnetwork {ZARR_AVRO_CONVERSION_SUBNET} --max_num_workers 2000"
-    )
-    subprocess_run(command)
-    logger.info(f"Data conversion of {z_file} to AVRO file is : {avro_file} completed.")
-
-    logger.info(f"Data ingesting of {avro_file} into BQ table: {table} started.")
-    avro_to_bq_func(input_path=avro_file, month=month_year,
-                    table_name=table_name, project="gcp-public-data-era5") # confirm the project name with the tyler in the above, too.
-    logger.info(f"Data ingesting of {avro_file} into BQ table: {table} completed.")
 
 def perform_data_operations(z_file: str, table: str, region: str, start_date: str,
                             end_date: str, init_date: str, data_process_month: str, data_process_year: str):
@@ -151,10 +116,15 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         logger.info(f"Resizing zarr file: {z_file} completed.")
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         project=PROJECT, bucket=BUCKET, python_path=PYTHON_PATH)
+                                         project=PROJECT, bucket=BUCKET, python_path=PYTHON_PATH,
+                                         sdk_container_image=SDK_CONTAINER_IMAGE)
         logger.info(f"Data ingesting for {z_file} is completed.")
-        if '/ar/' in z_file:
-            ingest_data_in_bigquery_dataflow_job(z_file, data_process_month, data_process_year, AR_RAW_AVRO_FILE, table)
+        
+        ingest_data_in_bigquery_dataflow_job(z_file, data_process_month, data_process_year, AR_RAW_AVRO_FILE, table,
+                                             project=PROJECT, bucket=BUCKET, python_path=PYTHON_PATH,
+                                             zarr_avro_conversion_sdk_container_image=ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE,
+                                             zarr_avro_conversion_network=ZARR_AVRO_CONVERSION_NETWORK,
+                                             zarr_avro_conversion_subnet=ZARR_AVRO_CONVERSION_SUBNET)
             
     except Exception as e:
         logger.error(
@@ -165,7 +135,7 @@ if __name__ == "__main__":
     try:
         parsed_args, unknown_args = parse_arguments_raw_to_zarr_to_bq("Parse arguments.")
 
-        logger.info(f"Automatic update for ARCO-ERA5 started for {dates_data['sl_month']}.")
+        logger.info(f"Automatic update for ARCO-ERA5 started for {dates_data['sl_month']}/{dates_data['sl_year']}.")
         data_date_range = date_range(
             dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
         )
@@ -199,6 +169,8 @@ if __name__ == "__main__":
             if data_is_missing:
                 logger.warning("Data is missing.")
                 raw_data_download_dataflow_job()
+                data_splitting_dataflow_job(
+                    dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
         remove_licenses_from_directory(DIRECTORY, len(API_KEY_LIST))
@@ -211,6 +183,6 @@ if __name__ == "__main__":
                           dates_data["last_day_third_prev"], parsed_args.init_date,
                           dates_data["sl_month"], dates_data['sl_year'])
 
-        logger.info(f"Automatic update for ARCO-ERA5 completed for {dates_data['sl_month']}.")
+        logger.info(f"Automatic update for ARCO-ERA5 completed for {dates_data['sl_month']}/{dates_data['sl_year']}.")
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
