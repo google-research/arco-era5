@@ -1,7 +1,20 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import datetime
+import logging
 import numpy as np
 import typing as t
-import logging
 
 from concurrent.futures import ThreadPoolExecutor
 from gcsfs import GCSFileSystem
@@ -12,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def load_data(uris: np.ndarray, table: str, project: str):
     
-    logger.info(f"Started for {uris[0]}:{uris[-1]} files.")
+    logger.info(f"Data loading of {uris[0]}:{uris[-1]} files are started.")
 
     client = bigquery.Client(project)
 
@@ -27,11 +40,11 @@ def load_data(uris: np.ndarray, table: str, project: str):
     )
 
     load_job.result()
-    logger.info(f"Loaded {uris[0]}:{uris[-1]} files.")
+    logger.info(f"Data Loaded of {uris[0]}:{uris[-1]} files into the BQ.")
 
-def load_files(files: t.List[str], total: int, table: str, skip: int = 10000, project: str = "grid-intelligence-sandbox"):
+def load_files(files: t.List[str], total: int, table: str, project: str, skip: int = 10000):
     total_jobs = ceil(total / skip)
-    logger.info(f"Performing {total_jobs} Load Jobs.")
+    logger.info(f"Performing {total_jobs} Load Jobs of BQ.")
     with ThreadPoolExecutor(max_workers=100) as executor:
         for file in np.array_split(files, total_jobs):
             executor.submit(load_data, file, table, project)
@@ -71,7 +84,7 @@ def avro_to_bq_func(input_path: str, month: str, table_name: str, project: str):
         c_files = fs.ls(f"{input_path}/{month}/", prefix='ar-')
         files = [ f"gs://{file}" for file in c_files ]
 
-    logger.info(f"{total} files found for {month}.")
+    logger.info(f" total {total} AVRO files found for {month}.")
 
     load_files(files, total, table=table_name, project=project)
-    logger.info(f"load jobs are completed.")
+    logger.info(f"load jobs of BQ are completed.")

@@ -13,8 +13,8 @@
 # limitations under the License.
 import logging
 
-from .utils import subprocess_run
 from .avro_to_bq import avro_to_bq_func
+from .utils import subprocess_run
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +65,8 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, data_process_month: str
         subprocess_run(command)
         logger.info(f"Data conversion of {zarr_file} to AVRO file is : {avro_file} completed.")
 
-        logger.info(f"Data ingesting of {avro_file} into BQ table: {table_name} started.")
+        logger.info(f"Data ingesting of {avro_file} to BQ table: {table_name} started.")
         avro_to_bq_func(input_path=avro_file, month=month_year,
-                        table_name=table_name, project=project) # Update this project name : gcp-public-data-era5
-        logger.info(f"Data ingesting of {avro_file} into BQ table: {table_name} completed.")
+                        table_name=table_name, project=project)
+        logger.info(f"Data ingesting of {avro_file} to BQ table: {table_name} completed.")
 

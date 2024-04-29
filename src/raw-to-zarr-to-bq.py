@@ -63,8 +63,6 @@ ZARR_FILES_LIST = [
 BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 
-ZARR_TO_AVRO_FILE_PATH = '/arco-era5/src/arco_era5/zarr_to_avro.py'
-
 dates_data = get_previous_month_dates()
 
 
