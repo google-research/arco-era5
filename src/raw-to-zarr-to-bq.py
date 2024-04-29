@@ -105,8 +105,8 @@ def data_splitting_dataflow_job(date: str):
             tp.submit(subprocess_run, command)
 
 
-def perform_data_operations(z_file: str, table: str, region: str, start_date: str,
-                            end_date: str, init_date: str, data_process_month: str, data_process_year: str):
+def perform_data_operations(z_file: str, table: str, region: str, start_date: datetime.date,
+                            end_date: datetime.date, init_date: str, data_process_month: str, data_process_year: str):
     # Function to process a single pair of z_file and table
     try:
         logger.info(f"Resizing zarr file: {z_file} started.")

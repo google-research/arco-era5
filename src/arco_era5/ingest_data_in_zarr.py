@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import datetime
 import logging
 import os
 
@@ -47,16 +48,16 @@ CO_FILES_MAPPING = {
 }
 
 
-def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: str,
-                                     end_date: str, init_date: str, project: str,
+def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: datetime.date,
+                                     end_date: datetime.date, init_date: str, project: str,
                                      bucket: str, python_path: str, sdk_container_image: str) -> None:
     """Ingests data into a Zarr store and runs a Dataflow job.
 
     Args:
         target_path (str): The target Zarr store path.
         region (str): The region in which this job will run.
-        start_date (str): The start date in the format 'YYYY-MM-DD'.
-        end_date (str): The end date in the format 'YYYY-MM-DD'.
+        start_date (datetime.date): The start date in the format 'YYYY-MM-DD'.
+        end_date (datetime.date): The end date in the format 'YYYY-MM-DD'.
         init_date (str): The initial date of the zarr store in the format of str.
         project (str): The Google Cloud project ID in which this Dataflow job executed.
         bucket (str): The Google Cloud Storage bucket where the temparory data is located.
