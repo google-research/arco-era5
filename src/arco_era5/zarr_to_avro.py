@@ -58,5 +58,5 @@ if __name__ == "__main__":
     ds, _ = xbeam.open_zarr(known_args.uri)
     month = known_args.month
 
-    pipeline_args.extend(['--job_name', f"ar-avro-generation-{replace_non_alphanumeric_with_hyphen(month)}", '--save_main_session'])
+    pipeline_args.extend(['--job_name', f"ar-avro-generation-{replace_non_alphanumeric_with_hyphen(month)}"])
     run_pipeline(ds, month, input_chunks, output=known_args.output, pipeline_args=pipeline_args)

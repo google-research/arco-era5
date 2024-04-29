@@ -41,11 +41,10 @@ FIELD_NAME = "date"
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
-SDK_CONTAINER_IMAGE = os.environ.get("SDK_CONTAINER_IMAGE")
+SDK_CONTAINER_IMAGE = os.environ.get("SDK_CONTAINER_IMAGE") # Reference: gcr.io/grid-intelligence-sandbox/arco-era5:model
 MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
 PYTHON_PATH = os.environ.get("PYTHON_PATH")
 AR_RAW_AVRO_FILE = os.environ.get("AR_RAW_AVRO_FILE")  # Reference: "gs://gcp-public-data-era5/ar-raw-avro"
-ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE = os.environ.get("ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE")  # Reference: gcr.io/gcp-public-data-era5/era5:latest
 ZARR_AVRO_CONVERSION_NETWORK = os.environ.get("ZARR_AVRO_CONVERSION_NETWORK", "")  # Reference: arco-era5
 ZARR_AVRO_CONVERSION_SUBNET = os.environ.get("ZARR_AVRO_CONVERSION_SUBNET", "")  # Reference: regions/us-central1/subnetworks/arco-era5-subnet
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
@@ -120,7 +119,7 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: da
         
         ingest_data_in_bigquery_dataflow_job(z_file, data_process_month, data_process_year, AR_RAW_AVRO_FILE, table,
                                              project=PROJECT, bucket=BUCKET, python_path=PYTHON_PATH,
-                                             zarr_avro_conversion_sdk_container_image=ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE,
+                                             sdk_container_image=SDK_CONTAINER_IMAGE,
                                              zarr_avro_conversion_network=ZARR_AVRO_CONVERSION_NETWORK,
                                              zarr_avro_conversion_subnet=ZARR_AVRO_CONVERSION_SUBNET)
             

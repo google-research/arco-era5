@@ -24,7 +24,7 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, data_process_month: str
                                          data_process_year: str, avro_file: str,
                                          table_name: str, project: str, bucket: str,
                                          python_path: str,
-                                         zarr_avro_conversion_sdk_container_image: str,
+                                         sdk_container_image: str,
                                          zarr_avro_conversion_network: str,
                                          zarr_avro_conversion_subnet: str
                                          ) -> None:
@@ -40,8 +40,8 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, data_process_month: str
         project (str): The Google Cloud project ID in which this Dataflow job executed.
         bucket (str): The Google Cloud Storage bucket where the temparory data is located.
         python_path (str): The executable python path of the Docker container.
-        zarr_avro_conversion_sdk_container_image (str): The Docker container image URI for the Dataflow SDK
-                                                          harness used for Zarr to AVRO conversion.
+        sdk_container_image (str): The Docker container image URI for the Dataflow SDK
+            harness used for Zarr to AVRO conversion.
         zarr_avro_conversion_network (str): The name of the network to be used by Dataflow for Zarr to AVRO conversion.
         zarr_avro_conversion_subnet (str): The name of the subnet to be used by Dataflow for Zarr to AVRO conversion.
 
@@ -57,10 +57,10 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, data_process_month: str
             f"{python_path} {ZARR_TO_AVRO_FILE_PATH} -i {zarr_file} -m {month_year} -o {avro_file} "
             f"--temp_location gs://{bucket}/temp "
             f"--runner DataflowRunner --project {project} --region us-central1 "
-            f"--sdk_container_image {zarr_avro_conversion_sdk_container_image} "
+            f"--sdk_container_image {sdk_container_image} "
             f"--experiments use_runner_v2 --disk_size_gb 300 --machine_type n1-highmem-4 "
             f"--no_use_public_ips --network {zarr_avro_conversion_network} "
-            f"--subnetwork {zarr_avro_conversion_subnet} --max_num_workers 2000"
+            f"--subnetwork {zarr_avro_conversion_subnet}"
         )
         subprocess_run(command)
         logger.info(f"Data conversion of {zarr_file} to AVRO file is : {avro_file} completed.")

@@ -58,7 +58,6 @@ ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
 ENV BQ_TABLES_LIST='["gcp-public-data-era5.era5.ar-era5-v0", "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2", "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2", "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2", "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2", "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]'
 ENV REGION_LIST='["us-east1", "us-west4", "us-central1", "us-east4", "us-east1", "us-west4"]'
 ENV AR_RAW_AVRO_FILE='gs://gcp-public-data-era5/ar-raw-avro'
-ENV ZARR_AVRO_CONVERSION_SDK_CONTAINER_IMAGE='gcr.io/gcp-public-data-era5/era5:latest'
 ENV ZARR_AVRO_CONVERSION_NETWORK='arco-era5'
 ENV ZARR_AVRO_CONVERSION_SUBNET='regions/us-central1/subnetworks/arco-era5-subnet'
 
