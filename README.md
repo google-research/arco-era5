@@ -660,10 +660,14 @@ This feature is works in 4 parts.
     * `PROJECT` 
     * `REGION`
     * `BUCKET`
+    * `SDK_CONTAINER_IMAGE`
     * `MANIFEST_LOCATION`
     * `API_KEY_*`
     * `BQ_TABLES_LIST`
-    * `REGION_LIST` 
+    * `REGION_LIST`
+    * `AR_RAW_AVRO_FILE`
+    * `ZARR_AVRO_CONVERSION_NETWORK`
+    * `ZARR_AVRO_CONVERSION_SUBNET`
     
      > * In case of multiple API keys, API_KEY must follow this format: `API_KEY_*`. here * can be numeric value i.e. 1, 2. 
     > * API_KEY_* value is the resource name of [secret-manager key](https://cloud.google.com/secret-manager) and it's value looks like this :: ```projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1```  
@@ -672,6 +676,8 @@ This feature is works in 4 parts.
     > * `REGION_LIST` is list of the GCP_region in which the job of ingestion will run :: 
     ```'["us-east1", "us-west4",..., "us-west2"]'```.  
     > * Size of `BQ_TABLES_LIST` and `REGION_LIST` must be **6** as total 6 zarr file processed in the current pipeline and also, data ingestion in Bigquery are corresponding to `ZARR_FILES_LIST` of [raw-to-zarr-to-bq.py](/arco-era5/src/raw-to-zarr-to-bq.py) so add table name in `BQ_TABLES_LIST` accordingly.
+    > * `AR_RAW_AVRO_FILE` is a bucket location where AVRO files are stored.
+    > * `ZARR_AVRO_CONVERSION_NETWORK` and `ZARR_AVRO_CONVERSION_SUBNET` is used for the running the dataflow job into respective network & subnet.
    
 5. Create docker image.
 

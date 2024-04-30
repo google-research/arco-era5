@@ -59,9 +59,12 @@ def ingest_data_in_bigquery_dataflow_job(zarr_file: str, data_process_month: str
             f"--runner DataflowRunner --project {project} --region us-central1 "
             f"--sdk_container_image {sdk_container_image} "
             f"--experiments use_runner_v2 --disk_size_gb 300 --machine_type n1-highmem-4 "
-            f"--no_use_public_ips --network {zarr_avro_conversion_network} "
-            f"--subnetwork {zarr_avro_conversion_subnet}"
         )
+        if zarr_avro_conversion_network and zarr_avro_conversion_subnet:
+            command = command + (
+                f"--no_use_public_ips --network {zarr_avro_conversion_network} "
+                f"--subnetwork {zarr_avro_conversion_subnet}"
+            )
         subprocess_run(command)
         logger.info(f"Data conversion of {zarr_file} to AVRO file is : {avro_file} completed.")
 

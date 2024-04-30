@@ -47,17 +47,17 @@ WORKDIR /arco-era5
 RUN git checkout "${arco_era5_git_rev}"
 RUN pip install -e .
 
-ENV PROJECT='anthromet-ingestion'
-ENV REGION='us-west3'
-ENV BUCKET='dabhis_temp'
-ENV SDK_CONTAINER_IMAGE="gcr.io/grid-intelligence-sandbox/arco-era5:model"
-ENV MANIFEST_LOCATION='fs://manifest?projectId=anthromet-ingestion'
-ENV API_KEY_1='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_1/versions/1'
-ENV API_KEY_2='projects/anthromet-ingestion/secrets/ARCO-ERA5_licence_key_2/versions/1'
+ENV PROJECT='gcp-public-data-era5'
+ENV REGION='us-central1'
+ENV BUCKET='darshan-mid-store'
+ENV SDK_CONTAINER_IMAGE="gcr.io/gcp-public-data-era5/arco-era5:latest"
+ENV MANIFEST_LOCATION='fs://manifest?projectId=gcp-public-data-era5'
+ENV API_KEY_1='projects/gcp-public-data-era5/secrets/ARCO-ERA5_licence_key_1/versions/1'
+ENV API_KEY_2='projects/gcp-public-data-era5/secrets/ARCO-ERA5_licence_key_2/versions/1'
 ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
 ENV BQ_TABLES_LIST='["gcp-public-data-era5.era5.ar-era5-v0", "grid-intelligence-sandbox.dabhis_test.model-level-moisture-v2", "grid-intelligence-sandbox.dabhis_test.model-level-wind-v2", "grid-intelligence-sandbox.dabhis_test.single-level-forecast-v2", "grid-intelligence-sandbox.dabhis_test.single-level-reanalysis-v2", "grid-intelligence-sandbox.dabhis_test.single-level-surface-v2"]'
-ENV REGION_LIST='["us-east1", "us-west4", "us-central1", "us-east4", "us-east1", "us-west4"]'
-ENV AR_RAW_AVRO_FILE='gs://gcp-public-data-era5/ar-raw-avro'
+ENV REGION_LIST='["us-central1", "us-central1", "us-central1", "us-central1", "us-central1", "us-central1"]'
+ENV AR_RAW_AVRO_FILE='gs://era5-us-central1/ar-raw-avro'
 ENV ZARR_AVRO_CONVERSION_NETWORK='arco-era5'
 ENV ZARR_AVRO_CONVERSION_SUBNET='regions/us-central1/subnetworks/arco-era5-subnet'
 
