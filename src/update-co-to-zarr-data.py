@@ -18,7 +18,7 @@ import logging
 import typing as t
 
 from arco_era5 import (
-    daily_date_iterator,
+    hourly_dates,
     LoadDataForDateDoFn,
     COMergeUpdateSlice
 )
@@ -41,11 +41,12 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
     return parser.parse_known_args()
 
 known_args, pipeline_args = parse_arguments("Update Data Slice")
+dates = hourly_dates(known_args.start_date, known_args.end_date)
 
 with beam.Pipeline(argv=pipeline_args) as p:
     path = (
         p
-        | "CreateDayIterator" >> beam.Create(daily_date_iterator(known_args.start_date, known_args.end_date))
+        | "CreateDayIterator" >> beam.Create(dates)
         | "LoadDataForDay" >> beam.ParDo(LoadDataForDateDoFn(start_date=known_args.init_date))
         | "UpdateSlice" >> COMergeUpdateSlice(target=known_args.output_path, init_date=known_args.init_date)
     )

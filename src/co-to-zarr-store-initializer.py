@@ -16,7 +16,7 @@
     Generate zarr store from init_date without data. Default init_date will be 1900-01-01.
     ```
     python src/co-to-zarr-store-initializer.py \
-      --output_path="gs://gcp-public-data-arco-era5/regrided-co/model-level-1h-0p25deg-1959-2023.zarr-v1" \
+      --output_path="gs://gcp-public-data-arco-era5/regrid-co/model-level-1h-0p25deg-1959-2023.zarr-v1" \
       --start_date '1959-01-01' \
       --end_date '2021-12-31' \
       --init_date '1800-01-01' \
@@ -32,14 +32,6 @@ import pandas as pd
 import xarray as xr
 
 from arco_era5 import _read_nc_dataset
-
-def _read_grib_dataset(gpath_file):
-    path = str(gpath_file).replace('gs:/', 'gs://')
-    # with fsspec.open(path, mode="rb") as fid:
-        # dataset = xr.open_dataset(fid, engine="cfgrib", cache=False)
-    dataset = xr.open_dataset(path, engine="cfgrib", cache=False)
-    print("dataset opened")
-    return dataset
 
 def parse_arguments(desc: str):
     parser = argparse.ArgumentParser(description=desc)
@@ -69,19 +61,19 @@ def get_var_attrs_dict():
     # The variable attributes should be independent of the date chosen here
     # so we just choose any date.
     time = datetime.datetime(2021, 1, 1)
-    file_path = ("ERA5GRIB/HRES/Daily/{time.year:04d}/{time.year:04d}{time.month:02d}{time.day:02d}_hres_{chunk}.grb2")
     file_path_for_calculated_variable = ("date-variable-pressure_level/{time.year}/{time.month:02d}/"
                                          "{time.day:02d}/{variable}/1.nc")
     var_attrs_dict = {}
-    for chunk in ['dve', 'tw', 'o3q', 'qrqs']:
-        path = file_path.format(time = time, chunk = chunk)
-        dataset = _read_grib_dataset(root_path / path)
+    dataset_paths = ['gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/', 
+                     'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/']
+    for dataset_path in dataset_paths:
+        dataset = xr.open_zarr(dataset_path)
         for var in dataset.data_vars:
             var_attrs_dict[var] = dataset[var].attrs
 
     for variable_name, file_name in calculated_variables.items():
         path = file_path_for_calculated_variable.format(time = time, variable = variable_name)
-        data_array = _read_nc_dataset(root_path / path)
+        data_array = _read_nc_dataset(f"{root_path}/{path}")
         var_attrs_dict[file_name] = data_array.attrs
 
     return var_attrs_dict
@@ -134,7 +126,7 @@ def make_template(output_path: str, start_date: str, end_date: str):
 
 def main():
     logging.getLogger().setLevel(logging.INFO)
-    known_args, _ = parse_arguments()
+    known_args, _ = parse_arguments('')
 
     output_path=known_args.output_path
     start_date=known_args.start_date

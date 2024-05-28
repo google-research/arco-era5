@@ -52,6 +52,7 @@ class LoadDataForDateDoFn(beam.DoFn):
         Args:
             start_date (str): The start date in ISO format (YYYY-MM-DD).
         """
+        logger.info("inside the init file")
         self.start_date = start_date
 
     def attribute_fix(self, ds):
@@ -73,11 +74,11 @@ class LoadDataForDateDoFn(beam.DoFn):
     def process_hourly_data(self, data_list : list):
         try:
             wind_fieldset, moisture_fieldset, surface_fieldset = data_list
-            print("data extracted.")
+            logger.info("data extracted.")
 
             wind_gg_data = mv.read(data=wind_fieldset,grid='N320')
             surface_gg_data = mv.read(data=surface_fieldset,grid='N320')
-            print(f"surface gg data is read completely for time ")
+            logger.info(f"surface gg data is read completely for time ")
             uv_wind_spectral = mv.uvwind(data=wind_fieldset,truncation=639)
             uv_wind_gg_data = mv.read(data=uv_wind_spectral,grid='N320')
             uv_wind_ll_data = mv.read(data=uv_wind_gg_data,grid=[0.25, 0.25])
@@ -88,7 +89,7 @@ class LoadDataForDateDoFn(beam.DoFn):
             zs_gg = surface_gg_data.select(shortName="z")
 
             zm_gg = mv.mvl_geopotential_on_ml(t_gg, q_gg, lnsp_gg, zs_gg)
-            print(f"pressure level calculated for ")
+            logger.info(f"pressure level calculated for ")
             del t_gg
             del q_gg
             del lnsp_gg
@@ -104,7 +105,7 @@ class LoadDataForDateDoFn(beam.DoFn):
             ll_fieldset = mv.merge(ll_fieldset, uv_wind_ll_data)
 
             dataset = ll_fieldset.to_dataset()
-            print("dataset into the try block : ", dataset)
+            logger.info("dataset into the try block : ", dataset)
             return dataset
         except BaseException as e:
             # Make sure we print the date as part of the error for easier debugging
@@ -120,65 +121,34 @@ class LoadDataForDateDoFn(beam.DoFn):
         Yields:
             tuple: A tuple containing an xarray_beam key and the loaded dataset.
         """
-        year, month, day = args
-
-        datestring=f"{year}-{month}-{day}"
-        logger.info(f"started operation for the date of {datestring}")
+        year, month, day, hour = args
+        logger.info(f"args is this : {args}")
+        current_timestamp=f"{year}-{month}-{day}T{hour:02d}"
+        logger.info(f"started operation for the date of {current_timestamp}")
         
         ml_wind = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/')
         ml_moisture = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/')
         sl_surface = xr.open_zarr('gs://gcp-public-data-arco-era5/co/single-level-surface.zarr/')
-        print("zarr file opened successfully.")
-
-        def select_hour1(hour):
-            current_timestamp = f"{datestring}T{hour:02d}"
-            wind_slice = ml_wind.sel(time=current_timestamp)
-            wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
-            print("data extracted for select hour1.", current_timestamp)
-            return wind_fieldset
-
-        def select_hour2(hour):
-            current_timestamp = f"{datestring}T{hour:02d}"
-            moisture_slice = ml_moisture.sel(time=current_timestamp)
-            moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())
-            print("data extracted for select hour2.", current_timestamp)
-            return moisture_fieldset
-
-        def select_hour3(hour):
-            current_timestamp = f"{datestring}T{hour:02d}"
-            surface_slice = sl_surface.sel(time=current_timestamp)
-            surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
-            print("data extracted for select hour3.", current_timestamp)
-            return surface_fieldset
-
-        with ThreadPoolExecutor(max_workers=12) as executor:
-            data_slices1 = list(executor.map(select_hour1, range(24)))
-        print("first one is done")
-        with ThreadPoolExecutor(max_workers=12) as executor:
-            data_slices2 = list(executor.map(select_hour2, range(24)))
-        print("second one is done")
-        with ThreadPoolExecutor(max_workers=12) as executor:
-            data_slices3 = list(executor.map(select_hour3, range(24)))
-        print("third one is also done.")
-
-        data_slices = []
-        for ds1, ds2, ds3 in zip(data_slices1, data_slices2, data_slices3):
-            data_slices.append([ds1, ds2, ds3])
-
-        print("data slices are calculated : and len is this : ", len(data_slices))
-        print(data_slices[0])
+        logger.info("zarr file opened successfully.")
+    
+        wind_slice = ml_wind.sel(time=current_timestamp).compute()
+        moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
+        surface_slice = sl_surface.sel(time=current_timestamp).compute()
+        logger.info("data slicing completed.")
         
-        with ThreadPoolExecutor(max_workers=12) as executor:
-            output_data = list(executor.map(self.process_hourly_data, data_slices))
-               
-        print("output data is this : ", output_data)
-        dataset = xr.merge(output_data)
-        print("data is merged : ", dataset)
+        wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
+        moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())
+        surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
+        logger.info("all fieldset fetched successfully.")
+        
+        dataset = self.process_hourly_data([wind_fieldset, moisture_fieldset, surface_fieldset])
+        logger.info(f"output data is this : {dataset}")
+        logger.info(f"time of the dataset is this : {dataset.time.values}")
         dataset = align_coordinates(dataset)
-        offsets = {"time": offset_along_time_axis(self.start_date, year, month, day)}
+        offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
         key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
-        print("key is this : ", key)
-        logger.info("Finished loading data for %s-%s-%s", year, month, day)
+        logger.info(f"key is this : {key}", )
+        logger.info("Finished loading data for %s-%s-%s-%s", year, month, day, hour)
         yield key, dataset
         dataset.close()
 
@@ -218,14 +188,14 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
 
     return dataset
 
-def offset_along_time_axis(start_date: str, year: int, month: int, day: int) -> int:
+def offset_along_time_axis(start_date: str, year: int, month: int, day: int, hour: int) -> int:
     """Offset in indices along the time axis, relative to start of the dataset."""
     # Note the length of years can vary due to leap years, so the chunk lengths
     # will not always be the same, and we need to do a proper date calculation
     # not just multiply by 365*24.
     time_delta = pd.Timestamp(
-        year=year, month=month, day=day) - pd.Timestamp(start_date)
-    return time_delta.days * HOURS_PER_DAY // TIME_RESOLUTION_HOURS
+        year=year, month=month, day=day, hour=hour) - pd.Timestamp(start_date)
+    return int(time_delta.total_seconds() //60 //60)
 
 @dataclass
 class UpdateSlice(beam.PTransform):
@@ -241,19 +211,43 @@ class UpdateSlice(beam.PTransform):
             key (xb.Key): offset dict for dimensions.
             ds (xr.Dataset): Merged dataset for a single day.
         """
-        print("inside the updateslice function of the AR data.")
+        logger.info("inside the updateslice function of the AR data.")
         offset = key.offsets['time']
-        date = (datetime.datetime.strptime(self.init_date, '%Y-%m-%d') +
-                datetime.timedelta(days=offset / HOURS_PER_DAY))
+        logger.info(f"offset is this : {offset}")
+        date = (datetime.datetime.strptime(self.init_date, '%Y-%m-%d') + 
+                datetime.timedelta(hours=offset))
+        logger.info(f"date is this : {date}")
         zf = zarr.open(self.target)
-        region = slice(offset, offset + HOURS_PER_DAY)
+        region = slice(offset, offset + 1)
+        start_date = date.strftime('%Y-%m-%dT%H')
+        end_date = datetime.datetime.strptime(start_date, '%Y-%m-%dT%H') + datetime.timedelta(hours=1)
+        end_date = end_date.strftime('%Y-%m-%dT%H')
+        logger.info(f"start & end date is this : {start_date}, {end_date}")
         for vname in ds.data_vars:
-            logger.info(f"Started {vname} for {date.strftime('%Y-%m-%d')}")
+            logger.info(f"Started {vname} for {start_date}")
             zv = zf[vname]
+            ds[vname] = ds[vname].expand_dims(dim={'time': 1})
             zv[region] = ds[vname].values
-            logger.info(f"Done {vname} for {date.strftime('%Y-%m-%d')}")
+            logger.info(f"Done {vname} for {end_date}")
         del zv
         del ds
 
     def expand(self, pcoll: beam.PCollection) -> beam.PCollection:
         return pcoll | beam.MapTuple(self.apply)
+    
+
+def hourly_dates(start_date: str, end_date: str):
+    """Iterate through all (year, month, day, hour) tuples between start_date and
+    end_date (inclusive).
+
+    Args:
+        start_date (str): The start date in ISO format (YYYY-MM-DD).
+        end_date (str): The end date in ISO format (YYYY-MM-DD).
+
+    Yields:
+        tuple: A tuple containing the year, month, day, and hour for each hour in the range.
+
+    """
+    date_range = pd.date_range(start=start_date, end=end_date, freq='H', inclusive='left')
+    date_tuples = [(date.year, date.month, date.day, date.hour) for date in date_range]
+    return date_tuples
