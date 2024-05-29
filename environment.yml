@@ -1,0 +1,33 @@
+name: era5
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8.13
+  - apache-beam=2.40.0
+  - xarray-beam=0.6.2
+  - xarray=2023.1.0
+  - fsspec=2022.11.0
+  - gcsfs=2022.11.0
+  - rioxarray=0.13.4
+  - gdal=3.5.1
+  - pyproj=3.4.0
+  - cdsapi=0.5.1
+  - ecmwf-api-client=1.6.3
+  - eccodes=2.27.0
+  - cfgrib=0.9.10.2
+  - pygrib=2.1.4
+  - metview-batch=5.17.0
+  - netcdf4=1.6.1
+  - geojson=2.5.0=py_0
+  - simplejson=3.17.6
+  - numpy=1.22.4
+  - pandas=1.5.1
+  - google-cloud-sdk=410.0.0
+  - aria2=1.36.0
+  - pip=22.3
+  - zarr=2.15.0
+  - pip:
+    - cython==0.29.34
+    - earthengine-api==0.1.329
+    - firebase-admin==6.0.1
+    - metview
