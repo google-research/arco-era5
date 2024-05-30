@@ -52,7 +52,6 @@ class LoadDataForDateDoFn(beam.DoFn):
         Args:
             start_date (str): The start date in ISO format (YYYY-MM-DD).
         """
-        logger.info("inside the init file")
         self.start_date = start_date
 
     def attribute_fix(self, ds):
@@ -74,11 +73,9 @@ class LoadDataForDateDoFn(beam.DoFn):
     def process_hourly_data(self, data_list : list):
         try:
             wind_fieldset, moisture_fieldset, surface_fieldset = data_list
-            logger.info("data extracted.")
 
             wind_gg_data = mv.read(data=wind_fieldset,grid='N320')
             surface_gg_data = mv.read(data=surface_fieldset,grid='N320')
-            logger.info(f"surface gg data is read completely for time ")
             uv_wind_spectral = mv.uvwind(data=wind_fieldset,truncation=639)
             uv_wind_gg_data = mv.read(data=uv_wind_spectral,grid='N320')
             uv_wind_ll_data = mv.read(data=uv_wind_gg_data,grid=[0.25, 0.25])
@@ -89,7 +86,6 @@ class LoadDataForDateDoFn(beam.DoFn):
             zs_gg = surface_gg_data.select(shortName="z")
 
             zm_gg = mv.mvl_geopotential_on_ml(t_gg, q_gg, lnsp_gg, zs_gg)
-            logger.info(f"pressure level calculated for ")
             del t_gg
             del q_gg
             del lnsp_gg
@@ -105,14 +101,12 @@ class LoadDataForDateDoFn(beam.DoFn):
             ll_fieldset = mv.merge(ll_fieldset, uv_wind_ll_data)
 
             dataset = ll_fieldset.to_dataset()
-            logger.info("dataset into the try block : ", dataset)
             return dataset
         except BaseException as e:
             # Make sure we print the date as part of the error for easier debugging
             # if something goes wrong. Note "from e" will also raise the details of the
             # original exception.
             raise RuntimeError(f"Error while loading dataset") from e
-   
 
     def process(self, args):
         """Load data for a day, with an xarray_beam key for it.
@@ -129,25 +123,19 @@ class LoadDataForDateDoFn(beam.DoFn):
         ml_wind = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/')
         ml_moisture = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/')
         sl_surface = xr.open_zarr('gs://gcp-public-data-arco-era5/co/single-level-surface.zarr/')
-        logger.info("zarr file opened successfully.")
     
         wind_slice = ml_wind.sel(time=current_timestamp).compute()
         moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
         surface_slice = sl_surface.sel(time=current_timestamp).compute()
-        logger.info("data slicing completed.")
         
         wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
         moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())
         surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
-        logger.info("all fieldset fetched successfully.")
         
         dataset = self.process_hourly_data([wind_fieldset, moisture_fieldset, surface_fieldset])
-        logger.info(f"output data is this : {dataset}")
-        logger.info(f"time of the dataset is this : {dataset.time.values}")
         dataset = align_coordinates(dataset)
         offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
         key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
-        logger.info(f"key is this : {key}", )
         logger.info("Finished loading data for %s-%s-%s-%s", year, month, day, hour)
         yield key, dataset
         dataset.close()
@@ -213,22 +201,20 @@ class UpdateSlice(beam.PTransform):
         """
         logger.info("inside the updateslice function of the AR data.")
         offset = key.offsets['time']
-        logger.info(f"offset is this : {offset}")
         date = (datetime.datetime.strptime(self.init_date, '%Y-%m-%d') + 
                 datetime.timedelta(hours=offset))
-        logger.info(f"date is this : {date}")
         zf = zarr.open(self.target)
         region = slice(offset, offset + 1)
         start_date = date.strftime('%Y-%m-%dT%H')
         end_date = datetime.datetime.strptime(start_date, '%Y-%m-%dT%H') + datetime.timedelta(hours=1)
         end_date = end_date.strftime('%Y-%m-%dT%H')
-        logger.info(f"start & end date is this : {start_date}, {end_date}")
         for vname in ds.data_vars:
             logger.info(f"Started {vname} for {start_date}")
             zv = zf[vname]
             ds[vname] = ds[vname].expand_dims(dim={'time': 1})
             zv[region] = ds[vname].values
-            logger.info(f"Done {vname} for {end_date}")
+            logger.info(f"Done {vname} for {start_date}")
+        logger.info(f"data appended successfully for {start_date} to {end_date} timestamp")
         del zv
         del ds
 

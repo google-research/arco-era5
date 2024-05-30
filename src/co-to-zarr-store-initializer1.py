@@ -30,6 +30,7 @@ import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
+import xarray_beam as xb
 import dask.array as da
 
 from arco_era5 import _read_nc_dataset
@@ -105,9 +106,8 @@ def make_template(output_path: str, start_date: str, end_date: str):
     lon_size = len(coords['longitude'])
     hybrid_size = len(coords['hybrid'])
 
-    # sample_data = np.full((time_size, hybrid_size, lat_size, lon_size), np.nan)
     sample_data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan)
-    print("sample data calculated.")
+    
     template_dataset = {}
     var_attrs_dict = get_var_attrs_dict()
     for variable_name in variables_names:
@@ -121,13 +121,16 @@ def make_template(output_path: str, start_date: str, end_date: str):
         template_dataset[file_name] = xr.Variable(
             dims=("time", "hybrid", "latitude", "longitude"),
             data=sample_data,
-            attrs=var_attrs_dict[file_name],
+            attrs=var_attrs_dict[file_name]
             )
 
-    return xr.Dataset(template_dataset, coords=coords).chunk({"time":1, 
+    template = xr.Dataset(template_dataset, coords=coords)
+
+    _ = xb.ChunksToZarr(output_path, template=template,
+                        zarr_chunks={"time":1, 
                                      "hybrid": 137, 
                                      "latitude": 721,
-                                     "longitude": 1440}).to_zarr(output_path)
+                                     "longitude": 1440})
 
 def main():
     logging.getLogger().setLevel(logging.INFO)
@@ -139,7 +142,7 @@ def main():
     init_date=known_args.init_date
     from_init_date=known_args.from_init_date
 
-    _ = make_template(output_path, init_date if from_init_date else start_date, end_date)
+    make_template(output_path, init_date if from_init_date else start_date, end_date)
 
 if __name__ == "__main__":
     main()
