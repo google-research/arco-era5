@@ -51,7 +51,7 @@ def parse_arguments(desc: str):
 
     return parser.parse_known_args()
 
-variables_names = {
+grib_variables = {
     'cc': 'fraction_of_cloud_cover',
     'ciwc': 'specific_cloud_ice_water_content',
     'clwc': 'specific_cloud_liquid_water_content',
@@ -64,7 +64,7 @@ variables_names = {
     'vo': 'vorticity',
     'w': 'vertical_velocity'
     }
-calculated_variables = [ 'u_component_of_wind','v_component_of_wind', 'geopotential']
+nc_variables = [ 'u_component_of_wind','v_component_of_wind', 'geopotential']
 
 def get_var_attrs_dict():
     root_path = "/usr/local/google/home/dabhis/github_repo/sahil_personal_files/data" # remove for the GCP.
@@ -78,24 +78,24 @@ def get_var_attrs_dict():
     dataset_paths = ['gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/', 
                      'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/']
     for dataset_path in dataset_paths:
-        dataset = xr.open_zarr(dataset_path)
+        dataset = xr.open_zarr(dataset_path, chunks=None)
         for var in dataset.data_vars:
-            var_attrs_dict[variables_names[var]] = dataset[var].attrs
+            var_attrs_dict[grib_variables[var]] = dataset[var].attrs
 
-    for variable_name in calculated_variables:
+    for variable_name in nc_variables:
         path = file_path_for_calculated_variable.format(time = time, variable = variable_name)
         data_array = _read_nc_dataset(f"{root_path}/{path}")
         var_attrs_dict[variable_name] = data_array.attrs
 
     return var_attrs_dict
 
-def make_template(start_date: str, end_date: str):
+def make_template(start_date: str, end_date: str, zarr_chunks: tuple):
     
     coords = dict()
     coords["time"] = pd.date_range( pd.Timestamp(start_date), pd.Timestamp(end_date),
                                    freq=pd.DateOffset(hours=1), inclusive="left").values
     
-    longitude_value = np.arange(0., 359.75 + 0.25, 0.25)
+    longitude_value = np.arange(0., 359.75 + 0.25, 0.25) # add dtype here and remove next line & do this for the next 3 var.
     longitude = np.array(longitude_value, dtype=np.float32)
 
     latitude_value = np.arange(90.0, -90.0 - 0.25, -0.25)
@@ -113,11 +113,11 @@ def make_template(start_date: str, end_date: str):
     lon_size = len(coords['longitude'])
     hybrid_size = len(coords['hybrid'])
 
-    sample_data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan, dtype = np.float32)
-    
+    sample_data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan, dtype = np.float32, chunks=zarr_chunks)
+
     template_dataset = {}
     var_attrs_dict = get_var_attrs_dict()
-    for variable_name in list(variables_names.values()) + calculated_variables:
+    for variable_name in list(grib_variables.values()) + nc_variables:
         template_dataset[variable_name] = xr.Variable(
             dims=("time", "hybrid", "latitude", "longitude"),
             data=sample_data,
@@ -126,27 +126,6 @@ def make_template(start_date: str, end_date: str):
     
     template = xr.Dataset(template_dataset, coords=coords)
     return template
-
-def _override_chunks(
-    dataset: xr.Dataset,
-    chunks: Mapping[str, int],
-) -> xr.Dataset:
-    """Override chunks on a Dataset, for already chunked variables only."""
-
-    def maybe_rechunk(variable):
-        if variable.chunks is None:
-            return variable
-        else:
-            relevant_chunks = {
-                k: v for k, v in chunks.items() if k in variable.dims
-            }
-            return variable.chunk(relevant_chunks)
-
-    data_vars = {
-        k: maybe_rechunk(dataset.variables[k]) for k in dataset.data_vars
-    }
-    coords = {k: maybe_rechunk(dataset.variables[k]) for k in dataset.coords}
-    return xr.Dataset(data_vars, coords, dataset.attrs)
 
 def main():
     logging.getLogger().setLevel(logging.INFO)
@@ -158,11 +137,13 @@ def main():
     init_date=known_args.init_date
     from_init_date=known_args.from_init_date
 
-    template = make_template(init_date if from_init_date else start_date, end_date)
-    zarr_chunks = {"time":1, "hybrid": 18, 'latitude': 721, 'longitude': 1440}
+    zarr_chunks=(1, 18, 721, 1440)
+    template = make_template(init_date if from_init_date else start_date, end_date, zarr_chunks)
+    
 
-    ds = _override_chunks(template, zarr_chunks)
-    _ = ds.to_zarr(output_path, compute=False, mode="w")
+    print("template made successfully")
+    _ = template.to_zarr(output_path, compute=False, mode="w")
+    print(f"{output_path} zarr store created successfully.")
 
 if __name__ == "__main__":
     main()

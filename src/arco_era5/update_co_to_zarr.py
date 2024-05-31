@@ -120,10 +120,10 @@ class LoadDataForDateDoFn(beam.DoFn):
         current_timestamp=f"{year}-{month}-{day}T{hour:02d}"
         logger.info(f"started operation for the date of {current_timestamp}")
         
-        ml_wind = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/')
-        ml_moisture = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/')
-        sl_surface = xr.open_zarr('gs://gcp-public-data-arco-era5/co/single-level-surface.zarr/')
-    
+        ml_wind = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/', chunks=None)
+        ml_moisture = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/', chunks=None)
+        sl_surface = xr.open_zarr('gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/', chunks=None)
+
         wind_slice = ml_wind.sel(time=current_timestamp).compute()
         moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
         surface_slice = sl_surface.sel(time=current_timestamp).compute()
@@ -131,7 +131,7 @@ class LoadDataForDateDoFn(beam.DoFn):
         wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
         moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())
         surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
-        
+
         dataset = self.process_hourly_data([wind_fieldset, moisture_fieldset, surface_fieldset])
         variables_full_names = {
             'cc': 'fraction_of_cloud_cover',
