@@ -133,6 +133,23 @@ class LoadDataForDateDoFn(beam.DoFn):
         surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
         
         dataset = self.process_hourly_data([wind_fieldset, moisture_fieldset, surface_fieldset])
+        variables_full_names = {
+            'cc': 'fraction_of_cloud_cover',
+            'ciwc': 'specific_cloud_ice_water_content',
+            'clwc': 'specific_cloud_liquid_water_content',
+            'crwc': 'specific_rain_water_content',
+            'cswc': 'specific_snow_water_content',
+            'd': 'divergence',
+            'o3': 'ozone_mass_mixing_ratio',
+            'q': 'specific_humidity',
+            't': 'temperature',
+            'vo': 'vorticity',
+            'w': 'vertical_velocity',
+            'u': 'u_component_of_wind',
+            'v': 'v_component_of_wind',
+            'z': 'geopotential'
+            }
+        dataset = dataset.rename(variables_full_names)
         dataset = align_coordinates(dataset)
         offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
         key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))

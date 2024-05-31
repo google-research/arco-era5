@@ -51,11 +51,20 @@ def parse_arguments(desc: str):
 
     return parser.parse_known_args()
 
-variables_names = ['t','w','q','o3','clwc','ciwc','vo','d','cc','crwc','cswc']
-calculated_variables = {
-    'u_component_of_wind': 'u',
-    'v_component_of_wind': 'v',
-    'geopotential': 'z'}
+variables_names = {
+    'cc': 'fraction_of_cloud_cover',
+    'ciwc': 'specific_cloud_ice_water_content',
+    'clwc': 'specific_cloud_liquid_water_content',
+    'crwc': 'specific_rain_water_content',
+    'cswc': 'specific_snow_water_content',
+    'd': 'divergence',
+    'o3': 'ozone_mass_mixing_ratio',
+    'q': 'specific_humidity',
+    't': 'temperature',
+    'vo': 'vorticity',
+    'w': 'vertical_velocity'
+    }
+calculated_variables = [ 'u_component_of_wind','v_component_of_wind', 'geopotential']
 
 def get_var_attrs_dict():
     root_path = "/usr/local/google/home/dabhis/github_repo/sahil_personal_files/data" # remove for the GCP.
@@ -71,12 +80,12 @@ def get_var_attrs_dict():
     for dataset_path in dataset_paths:
         dataset = xr.open_zarr(dataset_path)
         for var in dataset.data_vars:
-            var_attrs_dict[var] = dataset[var].attrs
+            var_attrs_dict[variables_names[var]] = dataset[var].attrs
 
-    for variable_name, file_name in calculated_variables.items():
+    for variable_name in calculated_variables:
         path = file_path_for_calculated_variable.format(time = time, variable = variable_name)
         data_array = _read_nc_dataset(f"{root_path}/{path}")
-        var_attrs_dict[file_name] = data_array.attrs
+        var_attrs_dict[variable_name] = data_array.attrs
 
     return var_attrs_dict
 
@@ -85,8 +94,6 @@ def make_template(output_path: str, start_date: str, end_date: str):
     coords = dict()
     coords["time"] = pd.date_range( pd.Timestamp(start_date), pd.Timestamp(end_date),
                                    freq=pd.DateOffset(hours=1), inclusive="left").values
-    coords['valid_time'] = coords['time']
-    coords['step'] = np.timedelta64(0,'ns')
     
     longitude_value = np.arange(0., 359.75 + 0.25, 0.25)
     longitude = np.array(longitude_value, dtype=np.float32)
@@ -106,29 +113,22 @@ def make_template(output_path: str, start_date: str, end_date: str):
     lon_size = len(coords['longitude'])
     hybrid_size = len(coords['hybrid'])
 
-    sample_data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan)
+    sample_data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan, dtype = np.float32)
     
     template_dataset = {}
     var_attrs_dict = get_var_attrs_dict()
-    for variable_name in variables_names:
+    for variable_name in list(variables_names.values()) + calculated_variables:
         template_dataset[variable_name] = xr.Variable(
             dims=("time", "hybrid", "latitude", "longitude"),
             data=sample_data,
             attrs=var_attrs_dict[variable_name]
             )
-            
-    for file_name in calculated_variables.values():
-        template_dataset[file_name] = xr.Variable(
-            dims=("time", "hybrid", "latitude", "longitude"),
-            data=sample_data,
-            attrs=var_attrs_dict[file_name]
-            )
-
+    
     template = xr.Dataset(template_dataset, coords=coords)
 
     _ = xb.ChunksToZarr(output_path, template=template,
                         zarr_chunks={"time":1, 
-                                     "hybrid": 137, 
+                                     "hybrid": 18,
                                      "latitude": 721,
                                      "longitude": 1440})
 
