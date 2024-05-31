@@ -30,9 +30,9 @@ import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
-import xarray_beam as xb
 import dask.array as da
 
+from typing import Mapping
 from arco_era5 import _read_nc_dataset
 
 def parse_arguments(desc: str):
@@ -89,7 +89,7 @@ def get_var_attrs_dict():
 
     return var_attrs_dict
 
-def make_template(output_path: str, start_date: str, end_date: str):
+def make_template(start_date: str, end_date: str):
     
     coords = dict()
     coords["time"] = pd.date_range( pd.Timestamp(start_date), pd.Timestamp(end_date),
@@ -125,12 +125,28 @@ def make_template(output_path: str, start_date: str, end_date: str):
             )
     
     template = xr.Dataset(template_dataset, coords=coords)
+    return template
 
-    _ = xb.ChunksToZarr(output_path, template=template,
-                        zarr_chunks={"time":1, 
-                                     "hybrid": 18,
-                                     "latitude": 721,
-                                     "longitude": 1440})
+def _override_chunks(
+    dataset: xr.Dataset,
+    chunks: Mapping[str, int],
+) -> xr.Dataset:
+    """Override chunks on a Dataset, for already chunked variables only."""
+
+    def maybe_rechunk(variable):
+        if variable.chunks is None:
+            return variable
+        else:
+            relevant_chunks = {
+                k: v for k, v in chunks.items() if k in variable.dims
+            }
+            return variable.chunk(relevant_chunks)
+
+    data_vars = {
+        k: maybe_rechunk(dataset.variables[k]) for k in dataset.data_vars
+    }
+    coords = {k: maybe_rechunk(dataset.variables[k]) for k in dataset.coords}
+    return xr.Dataset(data_vars, coords, dataset.attrs)
 
 def main():
     logging.getLogger().setLevel(logging.INFO)
@@ -142,7 +158,11 @@ def main():
     init_date=known_args.init_date
     from_init_date=known_args.from_init_date
 
-    make_template(output_path, init_date if from_init_date else start_date, end_date)
+    template = make_template(init_date if from_init_date else start_date, end_date)
+    zarr_chunks = {"time":1, "hybrid": 18, 'latitude': 721, 'longitude': 1440}
+
+    ds = _override_chunks(template, zarr_chunks)
+    _ = ds.to_zarr(output_path, compute=False, mode="w")
 
 if __name__ == "__main__":
     main()
