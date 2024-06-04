@@ -33,7 +33,7 @@ import xarray_beam as xb
 import zarr
 
 from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor
+
 logger = logging.getLogger(__name__)
 
 TIME_RESOLUTION_HOURS = 1
@@ -123,7 +123,7 @@ class LoadDataForDateDoFn(beam.DoFn):
         ml_wind = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/', chunks=None)
         ml_moisture = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/', chunks=None)
         sl_surface = xr.open_zarr('gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/', chunks=None)
-
+        print("data accessed of v2 version of zarr file.")
         wind_slice = ml_wind.sel(time=current_timestamp).compute()
         moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
         surface_slice = sl_surface.sel(time=current_timestamp).compute()

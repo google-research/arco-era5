@@ -32,7 +32,6 @@ import pandas as pd
 import xarray as xr
 import dask.array as da
 
-from typing import Mapping
 from arco_era5 import _read_nc_dataset
 
 def parse_arguments(desc: str):
