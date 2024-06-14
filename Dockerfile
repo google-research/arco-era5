@@ -1,4 +1,4 @@
-ARG py_version=3.8
+ARG py_version=3.9
 FROM apache/beam_python${py_version}_sdk:2.40.0 as beam_sdk
 FROM continuumio/miniconda3:latest
 
