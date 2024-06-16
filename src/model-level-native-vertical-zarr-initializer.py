@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
 """
     Generate zarr store from init_date without data. Default init_date will be 1900-01-01.
     ```
-    python src/co-to-zarr-store-initializer.py \
-      --output_path="gs://gcp-public-data-arco-era5/regrid-co/model-level-1h-0p25deg-1959-2023.zarr-v1" \
-      --start_date '1959-01-01' \
-      --end_date '2021-12-31' \
-      --init_date '1800-01-01' \
+    python src/model-level-native-vertical-zarr-initializer.py \
+      --output_path="gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1" \
+      --start_date '1900-01-01' \
+      --end_date '2024-03-31' \
+      --init_date '1900-01-01' \
       --from_init_date \
     ```
 """
 import argparse
 import datetime
 import logging
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -33,22 +34,6 @@ import xarray as xr
 import dask.array as da
 
 from arco_era5 import _read_nc_dataset
-
-def parse_arguments(desc: str):
-    parser = argparse.ArgumentParser(description=desc)
-
-    parser.add_argument("--output_path", type=str, required=True,
-                        help="Path to the destination Zarr archive.")
-    parser.add_argument('-s', "--start_date", default='2020-01-01',
-                        help='Start date, iso format string.')
-    parser.add_argument('-e', "--end_date", default='2020-01-02',
-                        help='End date, iso format string.')
-    parser.add_argument("--init_date", type=str, default='1900-01-01',
-                        help="Date to initialize the zarr store.")
-    parser.add_argument("--from_init_date", action='store_true', default=False,
-                        help="To initialize the store from some previous date (--init_date). i.e. 1900-01-01")
-
-    return parser.parse_known_args()
 
 grib_variables = {
     'cc': 'fraction_of_cloud_cover',
@@ -65,8 +50,28 @@ grib_variables = {
     }
 nc_variables = [ 'u_component_of_wind','v_component_of_wind', 'geopotential']
 
-def get_var_attrs_dict():
-    root_path = "/usr/local/google/home/dabhis/github_repo/sahil_personal_files/data" # remove for the GCP.
+
+def parse_arguments(desc: str) -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument("--output_path", type=str, required=True,
+                        help="Path to the destination Zarr archive.")
+    parser.add_argument('-s', "--start_date", default='2020-01-01',
+                        help='Start date, iso format string.')
+    parser.add_argument('-e', "--end_date", default='2020-01-02',
+                        help='End date, iso format string.')
+    parser.add_argument("--init_date", type=str, default='1900-01-01',
+                        help="Date to initialize the zarr store.")
+    parser.add_argument("--from_init_date", action='store_true', default=False,
+                        help="To initialize the store from some previous date (--init_date). i.e. 1900-01-01")
+
+    return parser.parse_known_args()
+
+
+def get_var_attrs_dict() -> Dict[str, Dict]:
+    """Get variable attributes dictionary."""
+    root_path = "gs://gcp-public-data-arco-era5/raw"
 
     # The variable attributes should be independent of the date chosen here
     # so we just choose any date.
@@ -88,21 +93,15 @@ def get_var_attrs_dict():
 
     return var_attrs_dict
 
-def make_template(start_date: str, end_date: str, zarr_chunks: tuple):
-    
+def make_template(start_date: str, end_date: str, zarr_chunks: Tuple[int, int, int, int]) -> xr.Dataset:
+    """Create a template dataset for the Zarr store."""
+    longitude = np.arange(0., 359.75 + 0.25, 0.25, dtype=np.float32)
+    latitude = np.arange(90.0, -90.0 - 0.25, -0.25, dtype=np.float32)
+    hybrid = np.arange(1, 137 + 1, 1.0, dtype=np.float32)
+
     coords = dict()
     coords["time"] = pd.date_range( pd.Timestamp(start_date), pd.Timestamp(end_date),
                                    freq=pd.DateOffset(hours=1), inclusive="left").values
-    
-    longitude_value = np.arange(0., 359.75 + 0.25, 0.25) # add dtype here and remove next line & do this for the next 3 var.
-    longitude = np.array(longitude_value, dtype=np.float32)
-
-    latitude_value = np.arange(90.0, -90.0 - 0.25, -0.25)
-    latitude = np.array(latitude_value, dtype=np.float32)
-
-    hybrid_value = np.arange(1, 137 + 1, 1.0)
-    hybrid = np.array(hybrid_value, dtype=np.float32)
-
     coords['latitude'] = latitude
     coords['longitude'] = longitude
     coords['hybrid'] = hybrid
@@ -112,14 +111,14 @@ def make_template(start_date: str, end_date: str, zarr_chunks: tuple):
     lon_size = len(coords['longitude'])
     hybrid_size = len(coords['hybrid'])
 
-    sample_data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan, dtype = np.float32, chunks=zarr_chunks)
+    data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan, dtype = np.float32, chunks=zarr_chunks)
 
     template_dataset = {}
     var_attrs_dict = get_var_attrs_dict()
     for variable_name in list(grib_variables.values()) + nc_variables:
         template_dataset[variable_name] = xr.Variable(
             dims=("time", "hybrid", "latitude", "longitude"),
-            data=sample_data,
+            data=data,
             attrs=var_attrs_dict[variable_name]
             )
     
@@ -139,10 +138,9 @@ def main():
     zarr_chunks=(1, 18, 721, 1440)
     template = make_template(init_date if from_init_date else start_date, end_date, zarr_chunks)
     
-
-    print("template made successfully")
+    print("Template created successfully.")
     _ = template.to_zarr(output_path, compute=False, mode="w")
-    print(f"{output_path} zarr store created successfully.")
+    print(f"{output_path} Zarr store created successfully.")
 
 if __name__ == "__main__":
     main()

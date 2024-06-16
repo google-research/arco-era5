@@ -14,11 +14,11 @@
 """
     append the data into the zarr store. Default init_date will be 1900-01-01.
     ```
-    python src/update-co-to-zarr-data.py \
-      --output_path="gs://gcp-public-data-arco-era5/regrided-co/model-level-1h-0p25deg-1959-2023.zarr-v1" \
-      --start_date '1981-03-16' \
-      --end_date '1981-03-17' \
-      --init_date '1981-03-16'
+    python src/update_model_level_native_vertical_zarr.py \
+      --output_path="gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1" \
+      --start_date '1900-01-01' \
+      --end_date '2024-03-31' \
+      --init_date '1900-01-01' \
     ```
 """
 
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 TIME_RESOLUTION_HOURS = 1
 HOURS_PER_DAY = 24
 
-class LoadDataForDateDoFn(beam.DoFn):
+class LoadDataForDayDoFn(beam.DoFn):
     """A Beam DoFn for loading data for a specific date.
 
     Args:
@@ -123,7 +123,7 @@ class LoadDataForDateDoFn(beam.DoFn):
         ml_wind = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/', chunks=None)
         ml_moisture = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/', chunks=None)
         sl_surface = xr.open_zarr('gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/', chunks=None)
-        print("data accessed of v2 version of zarr file.")
+
         wind_slice = ml_wind.sel(time=current_timestamp).compute()
         moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
         surface_slice = sl_surface.sel(time=current_timestamp).compute()
@@ -157,7 +157,7 @@ class LoadDataForDateDoFn(beam.DoFn):
         yield key, dataset
         dataset.close()
 
-# remove reset_coords from this function if more coords are needed.
+
 def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
     """Align coordinates of variables in the dataset before consolidation.
 

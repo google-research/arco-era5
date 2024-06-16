@@ -42,7 +42,7 @@ from .update_config_files import (
     get_month_range,
     remove_licenses_from_directory
     )
-from .update_co_to_zarr import LoadDataForDateDoFn, UpdateSlice as COMergeUpdateSlice, hourly_dates
+from .update_model_level_native_vertical_zarr import LoadDataForDayDoFn, UpdateSlice as UpdateModelLevelNativeVerticalDataSlice, hourly_dates
 from .utils import (
     date_range,
     replace_non_alphanumeric_with_hyphen,

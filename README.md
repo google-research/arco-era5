@@ -70,9 +70,9 @@ _Updated on 2023-08-23_
 4. [x] **Phase 3**: Automatic dataset updates, data is back-fillable.
 5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
 6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
-    1. [ ] Regrid datasets to lat/long grids.
-    2. [ ] Convert model levels to pressure levels (at high resolution).
-    3. [ ] Compute derived variables.
+    1. [x] Regrid datasets to lat/long grids.
+    2. [x] Convert model levels to pressure levels (at high resolution).
+    3. [x] Compute derived variables.
     4. [ ] Expand on example notebooks.
 
 ## Data Description
@@ -108,7 +108,7 @@ ml_wind = xr.open_zarr(
 | vorticity (relative) | vo         | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=138 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
 | divergence           | d          | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=155 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
 | temperature          | t          | K       | https://apps.ecmwf.int/codes/grib/param-db?id=130 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
-| vertical velocity    | d          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
+| vertical velocity    | w          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
 
 </details>
 
@@ -583,6 +583,40 @@ ar_full_37_1h = xr.open_zarr(
 | wave_spectral_peakedness | wsp | dimensionless | https://codes.ecmwf.int/grib/param-db/140254 |
 | wave_spectral_skewness | wss | dimensionless | https://codes.ecmwf.int/grib/param-db/140207 |
 | zero_degree_level | deg0l | m | https://codes.ecmwf.int/grib/param-db/228024 |
+
+</details>
+
+### model-level-1h-0p25deg.zarr-v1/
+
+```python
+import xarray as xr
+
+co_native_vertical_grid_data = xr.open_zarr('gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1')
+```
+* _Times_: `00/to/23`
+* _Levels_: `1/to/137`
+* _Grid_: `Regular lat-lon`,
+* _Size_: 18675.44 TB
+
+<details>
+<summary>Data summary table</summary>
+
+| name                 | short name | units   | docs                                              | config                               |
+|----------------------|------------|---------|---------------------------------------------------|--------------------------------------|
+| vorticity (relative) | vo         | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=138 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
+| divergence           | d          | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=155 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
+| temperature          | t          | K       | https://apps.ecmwf.int/codes/grib/param-db?id=130 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
+| vertical velocity    | w          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
+| specific humidity                   | q          | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=133 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
+| ozone mass mixing ratio             | o3         | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=203 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
+| specific cloud liquid water content | clwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=246 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
+| specific cloud ice water content    | ciwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=247 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
+| fraction of cloud cover             | cc         | (0 - 1)  | https://apps.ecmwf.int/codes/grib/param-db?id=248 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
+| specific rain water content         | crwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=75  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
+| specific snow water content         | cswc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=76  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
+| u_component_of_wind | u | m s**-1 | https://codes.ecmwf.int/grib/param-db/500028 | [era5_pl_hourly.cfg](raw/era5_pl_hourly.cfg)  
+| v_component_of_wind | v | m s**-1 | https://codes.ecmwf.int/grib/param-db/500030 | [era5_pl_hourly.cfg](raw/era5_pl_hourly.cfg)  
+| Geopotential	                                              | z	         | m^2 s^-2	    | https://apps.ecmwf.int/codes/grib/param-dbid=129     | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
 
 </details>
 
