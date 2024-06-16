@@ -25,6 +25,8 @@
 import apache_beam as beam
 import datetime
 import logging
+from typing import Any, Dict, List, Tuple
+
 import metview as mv
 import numpy as np
 import pandas as pd
@@ -54,7 +56,7 @@ class LoadDataForDayDoFn(beam.DoFn):
         """
         self.start_date = start_date
 
-    def attribute_fix(self, ds):
+    def attribute_fix(self, ds: xr.Dataset) -> xr.Dataset:
         """Needed to fix a low-level bug in ecCodes.
         
         Sometimes, shortNames get overloaded in ecCodes's table. 
@@ -70,15 +72,23 @@ class LoadDataForDayDoFn(beam.DoFn):
             ds[var].attrs.update(attrs)
         return ds
 
-    def process_hourly_data(self, data_list : list):
+    def process_hourly_data(self, data_list: List[Any]) -> xr.Dataset:
+        """Process hourly data and return a dataset.
+
+        Args:
+            data_list (List[Any]): List of fieldsets for wind, moisture, and surface data.
+
+        Returns:
+            xr.Dataset: The processed dataset.
+        """
         try:
             wind_fieldset, moisture_fieldset, surface_fieldset = data_list
 
-            wind_gg_data = mv.read(data=wind_fieldset,grid='N320')
-            surface_gg_data = mv.read(data=surface_fieldset,grid='N320')
-            uv_wind_spectral = mv.uvwind(data=wind_fieldset,truncation=639)
-            uv_wind_gg_data = mv.read(data=uv_wind_spectral,grid='N320')
-            uv_wind_ll_data = mv.read(data=uv_wind_gg_data,grid=[0.25, 0.25])
+            wind_gg_data = mv.read(data=wind_fieldset, grid='N320')
+            surface_gg_data = mv.read(data=surface_fieldset, grid='N320')
+            uv_wind_spectral = mv.uvwind(data=wind_fieldset, truncation=639)
+            uv_wind_gg_data = mv.read(data=uv_wind_spectral, grid='N320')
+            uv_wind_ll_data = mv.read(data=uv_wind_gg_data, grid=[0.25, 0.25])
 
             t_gg = wind_gg_data.select(shortName='t')
             q_gg = moisture_fieldset.select(shortName='q')
@@ -103,17 +113,16 @@ class LoadDataForDayDoFn(beam.DoFn):
             dataset = ll_fieldset.to_dataset()
             return dataset
         except BaseException as e:
-            # Make sure we print the date as part of the error for easier debugging
-            # if something goes wrong. Note "from e" will also raise the details of the
-            # original exception.
-            raise RuntimeError(f"Error while loading dataset") from e
+            raise RuntimeError("Error while loading dataset") from e
 
-    def process(self, args):
+    def process(self, args: Tuple[int, int, int, int]):
         """Load data for a day, with an xarray_beam key for it.
+
         Args:
-            args (tuple): A tuple containing the year, month, and day.
+            args (Tuple[int, int, int, int]): A tuple containing the year, month, day, and hour.
+
         Yields:
-            tuple: A tuple containing an xarray_beam key and the loaded dataset.
+            Tuple[xb.Key, xr.Dataset]: A tuple containing an xarray_beam key and the loaded dataset.
         """
         year, month, day, hour = args
         logger.info(f"args is this : {args}")
@@ -127,7 +136,7 @@ class LoadDataForDayDoFn(beam.DoFn):
         wind_slice = ml_wind.sel(time=current_timestamp).compute()
         moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
         surface_slice = sl_surface.sel(time=current_timestamp).compute()
-        
+
         wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
         moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())
         surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
@@ -148,12 +157,12 @@ class LoadDataForDayDoFn(beam.DoFn):
             'u': 'u_component_of_wind',
             'v': 'v_component_of_wind',
             'z': 'geopotential'
-            }
+        }
         dataset = dataset.rename(variables_full_names)
         dataset = align_coordinates(dataset)
         offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
         key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
-        logger.info("Finished loading data for %s-%s-%s-%s", year, month, day, hour)
+        logger.info(f"Finished loading data for {current_timestamp}")
         yield key, dataset
         dataset.close()
 
@@ -189,34 +198,43 @@ def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
     # works for now.)
     dataset = dataset.assign_coords(
         latitude=dataset["latitude"].astype(np.float32),
-        longitude=dataset["longitude"].astype(np.float32))
-
+        longitude=dataset["longitude"].astype(np.float32)
+    )
     return dataset
 
 def offset_along_time_axis(start_date: str, year: int, month: int, day: int, hour: int) -> int:
-    """Offset in indices along the time axis, relative to start of the dataset."""
+    """Calculate offset in indices along the time axis, relative to start of the dataset.
     # Note the length of years can vary due to leap years, so the chunk lengths
     # will not always be the same, and we need to do a proper date calculation
     # not just multiply by 365*24.
-    time_delta = pd.Timestamp(
-        year=year, month=month, day=day, hour=hour) - pd.Timestamp(start_date)
-    return int(time_delta.total_seconds() //60 //60)
+    Args:
+        start_date (str): The start date in ISO format (YYYY-MM-DD).
+        year (int): The year.
+        month (int): The month.
+        day (int): The day.
+        hour (int): The hour.
+
+    Returns:
+        int: The offset in indices along the time axis.
+    """
+    time_delta = pd.Timestamp(year=year, month=month, day=day, hour=hour) - pd.Timestamp(start_date)
+    return int(time_delta.total_seconds() // 60 // 60)
 
 @dataclass
 class UpdateSlice(beam.PTransform):
-    """A Beam PTransform to write zarr arrays from the xarray datasets and time offset."""
+    """A Beam PTransform to write Zarr arrays from the xarray datasets and time offset."""
 
     target: str
     init_date: str
 
     def apply(self, key: xb.Key, ds: xr.Dataset) -> None:
-        """A method to write zarr arrays from the xarray datasets and time offset.
+        """Write Zarr arrays from the xarray datasets and time offset.
 
         Args:
-            key (xb.Key): offset dict for dimensions.
+            key (xb.Key): Offset dictionary for dimensions.
             ds (xr.Dataset): Merged dataset for a single day.
         """
-        logger.info("inside the updateslice function of the AR data.")
+        logger.info("Inside the UpdateSlice function of the AR data.")
         offset = key.offsets['time']
         date = (datetime.datetime.strptime(self.init_date, '%Y-%m-%d') + 
                 datetime.timedelta(hours=offset))
