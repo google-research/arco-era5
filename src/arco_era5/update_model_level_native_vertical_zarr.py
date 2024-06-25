@@ -23,9 +23,8 @@
 """
 
 import apache_beam as beam
-import datetime
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, List, Tuple
 
 import metview as mv
 import numpy as np
@@ -36,6 +35,7 @@ import zarr
 
 from dataclasses import dataclass
 
+from .constant import variables_full_names, zarr_files
 logger = logging.getLogger(__name__)
 
 TIME_RESOLUTION_HOURS = 1
@@ -129,9 +129,9 @@ class LoadDataForDayDoFn(beam.DoFn):
         current_timestamp=f"{year}-{month}-{day}T{hour:02d}"
         logger.info(f"started operation for the date of {current_timestamp}")
         
-        ml_wind = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/', chunks=None)
-        ml_moisture = xr.open_zarr('gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/', chunks=None)
-        sl_surface = xr.open_zarr('gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/', chunks=None)
+        ml_wind = xr.open_zarr(zarr_files['ml_wind'], chunks=None)
+        ml_moisture = xr.open_zarr(zarr_files['ml_moisture'], chunks=None)
+        sl_surface = xr.open_zarr(zarr_files['sl_surface'], chunks=None)
 
         wind_slice = ml_wind.sel(time=current_timestamp).compute()
         moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
@@ -142,22 +142,6 @@ class LoadDataForDayDoFn(beam.DoFn):
         surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
 
         dataset = self.process_hourly_data([wind_fieldset, moisture_fieldset, surface_fieldset])
-        variables_full_names = {
-            'cc': 'fraction_of_cloud_cover',
-            'ciwc': 'specific_cloud_ice_water_content',
-            'clwc': 'specific_cloud_liquid_water_content',
-            'crwc': 'specific_rain_water_content',
-            'cswc': 'specific_snow_water_content',
-            'd': 'divergence',
-            'o3': 'ozone_mass_mixing_ratio',
-            'q': 'specific_humidity',
-            't': 'temperature',
-            'vo': 'vorticity',
-            'w': 'vertical_velocity',
-            'u': 'u_component_of_wind',
-            'v': 'v_component_of_wind',
-            'z': 'geopotential'
-        }
         dataset = dataset.rename(variables_full_names)
         dataset = align_coordinates(dataset)
         offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
@@ -236,20 +220,16 @@ class UpdateSlice(beam.PTransform):
         """
         logger.info("Inside the UpdateSlice function of the AR data.")
         offset = key.offsets['time']
-        date = (datetime.datetime.strptime(self.init_date, '%Y-%m-%d') + 
-                datetime.timedelta(hours=offset))
         zf = zarr.open(self.target)
         region = slice(offset, offset + 1)
-        start_date = date.strftime('%Y-%m-%dT%H')
-        end_date = datetime.datetime.strptime(start_date, '%Y-%m-%dT%H') + datetime.timedelta(hours=1)
-        end_date = end_date.strftime('%Y-%m-%dT%H')
+        time_stamp = str(ds.time.values)
         for vname in ds.data_vars:
-            logger.info(f"Started {vname} for {start_date}")
+            logger.info(f"Started {vname} for {time_stamp}")
             zv = zf[vname]
             ds[vname] = ds[vname].expand_dims(dim={'time': 1})
             zv[region] = ds[vname].values
-            logger.info(f"Done {vname} for {start_date}")
-        logger.info(f"data appended successfully for {start_date} to {end_date} timestamp")
+            logger.info(f"Done {vname} for {time_stamp}")
+        logger.info(f"data appended successfully for {time_stamp} timestamp.")
         del zv
         del ds
 

@@ -33,7 +33,7 @@ import pandas as pd
 import xarray as xr
 import dask.array as da
 
-from arco_era5 import _read_nc_dataset
+from arco_era5 import _read_nc_dataset, zarr_files, GCP_DIRECTORY
 
 grib_variables = {
     'cc': 'fraction_of_cloud_cover',
@@ -49,7 +49,9 @@ grib_variables = {
     'w': 'vertical_velocity'
     }
 nc_variables = [ 'u_component_of_wind','v_component_of_wind', 'geopotential']
-
+file_path_for_calculated_variable = ("date-variable-pressure_level/{time.year}/{time.month:02d}/"
+                                     "{time.day:02d}/{variable}/1.nc")
+dataset_paths = [ zarr_files['ml_moisture'], zarr_files['ml_wind'] ]
 
 def parse_arguments(desc: str) -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -71,16 +73,12 @@ def parse_arguments(desc: str) -> argparse.Namespace:
 
 def get_var_attrs_dict() -> Dict[str, Dict]:
     """Get variable attributes dictionary."""
-    root_path = "gs://gcp-public-data-arco-era5/raw"
 
     # The variable attributes should be independent of the date chosen here
     # so we just choose any date.
     time = datetime.datetime(2021, 1, 1)
-    file_path_for_calculated_variable = ("date-variable-pressure_level/{time.year}/{time.month:02d}/"
-                                         "{time.day:02d}/{variable}/1.nc")
     var_attrs_dict = {}
-    dataset_paths = ['gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr/', 
-                     'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr/']
+
     for dataset_path in dataset_paths:
         dataset = xr.open_zarr(dataset_path, chunks=None)
         for var in dataset.data_vars:
@@ -88,7 +86,7 @@ def get_var_attrs_dict() -> Dict[str, Dict]:
 
     for variable_name in nc_variables:
         path = file_path_for_calculated_variable.format(time = time, variable = variable_name)
-        data_array = _read_nc_dataset(f"{root_path}/{path}")
+        data_array = _read_nc_dataset(f"{GCP_DIRECTORY}/{path}")
         var_attrs_dict[variable_name] = data_array.attrs
 
     return var_attrs_dict
@@ -98,20 +96,16 @@ def make_template(start_date: str, end_date: str, zarr_chunks: Tuple[int, int, i
     longitude = np.arange(0., 359.75 + 0.25, 0.25, dtype=np.float32)
     latitude = np.arange(90.0, -90.0 - 0.25, -0.25, dtype=np.float32)
     hybrid = np.arange(1, 137 + 1, 1.0, dtype=np.float32)
-
-    coords = dict()
-    coords["time"] = pd.date_range( pd.Timestamp(start_date), pd.Timestamp(end_date),
+    time = pd.date_range( pd.Timestamp(start_date), pd.Timestamp(end_date),
                                    freq=pd.DateOffset(hours=1), inclusive="left").values
+    
+    coords = dict()
+    coords["time"] = time
     coords['latitude'] = latitude
     coords['longitude'] = longitude
     coords['hybrid'] = hybrid
 
-    time_size = len(coords["time"])
-    lat_size = len(coords['latitude'])
-    lon_size = len(coords['longitude'])
-    hybrid_size = len(coords['hybrid'])
-
-    data = da.full((time_size, hybrid_size, lat_size, lon_size), np.nan, dtype = np.float32, chunks=zarr_chunks)
+    data = da.full((time.size, hybrid.size, latitude.size, longitude.size), np.nan, dtype = np.float32, chunks=zarr_chunks)
 
     template_dataset = {}
     var_attrs_dict = get_var_attrs_dict()
