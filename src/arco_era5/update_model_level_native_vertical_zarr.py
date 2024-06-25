@@ -147,7 +147,7 @@ class LoadDataForDayDoFn(beam.DoFn):
         offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
         key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
         logger.info(f"Finished loading data for {current_timestamp}")
-        yield key, dataset
+        yield key, dataset, current_timestamp
         dataset.close()
 
 
@@ -211,7 +211,7 @@ class UpdateSlice(beam.PTransform):
     target: str
     init_date: str
 
-    def apply(self, key: xb.Key, ds: xr.Dataset) -> None:
+    def apply(self, key: xb.Key, ds: xr.Dataset, timestamp: str) -> None:
         """Write Zarr arrays from the xarray datasets and time offset.
 
         Args:
@@ -222,14 +222,13 @@ class UpdateSlice(beam.PTransform):
         offset = key.offsets['time']
         zf = zarr.open(self.target)
         region = slice(offset, offset + 1)
-        time_stamp = str(ds.time.values)
         for vname in ds.data_vars:
-            logger.info(f"Started {vname} for {time_stamp}")
+            logger.info(f"Started {vname} for {timestamp}")
             zv = zf[vname]
             ds[vname] = ds[vname].expand_dims(dim={'time': 1})
             zv[region] = ds[vname].values
-            logger.info(f"Done {vname} for {time_stamp}")
-        logger.info(f"data appended successfully for {time_stamp} timestamp.")
+            logger.info(f"Done {vname} for {timestamp}")
+        logger.info(f"data appended successfully for {timestamp} timestamp.")
         del zv
         del ds
 
