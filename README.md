@@ -36,274 +36,50 @@ for more.
 
 So far, we have ingested meteorologically valuable variables for the land and atmosphere. From this, we have produced a
 cloud-optimized version of ERA5, in which we have converted [grib data](https://en.wikipedia.org/wiki/GRIB)
-to [Zarr](https://zarr.readthedocs.io/) with no other modifications. In addition, we have created an "analysis-ready"
-version, oriented towards common research & ML workflows.
+to [Zarr](https://zarr.readthedocs.io/) with no other modifications. In addition, we have created "analysis-ready"
+versions on regular lat-lon grids, oriented towards common research & ML workflows.
 
 This two-pronged approach for the data serves different user needs. Some researchers need full control over the
 interpolation of data for their analysis. Most will want a batteries-included dataset, where standard pre-processing and
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
 to provide transparency in the provenance of all data.
 
-TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we done to make this dataset possible?
-
-**Please view out our [walkthrough notebook](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) for a demo of the datasets.**
-
-## Roadmap
-
-_Updated on 2023-08-23_
+## Overview
 
 | Location       | Type            | Description                                                                   |
 |----------------|-----------------|-------------------------------------------------------------------------------|
-| `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
-| `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/ar/`  | Analysis Ready  | An ML-ready, unified (surface & atmospheric) version of the data in Zarr.     |
-| `$BUCKET/hr/`  | High Resolution | Similar to `ar/`, but all 137 model levels are translated to pressure levels. |
-
-
-1. [x] **Phase 0**: Ingest raw ERA5
-2. [x] **Phase 1**: Cloud-Optimize to Zarr, without data modifications
-    1. [x] Use [Pangeo-Forge](https://pangeo-forge.readthedocs.io/) to convert the data from grib to Zarr.
-    2. [x] Create example notebooks for common workflows, including regridding and variable derivation.
-3. [x] **Phase 2**: Produce an Analysis-Ready corpus
-   1. [ ] Update GCP CPDs documentation.
-   2. [ ] Create walkthrough notebooks.
-4. [x] **Phase 3**: Automatic dataset updates, data is back-fillable.
-5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
-6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
-    1. [x] Regrid datasets to lat/long grids.
-    2. [x] Convert model levels to pressure levels (at high resolution).
-    3. [x] Compute derived variables.
-    4. [ ] Expand on example notebooks.
-
-## Data Description
+| `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
+| `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
 As of 2023-10-13, all data spans the dates `1940-01-01/to/2023-07-31` (inclusive).
 
-Whenever possible, we have chosen to represent parameters by their native grid resolution.
-See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
+## Analysis Ready Data
 
-### Model Level Wind
+These datasets have been regridded to a uniform 0.25° equiangular horizontal resolution to facilitate downstream analyses, e.g., with [WeatherBench2](https://github.com/google-research/weatherbench2).
 
-```python
-import xarray as xr
+### 0.25° Pressure and Surface Level Data
 
-ml_wind = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/',
-    chunks={'time': 48},
-    consolidated=True,
-)
-```
-
-* _Levels_: `1/to/137`
-* _Times_: `00/to/23`
-* _Grid_: `Spectral Harmonic Coefficients`
-  ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
-* _Size_: 974.14 TiB
-
-<details>
-<summary>Data summary table</summary>
-
-| name                 | short name | units   | docs                                              | config                               |
-|----------------------|------------|---------|---------------------------------------------------|--------------------------------------|
-| vorticity (relative) | vo         | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=138 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
-| divergence           | d          | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=155 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
-| temperature          | t          | K       | https://apps.ecmwf.int/codes/grib/param-db?id=130 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
-| vertical velocity    | w          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
-
-</details>
-
-
-
-### Model Level Moisture
+This dataset contains most pressure-level fields and all surface-level field regridded to a uniform 0.25° resolution.
+It is a superset of the data used to train [GraphCast](https://github.com/google-deepmind/graphcast) and
+[NeuralGCM](https://github.com/google-research/neuralgcm).
 
 ```python
-import xarray as xr
+import xarray
 
-ml_moisture = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/',
-    chunks={'time': 48},
-    consolidated=True,
-)
-```
-
-* _Levels_: `1/to/137`
-* _Times_: `00/to/23`
-* _Grid_: `N320`,
-  a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 2252.61 TiB
-
-
-<details>
-<summary>Data summary table</summary>
-
-| name                                | short name | units    | docs                                              | config                                   |
-|-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
-| specific humidity                   | q          | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=133 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
-| ozone mass mixing ratio             | o3         | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=203 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
-| specific cloud liquid water content | clwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=246 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
-| specific cloud ice water content    | ciwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=247 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
-| fraction of cloud cover             | cc         | (0 - 1)  | https://apps.ecmwf.int/codes/grib/param-db?id=248 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
-| specific rain water content         | crwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=75  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
-| specific snow water content         | cswc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=76  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
-
-</details>
-
-
-### Single Level Surface
-
-```python
-import xarray as xr
-
-ml_surface = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/',
-    chunks={'time': 48},
-    consolidated=True,
-)
-```
-
-* _Times_: `00/to/23`
-* _Grid_: `Spectral Harmonic Coefficients`
-  ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
-* _Size_: 3.55 TiB
-
-
-<details>
-<summary>Data summary table</summary>
-
-| name                                | short name | units    | docs                                              | config                                   |
-|-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
-| logarithm of surface pressure       | lnsp       | Numeric  | https://apps.ecmwf.int/codes/grib/param-db?id=152 | [era5_ml_lnsp.cfg](raw/era5_ml_lnsp.cfg)  |
-| surface geopotential                | zs         | m^2 s^-2 | https://apps.ecmwf.int/codes/grib/param-db?id=162051 | [era5_ml_zs.cfg](raw/era5_ml_zs.cfg)  | 
-
-</details>
-
-
-### Single Level Reanalysis
-
-```python
-import xarray as xr
-
-sl_reanalysis = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
-    chunks={'time': 48},
-    consolidated=True,
-)
-```
-
-* _Times_: `00/to/23`
-* _Grid_: `N320`,
-  a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 89.26 TiB
-
-
-<details>
-<summary>Data summary table</summary>
-
-| name                                                       | short name | units        | docs                                                 | config                                       |
-|------------------------------------------------------------|------------|--------------|------------------------------------------------------|----------------------------------------------|
-| convective available potential energy                      | cape       | J kg^-1      | https://apps.ecmwf.int/codes/grib/param-db?id=59     | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
-| total column cloud ice water                               | tciw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=79     | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
-| vertical integral of divergence of cloud frozen water flux | wiiwd      | kg m^-2 s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=162080 | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
-| 100 metre U wind component                                 | 100u       | m s^-1       | https://apps.ecmwf.int/codes/grib/param-db?id=228246 | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
-| 100 metre V wind component                                 | 100v       | m s^-1       | https://apps.ecmwf.int/codes/grib/param-db?id=228247 | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
-| sea ice area fraction                                      | ci         | (0 - 1)      | https://apps.ecmwf.int/codes/grib/param-db?id=31     | [era5_sfc_cisst.cfg](raw/era5_sfc_cisst.cfg) | 
-| sea surface temperature                                    | sst        | Pa           | https://apps.ecmwf.int/codes/grib/param-db?id=34     | [era5_sfc_cisst.cfg](raw/era5_sfc_cisst.cfg) |
-| skin temperature                                           | skt        | K            | https://apps.ecmwf.int/codes/grib/param-db?id=235    | [era5_sfc_cisst.cfg](raw/era5_sfc_cisst.cfg) |
-| soil temperature level 1                                   | stl1       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=139    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   | 
-| soil temperature level 2                                   | stl2       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=170    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| soil temperature level 3                                   | stl3       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=183    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| soil temperature level 4                                   | stl4       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=236    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| temperature of snow layer                                  | tsn        | K            | https://apps.ecmwf.int/codes/grib/param-db?id=238    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| volumetric soil water layer 1                              | swvl1      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=39     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| volumetric soil water layer 2                              | swvl2      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=40     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| volumetric soil water layer 3                              | swvl3      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=41     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| volumetric soil water layer 4                              | swvl4      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=42     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| ice temperature layer 1                                    | istl1      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=35     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| ice temperature layer 2                                    | istl2      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=36     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| ice temperature layer 3                                    | istl3      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=37     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| ice temperature layer 4                                    | istl4      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=38     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
-| total column cloud liquid water                            | tclw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=78     | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   | 
-| total column rain water                                    | tcrw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=228089 | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
-| total column snow water                                    | tcsw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=228090 | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
-| total column water                                         | tcw        | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=136    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
-| total column vertically-integrated water vapour            | tcwv       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=137    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
-| Geopotential	                                              | z	         | m^2 s^-2	    | https://apps.ecmwf.int/codes/grib/param-dbid=129     | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| Surface pressure	                                          | sp	        | Pa	          | https://apps.ecmwf.int/codes/grib/param-db?id=134    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| Total column vertically-integrated water vapour            | tcwv	      | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=137    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| Mean sea level pressure	                                   | msl	       | Pa	          | https://apps.ecmwf.int/codes/grib/param-db?id=151    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| Total cloud cover                                          | tcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=164    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| 10 metre U wind component	                                 | 10u	       | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=165    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| 10 metre V wind component	                                 | 10v	       | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=166    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| 2 metre temperature	                                       | 2t	        | K	           | https://apps.ecmwf.int/codes/grib/param-db?id=167    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| 2 metre dewpoint temperature	                              | 2d	        | K	           | https://apps.ecmwf.int/codes/grib/param-db?id=168    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| Low cloud cover	                                           | lcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=186    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| Medium cloud cover	                                        | mcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=187    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| High cloud cover	                                          | hcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=188    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| 100 metre U wind component                                 | 100u       | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=228246 | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
-| 100 metre V wind component                                 | 100v	      | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=228247 | [era5_sfc.cfg](raw/era5_sfc.cfg)             |
-
-</details>
-
-### Single Level Forecast
-
-```python
-import xarray as xr
-
-sl_forecasts = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2/', 
-    chunks={'time': 48},
-    consolidated=True,
-)
-```
-
-* _Times_: `06:00/18:00`
-* _Steps_: `0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18`
-* _Grid_: `N320`,
-  a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
-* _Size_: 78.10 TiB
- 
-<details>
-<summary>Data summary table</summary>
-
-| name                                       | short name | units                 | docs                                                 | config                                   |
-|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
-| snow density                               | rsn        | kg m^-3               | https://apps.ecmwf.int/codes/grib/param-db?id=33     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
-| snow evaporation                           | es         | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=44     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
-| snow melt                                  | smlt       | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=45     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
-| large-scale precipitation fraction         | lspf       | s                     | https://apps.ecmwf.int/codes/grib/param-db?id=50     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
-| snow depth                                 | sd         | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=141    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| large-scale precipitation                  | lsp        | m                     | https://apps.ecmwf.int/codes/grib/param-db?id=142    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| convective precipitation                   | cp         | m                     | https://apps.ecmwf.int/codes/grib/param-db?id=143    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| snowfall                                   | sf         | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=144    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| convective rain rate                       | crr        | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228218 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| large scale rain rate                      | lsrr       | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228219 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| convective snowfall rate water equivalent  | csfr       | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228220 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| large scale snowfall rate water equivalent | lssfr      | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228221 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| total precipitation                        | tp         | m                     | https://apps.ecmwf.int/codes/grib/param-db?id=228    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
-| convective snowfall                        | csf        | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=239    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
-| large-scale snowfall                       | lsf        | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=240    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| precipitation type                         | ptype      | code table (4.201)    | https://apps.ecmwf.int/codes/grib/param-db?id=260015 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
-| surface solar radiation downwards          | ssrd       | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=169    | [era5_sfc_rad.cfg](raw/era5_sfc_pcp.cfg) | 
-| top net thermal radiation                  | ttr        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=179    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
-| gravity wave dissipation                   | gwd        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=197    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
-| surface thermal radiation downwards        | strd       | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=175    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
-| surface net thermal radiation              | str        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=177    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
-
-</details>
-
-### full_37-1h-0p25deg-chunk-1.zarr-v3/
-
-```python
-import xarray as xr
-
-ar_full_37_1h = xr.open_zarr(
-    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/'
+ar_full_37_1h = xarray.open_zarr(
+    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
+    chunks=None,
+    storage_options=dict(token='anon'),
 )
 ```
 
 * _Times_: `00/to/23`
 * _Levels_: `1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000`
-* _Size_: 3009.74 TiB
+* _Grid_: equiangular lat-lon
+* _Size_: 2.05 PB
+* _Chunking_: `{'time': 1, 'latitude': 721, 'longitude': 1440, 'level': 37}`
+* _Chunk size (per variable)_: 154 MB
 
 
 <details>
@@ -586,17 +362,92 @@ ar_full_37_1h = xr.open_zarr(
 
 </details>
 
-### model-level-1h-0p25deg.zarr-v1/
+### 0.25° Model Level Data
+
+This dataset contains 3D fields at 0.25° resolution with ERA5's [native vertical coordinates](https://confluence.ecmwf.int/display/UDOC/L137+model+level+definitions)
+(hybrid pressure/sigma coordinates).
 
 ```python
-import xarray as xr
+import xarray
 
-co_native_vertical_grid_data = xr.open_zarr('gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1')
+ar_native_vertical_grid_data = xarray.open_zarr(
+    'gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1',
+    chunks=None,
+    storage_options=dict(token='anon'),
+)
 ```
+
+It can combined with surface-level variables from the 0.25° pressure- and surface-level dataset:
+```python
+ar_full_37_1h = xarray.open_zarr(
+    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
+    chunks=None,
+    storage_options=dict(token='anon'),
+)
+ar_model_level_and_surface_data = xarray.merge([
+    ar_native_vertical_grid_data, ar_full_37_1h.drop_dims('level')
+])
+```
+
 * _Times_: `00/to/23`
 * _Levels_: `1/to/137`
-* _Grid_: `Regular lat-lon`,
-* _Size_: 18675.44 TB
+* _Grid_: equiangular lat-lon
+* _Size_: 5.88 PB
+* _Chunking_: `{'time': 1, 'hybrid': 18, 'latitude': 721, 'longitude': 1440}`
+* _Chunk size (per variable)_: 74.8 MB
+
+
+<details>
+<summary>Data summary table</summary>
+
+| name                 | short name | units   | docs                                              | config                               |
+|----------------------|------------|---------|---------------------------------------------------|--------------------------------------|
+| vorticity (relative) | vo         | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=138 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
+| divergence           | d          | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=155 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
+| geopotential	                                              | z	         | m^2 s^-2	    | https://apps.ecmwf.int/codes/grib/param-dbid=129     | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| temperature          | t          | K       | https://apps.ecmwf.int/codes/grib/param-db?id=130 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
+| vertical velocity    | w          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
+| specific humidity                   | q          | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=133 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
+| ozone mass mixing ratio             | o3         | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=203 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
+| specific cloud liquid water content | clwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=246 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
+| specific cloud ice water content    | ciwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=247 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
+| fraction of cloud cover             | cc         | (0 - 1)  | https://apps.ecmwf.int/codes/grib/param-db?id=248 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
+| specific rain water content         | crwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=75  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
+| specific snow water content         | cswc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=76  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
+| u component of wind | u | m s**-1 | https://codes.ecmwf.int/grib/param-db/500028 | [era5_pl_hourly.cfg](raw/era5_pl_hourly.cfg)  
+| v component of wind | v | m s**-1 | https://codes.ecmwf.int/grib/param-db/500030 | [era5_pl_hourly.cfg](raw/era5_pl_hourly.cfg)  
+
+</details>
+
+## Raw Cloud Optimized Data
+
+These datasets contain the raw data used to produce the Analysis Ready data. Whenever possible, parameters are represented by their native grid resolution
+See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
+
+**Please view out our [walkthrough notebook](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) for a demo of these cloud-optimized datasets.**
+
+### Model Level Wind
+
+This dataset contains model-level wind fields on ERA5's native grid, as spherical harmonic coefficients.
+
+```python
+import xarray
+
+model_level_wind = xarray.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2',
+    chunks=None,
+    storage_options=dict(token='anon'),
+)
+```
+
+* _Levels_: `1/to/137`
+* _Times_: `00/to/23`
+* _Grid_: `T639` spherical harmonic coefficients
+  ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
+* _Size_: 664 TB
+* _Chunking_: `{'time': 1, 'hybrid': 1, 'values': 410240}`
+* _Chunk size (per variable)_: 1.64 MB
+
 
 <details>
 <summary>Data summary table</summary>
@@ -607,6 +458,37 @@ co_native_vertical_grid_data = xr.open_zarr('gs://gcp-public-data-arco-era5/ar/m
 | divergence           | d          | s^-1    | https://apps.ecmwf.int/codes/grib/param-db?id=155 | [era5_ml_dve.cfg](raw/era5_ml_dve.cfg) |
 | temperature          | t          | K       | https://apps.ecmwf.int/codes/grib/param-db?id=130 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
 | vertical velocity    | w          | Pa s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=135 | [era5_ml_tw.cfg](raw/era5_ml_tw.cfg) |
+
+</details>
+
+### Model Level Moisture
+
+This dataset contains model-level moisture fields on ERA5's native reduced Gaussian grid.
+
+```python
+import xarray
+
+model_level_moisture = xr.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/',
+    chunks=None,
+    storage_options=dict(token='anon'),
+)
+```
+
+* _Levels_: `1/to/137`
+* _Times_: `00/to/23`
+* _Grid_: `N320`,
+  a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
+* _Size_: 1.54 PB
+* _Chunking_: `{'time': 1, 'hybrid': 1, 'values': 542080}`
+* _Chunk size (per variable)_: 2.17 MB
+
+
+<details>
+<summary>Data summary table</summary>
+
+| name                                | short name | units    | docs                                              | config                                   |
+|-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
 | specific humidity                   | q          | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=133 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
 | ozone mass mixing ratio             | o3         | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=203 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
 | specific cloud liquid water content | clwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=246 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   | 
@@ -614,11 +496,183 @@ co_native_vertical_grid_data = xr.open_zarr('gs://gcp-public-data-arco-era5/ar/m
 | fraction of cloud cover             | cc         | (0 - 1)  | https://apps.ecmwf.int/codes/grib/param-db?id=248 | [era5_ml_o3q.cfg](raw/era5_ml_o3q.cfg)   |
 | specific rain water content         | crwc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=75  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
 | specific snow water content         | cswc       | kg kg^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=76  | [era5_ml_qrqs.cfg](raw/era5_ml_qrqs.cfg) |
-| u_component_of_wind | u | m s**-1 | https://codes.ecmwf.int/grib/param-db/500028 | [era5_pl_hourly.cfg](raw/era5_pl_hourly.cfg)  
-| v_component_of_wind | v | m s**-1 | https://codes.ecmwf.int/grib/param-db/500030 | [era5_pl_hourly.cfg](raw/era5_pl_hourly.cfg)  
-| Geopotential	                                              | z	         | m^2 s^-2	    | https://apps.ecmwf.int/codes/grib/param-dbid=129     | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
 
 </details>
+
+
+### Single Level Surface
+
+This dataset contains single-level renanalysis fields on ERA5's native grid, as spherical harmonic coefficients.
+
+```python
+import xarray
+
+single_level_surface = xarray.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/',
+    chunks=None,
+    storage_options=dict(token='anon'),
+)
+```
+
+* _Times_: `00/to/23`
+* _Grid_: `TL639` spherical harmonic coefficients
+  ([docs](https://confluence.ecmwf.int/display/UDOC/How+to+access+the+data+values+of+a+spherical+harmonic+field+in+GRIB+-+ecCodes+GRIB+FAQ))
+* _Size_: 2.42 TB
+* _Chunking_: `{'time': 1, 'values': 410240}`
+* _Chunk size (per variable)_: 1.64 MB
+
+
+<details>
+<summary>Data summary table</summary>
+
+| name                                | short name | units    | docs                                              | config                                   |
+|-------------------------------------|------------|----------|---------------------------------------------------|------------------------------------------|
+| logarithm of surface pressure       | lnsp       | Numeric  | https://apps.ecmwf.int/codes/grib/param-db?id=152 | [era5_ml_lnsp.cfg](raw/era5_ml_lnsp.cfg)  |
+| surface geopotential                | zs         | m^2 s^-2 | https://apps.ecmwf.int/codes/grib/param-db?id=162051 | [era5_ml_zs.cfg](raw/era5_ml_zs.cfg)  | 
+
+</details>
+
+
+### Single Level Reanalysis
+
+This dataset contains single-level renanalysis fields on ERA5's native reduced Gaussian grid.
+
+```python
+import xarray
+
+single_level_reanalysis = xarray.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
+    chunks=None,
+    storage_options=dict(token='anon'),
+)
+```
+
+* _Times_: `00/to/23`
+* _Grid_: `N320`,
+  a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
+* _Size_: 60.9 TB
+* _Chunking_: `{'time': 1, 'values': 542080}`
+* _Chunk size (per variable)_: 2.17 MB
+
+
+<details>
+<summary>Data summary table</summary>
+
+| name                                                       | short name | units        | docs                                                 | config                                       |
+|------------------------------------------------------------|------------|--------------|------------------------------------------------------|----------------------------------------------|
+| convective available potential energy                      | cape       | J kg^-1      | https://apps.ecmwf.int/codes/grib/param-db?id=59     | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
+| total column cloud ice water                               | tciw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=79     | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
+| vertical integral of divergence of cloud frozen water flux | wiiwd      | kg m^-2 s^-1 | https://apps.ecmwf.int/codes/grib/param-db?id=162080 | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
+| 100 metre U wind component                                 | 100u       | m s^-1       | https://apps.ecmwf.int/codes/grib/param-db?id=228246 | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
+| 100 metre V wind component                                 | 100v       | m s^-1       | https://apps.ecmwf.int/codes/grib/param-db?id=228247 | [era5_sfc_cape.cfg](raw/era5_sfc_cape.cfg)   |
+| sea ice area fraction                                      | ci         | (0 - 1)      | https://apps.ecmwf.int/codes/grib/param-db?id=31     | [era5_sfc_cisst.cfg](raw/era5_sfc_cisst.cfg) | 
+| sea surface temperature                                    | sst        | Pa           | https://apps.ecmwf.int/codes/grib/param-db?id=34     | [era5_sfc_cisst.cfg](raw/era5_sfc_cisst.cfg) |
+| skin temperature                                           | skt        | K            | https://apps.ecmwf.int/codes/grib/param-db?id=235    | [era5_sfc_cisst.cfg](raw/era5_sfc_cisst.cfg) |
+| soil temperature level 1                                   | stl1       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=139    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   | 
+| soil temperature level 2                                   | stl2       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=170    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| soil temperature level 3                                   | stl3       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=183    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| soil temperature level 4                                   | stl4       | K            | https://apps.ecmwf.int/codes/grib/param-db?id=236    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| temperature of snow layer                                  | tsn        | K            | https://apps.ecmwf.int/codes/grib/param-db?id=238    | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| volumetric soil water layer 1                              | swvl1      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=39     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| volumetric soil water layer 2                              | swvl2      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=40     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| volumetric soil water layer 3                              | swvl3      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=41     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| volumetric soil water layer 4                              | swvl4      | m^3 m^-3     | https://apps.ecmwf.int/codes/grib/param-db?id=42     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| ice temperature layer 1                                    | istl1      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=35     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| ice temperature layer 2                                    | istl2      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=36     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| ice temperature layer 3                                    | istl3      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=37     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| ice temperature layer 4                                    | istl4      | K            | https://apps.ecmwf.int/codes/grib/param-db?id=38     | [era5_sfc_soil.cfg](raw/era5_sfc_soil.cfg)   |
+| total column cloud liquid water                            | tclw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=78     | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   | 
+| total column rain water                                    | tcrw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=228089 | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
+| total column snow water                                    | tcsw       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=228090 | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
+| total column water                                         | tcw        | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=136    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
+| total column vertically-integrated water vapour            | tcwv       | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=137    | [era5_sfc_tcol.cfg](raw/era5_sfc_tcol.cfg)   |
+| Geopotential	                                              | z	         | m^2 s^-2	    | https://apps.ecmwf.int/codes/grib/param-dbid=129     | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Surface pressure	                                          | sp	        | Pa	          | https://apps.ecmwf.int/codes/grib/param-db?id=134    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Total column vertically-integrated water vapour            | tcwv	      | kg m^-2      | https://apps.ecmwf.int/codes/grib/param-db?id=137    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Mean sea level pressure	                                   | msl	       | Pa	          | https://apps.ecmwf.int/codes/grib/param-db?id=151    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Total cloud cover                                          | tcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=164    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 10 metre U wind component	                                 | 10u	       | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=165    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 10 metre V wind component	                                 | 10v	       | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=166    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 2 metre temperature	                                       | 2t	        | K	           | https://apps.ecmwf.int/codes/grib/param-db?id=167    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 2 metre dewpoint temperature	                              | 2d	        | K	           | https://apps.ecmwf.int/codes/grib/param-db?id=168    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Low cloud cover	                                           | lcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=186    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| Medium cloud cover	                                        | mcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=187    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| High cloud cover	                                          | hcc	       | (0 - 1)	     | https://apps.ecmwf.int/codes/grib/param-db?id=188    | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 100 metre U wind component                                 | 100u       | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=228246 | [era5_sfc.cfg](raw/era5_sfc.cfg)             |  
+| 100 metre V wind component                                 | 100v	      | m s^-1	      | https://apps.ecmwf.int/codes/grib/param-db?id=228247 | [era5_sfc.cfg](raw/era5_sfc.cfg)             |
+
+</details>
+
+### Single Level Forecast
+
+This dataset contains single-level forecast fields on ERA5's native reduced Gaussian grid.
+
+```python
+import xarray
+
+single_level_forecasts = xarray.open_zarr(
+    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2/', 
+    chunks=None,
+    storage_options=dict(token='anon'),
+)
+```
+
+* _Times_: `06:00/18:00`
+* _Steps_: `0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18`
+* _Grid_: `N320`,
+  a [Reduced Gaussian Grid](https://confluence.ecmwf.int/display/EMOS/Reduced+Gaussian+Grids) ([docs](https://www.ecmwf.int/en/forecasts/documentation-and-support/gaussian_n320))
+* _Size_: 53.2 TB
+* _Chunking_: `{'time': 1, 'step': 1, 'values': 542080}`
+* _Chunk size (per variable)_: 2.17 MB
+ 
+<details>
+<summary>Data summary table</summary>
+
+| name                                       | short name | units                 | docs                                                 | config                                   |
+|--------------------------------------------|------------|-----------------------|------------------------------------------------------|------------------------------------------|
+| snow density                               | rsn        | kg m^-3               | https://apps.ecmwf.int/codes/grib/param-db?id=33     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
+| snow evaporation                           | es         | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=44     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
+| snow melt                                  | smlt       | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=45     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
+| large-scale precipitation fraction         | lspf       | s                     | https://apps.ecmwf.int/codes/grib/param-db?id=50     | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
+| snow depth                                 | sd         | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=141    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| large-scale precipitation                  | lsp        | m                     | https://apps.ecmwf.int/codes/grib/param-db?id=142    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| convective precipitation                   | cp         | m                     | https://apps.ecmwf.int/codes/grib/param-db?id=143    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| snowfall                                   | sf         | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=144    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| convective rain rate                       | crr        | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228218 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| large scale rain rate                      | lsrr       | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228219 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| convective snowfall rate water equivalent  | csfr       | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228220 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| large scale snowfall rate water equivalent | lssfr      | kg m^-2 s^-1          | https://apps.ecmwf.int/codes/grib/param-db?id=228221 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| total precipitation                        | tp         | m                     | https://apps.ecmwf.int/codes/grib/param-db?id=228    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
+| convective snowfall                        | csf        | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=239    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) | 
+| large-scale snowfall                       | lsf        | m of water equivalent | https://apps.ecmwf.int/codes/grib/param-db?id=240    | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| precipitation type                         | ptype      | code table (4.201)    | https://apps.ecmwf.int/codes/grib/param-db?id=260015 | [era5_sfc_pcp.cfg](raw/era5_sfc_pcp.cfg) |
+| surface solar radiation downwards          | ssrd       | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=169    | [era5_sfc_rad.cfg](raw/era5_sfc_pcp.cfg) | 
+| top net thermal radiation                  | ttr        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=179    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
+| gravity wave dissipation                   | gwd        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=197    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
+| surface thermal radiation downwards        | strd       | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=175    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
+| surface net thermal radiation              | str        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=177    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
+
+</details>
+
+## Project roadmap
+
+_Updated on 2024-06-25_
+
+1. [x] **Phase 0**: Ingest raw ERA5
+2. [x] **Phase 1**: Cloud-Optimize to Zarr, without data modifications
+    1. [x] Use [Pangeo-Forge](https://pangeo-forge.readthedocs.io/) to convert the data from grib to Zarr.
+    2. [x] Create example notebooks for common workflows, including regridding and variable derivation.
+3. [x] **Phase 2**: Produce an Analysis-Ready corpus
+   1. [ ] Update GCP CPDs documentation.
+   2. [ ] Create walkthrough notebooks.
+4. [x] **Phase 3**: Automatic dataset updates, data is back-fillable.
+5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
+6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
+    1. [x] Regrid datasets to lat/long grids.
+    2. [x] Convert model levels to pressure levels (at high resolution).
+    3. [x] Compute derived variables.
+    4. [ ] Expand on example notebooks.
+
 
 ## How to reproduce
 
