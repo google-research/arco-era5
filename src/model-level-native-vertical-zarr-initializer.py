@@ -132,9 +132,9 @@ def main():
     zarr_chunks=(1, 18, 721, 1440)
     template = make_template(init_date if from_init_date else start_date, end_date, zarr_chunks)
     
-    print("Template created successfully.")
+    logging.info("Template created successfully.")
     _ = template.to_zarr(output_path, compute=False, mode="w")
-    print(f"{output_path} Zarr store created successfully.")
+    logging.info(f"{output_path} Zarr store created successfully.")
 
 if __name__ == "__main__":
     main()

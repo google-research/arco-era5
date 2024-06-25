@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-    append the data into the zarr store. Default init_date will be 1900-01-01.
+    Append the data into the zarr store. Default init_date will be 1900-01-01.
     ```
     python src/update_model_level_native_vertical_zarr.py \
       --output_path="gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1" \
