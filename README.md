@@ -2,9 +2,9 @@
 
 Recipes for reproducing Analysis-Ready & Cloud Optimized (ARCO) ERA5 datasets.
 
-[Introduction](#introduction) • [Roadmap](#roadmap) • [Data Description](#data-description)
-• [How to reproduce](#how-to-reproduce) • [FAQs](#faqs) • [How to cite this work](#how-to-cite-this-work)
-• [License](#license)
+[Introduction](#introduction) • [Overview](#overview) • [Analysis Ready Data](#analysis-ready-data)
+• [Raw Cloud Optimized Data](#raw-cloud-optimized-data) • [Project roadmap](#project-roadmap) • [How to reproduce](#how-to-reproduce)
+• [FAQs](#faqs) • [How to cite this work](#how-to-cite-this-work) • [License](#license)
 
 ## Introduction
 
