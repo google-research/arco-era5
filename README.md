@@ -52,7 +52,7 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
-As of 2024-06-25, all data spans the dates `1940-01-01/to/2023-03-31` (inclusive).
+As of 2023-10-13, all data spans the dates `1940-01-01/to/2023-07-31` (inclusive).
 
 ## Analysis Ready Data
 
