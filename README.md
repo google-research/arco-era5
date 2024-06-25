@@ -36,47 +36,27 @@ for more.
 
 So far, we have ingested meteorologically valuable variables for the land and atmosphere. From this, we have produced a
 cloud-optimized version of ERA5, in which we have converted [grib data](https://en.wikipedia.org/wiki/GRIB)
-to [Zarr](https://zarr.readthedocs.io/) with no other modifications. In addition, we have created an "analysis-ready"
-version, oriented towards common research & ML workflows.
+to [Zarr](https://zarr.readthedocs.io/) with no other modifications. In addition, we have created "analysis-ready"
+versions on regular lat-lon grids, oriented towards common research & ML workflows.
 
 This two-pronged approach for the data serves different user needs. Some researchers need full control over the
 interpolation of data for their analysis. Most will want a batteries-included dataset, where standard pre-processing and
 chunk optimization is already applied. In general, we ensure that every step in this pipeline is open and reproducible,
 to provide transparency in the provenance of all data.
 
-TODO([#1](https://github.com/google-research/arco-era5/issues/1)): What have we done to make this dataset possible?
-
-## Roadmap
-
-_Updated on 2024-06-25_
+## Overview
 
 | Location       | Type            | Description                                                                   |
 |----------------|-----------------|-------------------------------------------------------------------------------|
-| `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
-| `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/ar/`  | Analysis Ready  | An ML-ready, unified (surface & atmospheric) version of the data in Zarr.     |
+| `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
+| `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
-
-1. [x] **Phase 0**: Ingest raw ERA5
-2. [x] **Phase 1**: Cloud-Optimize to Zarr, without data modifications
-    1. [x] Use [Pangeo-Forge](https://pangeo-forge.readthedocs.io/) to convert the data from grib to Zarr.
-    2. [x] Create example notebooks for common workflows, including regridding and variable derivation.
-3. [x] **Phase 2**: Produce an Analysis-Ready corpus
-   1. [ ] Update GCP CPDs documentation.
-   2. [ ] Create walkthrough notebooks.
-4. [x] **Phase 3**: Automatic dataset updates, data is back-fillable.
-5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
-6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
-    1. [x] Regrid datasets to lat/long grids.
-    2. [x] Convert model levels to pressure levels (at high resolution).
-    3. [x] Compute derived variables.
-    4. [ ] Expand on example notebooks.
+As of 2024-06-25, all data spans the dates `1940-01-01/to/2023-03-31` (inclusive).
 
 ## Analysis Ready Data
 
 These datasets have been regridded to a uniform 0.25° equiangular horizontal resolution to facilitate downstream analyses, e.g., with [WeatherBench2](https://github.com/google-research/weatherbench2).
-
-As of 2024-06-25, all data spans the dates `1940-01-01/to/2023-03-31` (inclusive).
 
 ### 0.25° Pressure and Surface Level Data
 
@@ -444,8 +424,6 @@ ar_model_level_and_surface_data = xarray.merge([
 These datasets contain the raw data used to produce the Analysis Ready data. Whenever possible, parameters are represented by their native grid resolution
 See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
 
-As of 2024-06-25, all data spans the dates `1940-01-01/to/2023-03-31` (inclusive).
-
 **Please view out our [walkthrough notebook](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) for a demo of these cloud-optimized datasets.**
 
 ### Model Level Wind
@@ -675,6 +653,25 @@ single_level_forecasts = xarray.open_zarr(
 | surface net thermal radiation              | str        | J m^-2                | https://apps.ecmwf.int/codes/grib/param-db?id=177    | [era5_sfc_rad.cfg](raw/era5_sfc_rad.cfg) |
 
 </details>
+
+## Project roadmap
+
+_Updated on 2024-06-25_
+
+1. [x] **Phase 0**: Ingest raw ERA5
+2. [x] **Phase 1**: Cloud-Optimize to Zarr, without data modifications
+    1. [x] Use [Pangeo-Forge](https://pangeo-forge.readthedocs.io/) to convert the data from grib to Zarr.
+    2. [x] Create example notebooks for common workflows, including regridding and variable derivation.
+3. [x] **Phase 2**: Produce an Analysis-Ready corpus
+   1. [ ] Update GCP CPDs documentation.
+   2. [ ] Create walkthrough notebooks.
+4. [x] **Phase 3**: Automatic dataset updates, data is back-fillable.
+5. WIP **Phase 4**: Mirror ERA5 data in Google BigQuery.
+6. [ ] **Phase 5**: Derive a high-resolution version of ERA5
+    1. [x] Regrid datasets to lat/long grids.
+    2. [x] Convert model levels to pressure levels (at high resolution).
+    3. [x] Compute derived variables.
+    4. [ ] Expand on example notebooks.
 
 
 ## How to reproduce
