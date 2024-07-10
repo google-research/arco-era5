@@ -52,7 +52,7 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
-As of 2023-10-13, all data spans the dates `1940-01-01/to/2023-07-31` (inclusive).
+Files are updated from ECMWF on a monthly cadence (on roughly the 9th of each month) with a 3 month delay, which avoids including preliminary versions of ERA5. The date of the latest available data can be found by inspecting the "time" axis of each Zarr store.
 
 ## Analysis Ready Data
 
