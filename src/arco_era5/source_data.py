@@ -543,7 +543,7 @@ def daily_date_iterator(start_date: str, end_date: str
         Year: 2023, Month: 9, Day: 4
         Year: 2023, Month: 9, Day: 5
     """
-    date_range = pd.date_range(start=start_date, end=end_date, inclusive='left')
+    date_range = pd.date_range(start=start_date, end=end_date)
     for date in date_range:
         yield date.year, date.month, date.day
 
