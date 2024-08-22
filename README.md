@@ -52,7 +52,8 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
-Files are updated from ECMWF on a monthly cadence (on roughly the 9th of each month) with a 3 month delay, which avoids including preliminary versions of ERA5. The date of the latest available data can be found by inspecting the "time" axis of each Zarr store.
+ - Files are updated from ECMWF on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay, which avoids including preliminary versions of ERA5.
+ - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_end`, and `last_updated`. These attributes specify the start date, end date, and most recent time of update for the dataset's data, respectively.
 
 ## Analysis Ready Data
 
@@ -67,11 +68,12 @@ It is a superset of the data used to train [GraphCast](https://github.com/google
 ```python
 import xarray
 
-ar_full_37_1h = xarray.open_zarr(
+ds = xarray.open_zarr(
     'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
     chunks=None,
     storage_options=dict(token='anon'),
 )
+ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
 ```
 
 * _Times_: `00/to/23`
@@ -370,20 +372,23 @@ This dataset contains 3D fields at 0.25° resolution with ERA5's [native vertica
 ```python
 import xarray
 
-ar_native_vertical_grid_data = xarray.open_zarr(
+ds = xarray.open_zarr(
     'gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1',
     chunks=None,
     storage_options=dict(token='anon'),
 )
+ar_native_vertical_grid_data = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
 ```
 
 It can combined with surface-level variables from the 0.25° pressure- and surface-level dataset:
 ```python
-ar_full_37_1h = xarray.open_zarr(
+ds = xarray.open_zarr(
     'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
     chunks=None,
     storage_options=dict(token='anon'),
 )
+ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+
 ar_model_level_and_surface_data = xarray.merge([
     ar_native_vertical_grid_data, ar_full_37_1h.drop_dims('level')
 ])
@@ -433,11 +438,12 @@ This dataset contains model-level wind fields on ERA5's native grid, as spherica
 ```python
 import xarray
 
-model_level_wind = xarray.open_zarr(
+ds = xarray.open_zarr(
     'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2',
     chunks=None,
     storage_options=dict(token='anon'),
 )
+model_level_wind = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
 ```
 
 * _Levels_: `1/to/137`
@@ -468,11 +474,12 @@ This dataset contains model-level moisture fields on ERA5's native reduced Gauss
 ```python
 import xarray
 
-model_level_moisture = xr.open_zarr(
+ds = xr.open_zarr(
     'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/',
     chunks=None,
     storage_options=dict(token='anon'),
 )
+model_level_moisture = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
 ```
 
 * _Levels_: `1/to/137`
@@ -507,11 +514,12 @@ This dataset contains single-level renanalysis fields on ERA5's native grid, as 
 ```python
 import xarray
 
-single_level_surface = xarray.open_zarr(
+ds = xarray.open_zarr(
     'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/',
     chunks=None,
     storage_options=dict(token='anon'),
 )
+single_level_surface = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
 ```
 
 * _Times_: `00/to/23`
@@ -540,11 +548,12 @@ This dataset contains single-level renanalysis fields on ERA5's native reduced G
 ```python
 import xarray
 
-single_level_reanalysis = xarray.open_zarr(
+ds = xarray.open_zarr(
     'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
     chunks=None,
     storage_options=dict(token='anon'),
 )
+single_level_reanalysis = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
 ```
 
 * _Times_: `00/to/23`
@@ -610,11 +619,12 @@ This dataset contains single-level forecast fields on ERA5's native reduced Gaus
 ```python
 import xarray
 
-single_level_forecasts = xarray.open_zarr(
+ds = xarray.open_zarr(
     'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2/', 
     chunks=None,
     storage_options=dict(token='anon'),
 )
+single_level_forecasts = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
 ```
 
 * _Times_: `06:00/18:00`
