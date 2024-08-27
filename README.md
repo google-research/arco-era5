@@ -53,7 +53,7 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
  - Files are updated from ECMWF on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay, which avoids including preliminary versions of ERA5.
- - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_end`, and `last_updated`. These attributes specify the start date, end date, and most recent time of update for the dataset's data, respectively.Please note that both start and end times are inclusive, and all times are given in UTC.
+ - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_stop`, and `last_updated`. These attributes specify the start date, stop date, and most recent time of update for the dataset's data, respectively. Please note that both start and end times are inclusive, and all times are given in UTC.
 
 ## Analysis Ready Data
 
@@ -73,7 +73,7 @@ ds = xarray.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 ```
 
 * _Times_: `00/to/23`
@@ -377,7 +377,7 @@ ds = xarray.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-ar_native_vertical_grid_data = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+ar_native_vertical_grid_data = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 ```
 
 It can combined with surface-level variables from the 0.25° pressure- and surface-level dataset:
@@ -387,7 +387,7 @@ ds = xarray.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 
 ar_model_level_and_surface_data = xarray.merge([
     ar_native_vertical_grid_data, ar_full_37_1h.drop_dims('level')
@@ -443,7 +443,7 @@ ds = xarray.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-model_level_wind = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+model_level_wind = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 ```
 
 * _Levels_: `1/to/137`
@@ -479,7 +479,7 @@ ds = xr.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-model_level_moisture = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+model_level_moisture = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 ```
 
 * _Levels_: `1/to/137`
@@ -519,7 +519,7 @@ ds = xarray.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-single_level_surface = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+single_level_surface = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 ```
 
 * _Times_: `00/to/23`
@@ -553,7 +553,7 @@ ds = xarray.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-single_level_reanalysis = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+single_level_reanalysis = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 ```
 
 * _Times_: `00/to/23`
@@ -624,7 +624,7 @@ ds = xarray.open_zarr(
     chunks=None,
     storage_options=dict(token='anon'),
 )
-single_level_forecasts = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_end']))
+single_level_forecasts = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_time_stop']))
 ```
 
 * _Times_: `06:00/18:00`
