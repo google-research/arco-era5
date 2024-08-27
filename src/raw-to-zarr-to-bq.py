@@ -27,7 +27,7 @@ from arco_era5 import (
     parse_arguments_raw_to_zarr_to_bq,
     remove_licenses_from_directory,
     replace_non_alphanumeric_with_hyphen,
-    resize_zarr_target,
+    update_zarr_metadata,
     subprocess_run,
     update_config_file,
     )
@@ -133,13 +133,13 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
                             end_date: str, init_date: str):
     # Function to process a single pair of z_file and table
     try:
-        logger.info(f"Resizing zarr file: {z_file} started.")
-        resize_zarr_target(z_file, end_date, init_date)
-        logger.info(f"Resizing zarr file: {z_file} completed.")
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
                                          project=PROJECT, bucket=BUCKET, python_path=PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
+        logger.info(f"update metadata for zarr file: {z_file} started.")
+        update_zarr_metadata(z_file, end_date)
+        logger.info(f"update metadata for zarr file: {z_file} completed.")
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"

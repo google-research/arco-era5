@@ -147,3 +147,32 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
         logger.info(f"Consolidation of {target_store} is completed.")
     else:
         logger.info(f"Data is already resized for {target_store}.")
+
+
+def update_zarr_metadata(url: str, time_end: datetime.date, metadata_key: str = '.zmetadata') -> None:
+    try:
+        attrs = {"valid_time_start": "1940-01-01",
+                 "valid_time_stop": str(time_end),
+                 "last_updated": str(datetime.datetime.utcnow())
+                 }
+        root_group = zarr.open(url)
+
+        # update zarr_store/.zattrs file.
+        root_group.attrs.update(attrs)
+
+        # update zarr_store/.zmetadata file.
+        metadata_path = f"{url}/{metadata_key}"
+        fs = GCSFileSystem()
+        with fs.open(metadata_path) as f:
+            meta_str = f.read().decode()
+            meta = json.loads(meta_str)
+
+            existing_attrs = meta['metadata'].get('.zattrs')
+            existing_attrs.update(attrs)
+            meta['metadata']['.zattrs'] = existing_attrs
+            new_meta_str = json.dumps(meta)
+
+            fs.write_text(metadata_path, new_meta_str)
+            logging.info(f"Metadata successfully updated for {url}.")
+    except Exception as e:
+        logging.error(f"Failed to update metadata for {url}: {e}")
