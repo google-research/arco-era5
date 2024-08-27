@@ -152,14 +152,13 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
 def update_zarr_metadata(url: str, time_end: datetime.date, metadata_key: str = '.zmetadata') -> None:
     try:
         attrs = {"valid_time_start": "1940-01-01",
-                 "valid_time_end": str(time_end),
-                 "last_updated": str(datetime.datetime.now())
+                 "valid_time_stop": str(time_end),
+                 "last_updated": str(datetime.datetime.utcnow())
                  }
         root_group = zarr.open(url)
 
         # update zarr_store/.zattrs file.
-        for k,v in attrs.items():
-            root_group.attrs[k] = v
+        root_group.attrs.update(attrs)
 
         # update zarr_store/.zmetadata file.
         metadata_path = f"{url}/{metadata_key}"

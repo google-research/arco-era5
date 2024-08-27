@@ -53,7 +53,7 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
  - Files are updated from ECMWF on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay, which avoids including preliminary versions of ERA5.
- - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_end`, and `last_updated`. These attributes specify the start date, end date, and most recent time of update for the dataset's data, respectively.
+ - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_end`, and `last_updated`. These attributes specify the start date, end date, and most recent time of update for the dataset's data, respectively.Please note that both start and end times are inclusive, and all times are given in UTC.
 
 ## Analysis Ready Data
 
