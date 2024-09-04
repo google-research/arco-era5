@@ -130,9 +130,8 @@ def get_previous_month_dates() -> MonthDates:
     """
 
     today = datetime.date.today()
-    # Calculate the correct previous month considering months from 1 to 12
-    prev_month = today.month + 10 if today.month < 3 else today.month - 2
-    third_prev_month = today.replace(month=prev_month)
+    # Calculate the correct previous third month considering months from 1 to 12
+    third_prev_month = today - datetime.timedelta(days=2*366/12)
     first_day_third_prev, last_day_third_prev = get_month_range(third_prev_month)
     first_date_third_prev = first_day_third_prev
     sl_year, sl_month = str(first_date_third_prev)[:4], str(first_date_third_prev)[5:7]

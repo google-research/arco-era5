@@ -99,7 +99,7 @@ def data_splitting_dataflow_job(date: str):
         )
         commands.append(command)
 
-    with ThreadPoolExecutor() as tp:
+    with ThreadPoolExecutor(max_workers=4) as tp:
         for command in commands:
             tp.submit(subprocess_run, command)
 
