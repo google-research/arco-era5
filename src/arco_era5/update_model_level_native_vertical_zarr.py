@@ -26,7 +26,6 @@ import apache_beam as beam
 import logging
 from typing import Any, List, Tuple
 
-import metview as mv
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -37,6 +36,14 @@ from dataclasses import dataclass
 
 from .constant import variables_full_names, zarr_files
 logger = logging.getLogger(__name__)
+
+try:
+    import metview as mv
+    Fieldset = mv.bindings.Fieldset
+except (ModuleNotFoundError, ImportError, FileNotFoundError):
+    logger.error('Metview could not be imported.')
+    mv = None  # noqa
+    Fieldset = Any
 
 TIME_RESOLUTION_HOURS = 1
 HOURS_PER_DAY = 24
