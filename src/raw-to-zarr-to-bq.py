@@ -73,7 +73,7 @@ def raw_data_download_dataflow_job():
         f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
         f"--sdk_container_image {Weather_tools_SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
-        f"--use-local-code --manifest-location {MANIFEST_LOCATION} "
+        f"--manifest-location {MANIFEST_LOCATION} "
     )
     subprocess_run(command)
 
@@ -95,7 +95,7 @@ def data_splitting_dataflow_job(date: str):
             f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
             f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 '
             f'--job_name split-{DATASET}-data-{month} '
-            f'--sdk_container_image {Weather_tools_SDK_CONTAINER_IMAGE} --use-local-code '
+            f'--sdk_container_image {Weather_tools_SDK_CONTAINER_IMAGE} '
         )
         commands.append(command)
 
