@@ -43,8 +43,8 @@ REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
 MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
 PYTHON_PATH = os.environ.get("PYTHON_PATH")
-Weather_tools_SDK_CONTAINER_IMAGE  = os.environ.get("Weather_tools_SDK_CONTAINER_IMAGE")
-Arco_era5_SDK_CONTAINER_IMAGE = os.environ.get("Arco_era5_SDK_CONTAINER_IMAGE")
+WEATHER_TOOLS_SDK_CONTAINER_IMAGE  = os.environ.get("WEATHER_TOOLS_SDK_CONTAINER_IMAGE")
+ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
 
@@ -72,7 +72,7 @@ def raw_data_download_dataflow_job():
         f"{PYTHON_PATH} /weather/weather_dl/weather-dl /arco-era5/raw/*.cfg "
         f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
         f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
-        f"--sdk_container_image {Weather_tools_SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
+        f"--sdk_container_image {WEATHER_TOOLS_SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
         f"--manifest-location {MANIFEST_LOCATION} "
     )
     subprocess_run(command)
@@ -95,7 +95,7 @@ def data_splitting_dataflow_job(date: str):
             f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
             f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 '
             f'--job_name split-{DATASET}-data-{month} '
-            f'--sdk_container_image {Weather_tools_SDK_CONTAINER_IMAGE} '
+            f'--sdk_container_image {WEATHER_TOOLS_SDK_CONTAINER_IMAGE} '
         )
         commands.append(command)
 
@@ -139,7 +139,7 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
     try:
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         PROJECT, BUCKET, Arco_era5_SDK_CONTAINER_IMAGE, PYTHON_PATH)
+                                         PROJECT, BUCKET, ARCO_ERA5_SDK_CONTAINER_IMAGE, PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
         logger.info(f"update metadata for zarr file: {z_file} started.")
         update_zarr_metadata(z_file, end_date)
