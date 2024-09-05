@@ -15,8 +15,9 @@
 
 FROM continuumio/miniconda3:latest
 
-# Update miniconda
-RUN conda update conda -y
+# Add the mamba solver for faster builds
+RUN conda install -n base conda-libmamba-solver
+RUN conda config --set solver libmamba
 
 # Clone the weather-tools and create conda env using environment.yml of weather-tools.
 ARG weather_tools_git_rev=main
@@ -49,8 +50,8 @@ ENV BUCKET='<BUCKET_NAME>'
 ENV MANIFEST_LOCATION='fs://manifest?projectId=PROJECT_ID'
 ENV API_KEY_1='projects/PROJECT/secrets/SECRET_NAME/versions/1'
 ENV API_KEY_2='projects/PROJECT/secrets/SECRET_NAME/versions/1'
-ENV Weather_tools_SDK_CONTAINER_IMAGE = 'gcr.io/Weather_tools_SDK_CONTAINER_IMAGE'
-ENV Arco_era5_SDK_CONTAINER_IMAGE = 'gcr.io/Arco_era5_SDK_CONTAINER_IMAGE'
+ENV Weather_tools_SDK_CONTAINER_IMAGE='gcr.io/Weather_tools_SDK_CONTAINER_IMAGE'
+ENV Arco_era5_SDK_CONTAINER_IMAGE='gcr.io/Arco_era5_SDK_CONTAINER_IMAGE'
 ENV BQ_TABLES_LIST='["xxx", "yyyy"]'
 ENV REGION_LIST='["xxx", "yyyy"]'
 ENV PYTHON_PATH='/opt/conda/envs/weather-tools-with-arco-era5/bin/python'
