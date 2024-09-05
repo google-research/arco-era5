@@ -35,8 +35,9 @@ RUN conda install -c conda-forge google-cloud-sdk==410.0.0 -y
 RUN apt-get update -y
 RUN gcloud components install alpha --quiet
 
-COPY dist/arco_era5-0.1.0-py3-none-any.whl ./
-RUN pip install arco_era5-0.1.0-py3-none-any.whl
+COPY setup.py ./
+COPY src ./src/
+RUN pip install .
 
 # Copy files from official SDK image, including script/dependencies.
 COPY --from=beam_sdk /opt/apache/beam /opt/apache/beam

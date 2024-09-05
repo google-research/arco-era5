@@ -49,7 +49,7 @@ CO_FILES_MAPPING = {
 
 def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: str,
                                      end_date: str, init_date: str, project: str,
-                                     bucket: str, python_path: str) -> None:
+                                     bucket: str, sdk_container_image: str,  python_path: str) -> None:
     """Ingests data into a Zarr store and runs a Dataflow job.
 
     Args:
@@ -92,6 +92,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--worker_machine_type n2-highmem-8 --disk_size_gb 250 "
             f"--setup_file /arco-era5/setup.py "
             f"--job_name {job_name} --number_of_worker_harness_threads 1 "
+            f"--sdk_container_image {sdk_container_image} "
             f"--init_date {init_date}")
 
     subprocess_run(command)

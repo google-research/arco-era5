@@ -760,6 +760,8 @@ This feature is works in 4 parts.
     * `BUCKET`
     * `MANIFEST_LOCATION`
     * `API_KEY_*`
+    * `WEATHER_TOOLS_SDK_CONTAINER_IMAGE`
+    * `ARCO_ERA5_SDK_CONTAINER_IMAGE`
     * `BQ_TABLES_LIST`
     * `REGION_LIST` 
     
@@ -770,7 +772,10 @@ This feature is works in 4 parts.
     > * `REGION_LIST` is list of the GCP_region in which the job of ingestion will run :: 
     ```'["us-east1", "us-west4",..., "us-west2"]'```.  
     > * Size of `BQ_TABLES_LIST` and `REGION_LIST` must be **6** as total 6 zarr file processed in the current pipeline and also, data ingestion in Bigquery are corresponding to `ZARR_FILES_LIST` of [raw-to-zarr-to-bq.py](/arco-era5/src/raw-to-zarr-to-bq.py) so add table name in `BQ_TABLES_LIST` accordingly.
-   
+    > * `WEATHER_TOOLS_SDK_CONTAINER_IMAGE` is made using this [dockerfile](https://github.com/google/weather-tools/blob/setuptools/Dockerfile) and is stored in a docker registry.
+    > * `ARCO_ERA5_SDK_CONTAINER_IMAGE` is made using this [dockerfile](https://github.com/google-research/arco-era5/blob/main/Dockerfile) and is stored in a registry.
+
+
 5. Create docker image.
 
 ```

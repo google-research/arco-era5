@@ -129,6 +129,7 @@ setup(
         'immutabledict',
         'xarray-beam',
         'scipy',
+        'fsspec==2023.4.0'
     ],
     tests_require=['pytest'],
     cmdclass={
