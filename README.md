@@ -52,6 +52,8 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
+ - The `gcp-public-data-arco-era5` bucket is stored in the `us-central1` (Iowa)
+   Google Cloud region.
  - Files are updated from ECMWF on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay, which avoids including preliminary versions of ERA5.
  - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_stop`, and `last_updated`. These attributes specify the start date, stop date, and most recent time of update for the dataset's data, respectively. Please note that both start and end times are inclusive, and all times are given in UTC.
 
