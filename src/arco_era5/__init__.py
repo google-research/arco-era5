@@ -37,11 +37,12 @@ from .update_ar import UpdateSlice as ARUpdateSlice
 from .update_co import GenerateOffset, UpdateSlice as COUpdateSlice, generate_input_paths
 from .update_config_files import (
     get_secret,
-    update_config_file,
+    update_date_in_config_file,
     get_previous_month_dates,
     new_config_file,
     get_month_range,
-    remove_licenses_from_directory
+    add_licenses_in_config_files,
+    get_last_sixth_date,
     )
 from .update_model_level_native_vertical_zarr import LoadDataForDayDoFn, UpdateSlice as UpdateModelLevelNativeVerticalDataSlice, hourly_dates
 from .utils import (

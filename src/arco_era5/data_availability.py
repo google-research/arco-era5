@@ -52,7 +52,7 @@ SINGLE_LEVEL_CHUNKS = [
 PRESSURE_LEVEL = PRESSURE_LEVELS_GROUPS["full_37"]
 
 
-def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
+def check_data_availability(data_date_range: t.List[datetime.datetime], type: str = None) -> bool:
     """Checks the availability of data for a given date range.
 
     Args:
@@ -65,24 +65,27 @@ def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
     fs = gcsfs.GCSFileSystem()
     start_date = data_date_range[0].strftime("%Y/%m/%d")
     end_date = data_date_range[-1].strftime("%Y/%m/%d")
-    all_uri = generate_input_paths(start_date, end_date, GCP_DIRECTORY, MODEL_LEVEL_CHUNKS)
-    all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, SINGLE_LEVEL_CHUNKS, True))
-
-    for date in data_date_range:
-        for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:
-            if chunk in MULTILEVEL_VARIABLES:
-                for pressure in PRESSURE_LEVEL:
+    all_uri = []
+    if type != 'ERA5T_MONTHLY':
+        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, MODEL_LEVEL_CHUNKS))
+        for date in data_date_range:
+            for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:
+                if chunk in MULTILEVEL_VARIABLES:
+                    for pressure in PRESSURE_LEVEL:
+                        all_uri.append(
+                            PRESSURELEVEL_DIR_TEMPLATE.format(year=date.year,
+                                                            month=date.month,
+                                                            day=date.day, chunk=chunk,
+                                                            pressure=pressure))
+                else:
+                    if chunk == 'geopotential_at_surface':
+                        chunk = 'geopotential'
                     all_uri.append(
-                        PRESSURELEVEL_DIR_TEMPLATE.format(year=date.year,
-                                                          month=date.month,
-                                                          day=date.day, chunk=chunk,
-                                                          pressure=pressure))
-            else:
-                if chunk == 'geopotential_at_surface':
-                    chunk = 'geopotential'
-                all_uri.append(
-                    AR_SINGLELEVEL_DIR_TEMPLATE.format(
-                        year=date.year, month=date.month, day=date.day, chunk=chunk))
+                        AR_SINGLELEVEL_DIR_TEMPLATE.format(
+                            year=date.year, month=date.month, day=date.day, chunk=chunk))
+
+    if type != 'ERA5T_DAILY':   
+        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, SINGLE_LEVEL_CHUNKS, True))
 
     data_is_missing = False
     for path in all_uri:
