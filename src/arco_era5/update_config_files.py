@@ -72,16 +72,18 @@ def new_config_file(config_file: str, config_args: ConfigArgs) -> None:
     last_day_third_prev = config_args.get("last_day_third_prev", None)
     sl_year = config_args.get("sl_year", None)
     sl_month = config_args.get("sl_month", None)
+    ERA5T_monthly = config_args.get("ERA5T_monthly", None)
 
     config = configparser.ConfigParser()
     config.read(config_file)
 
     if last_sixth_date and not year_wise_date: # ERA5T Daily
         config.set("selection", "date", f"{last_sixth_date}")
-    
-    # if year_wise_date: # ERA5T monthly -> Pending
-
-    if not last_sixth_date: # ERA5
+    elif ERA5T_monthly and year_wise_date: # ERA5T Monthly
+        config.set("selection", "year", sl_year)
+        config.set("selection", "month", sl_month)
+        config.set("selection", "day", "all")
+    elif not last_sixth_date and not ERA5T_monthly: # ERA5
         if year_wise_date:
             config.set("selection", "year", sl_year)
             config.set("selection", "month", sl_month)
@@ -116,7 +118,7 @@ def get_last_sixth_date() -> t.Dict[str, t.Any]:
     return { 'last_sixth_date' : sixth_last_date}
 
 
-def get_previous_month_dates() -> MonthDates:
+def get_previous_month_dates(last_month: bool = False) -> MonthDates:
     """Return a dictionary containing the first and third previous month's dates from
     the current date.
 
@@ -132,7 +134,7 @@ def get_previous_month_dates() -> MonthDates:
 
     today = datetime.date.today()
     # Calculate the correct previous third month considering months from 1 to 12
-    third_prev_month = today - datetime.timedelta(days=2*366/12)
+    third_prev_month = today - datetime.timedelta(days= (0 if last_month else 2)*366/12)
     first_day_third_prev, last_day_third_prev = get_month_range(third_prev_month)
     first_date_third_prev = first_day_third_prev
     sl_year, sl_month = str(first_date_third_prev)[:4], str(first_date_third_prev)[5:7]

@@ -21,6 +21,8 @@ import sys
 import pandas as pd
 import typing as t
 
+from concurrent.futures import ThreadPoolExecutor
+
 logger = logging.getLogger(__name__)
 
 AR_FILES = ['era5_pl_hourly.cfg', 'era5_sl_hourly.cfg']
@@ -28,6 +30,7 @@ CO_MODEL_LEVEL_FILES = ['era5_ml_dve.cfg', 'era5_ml_o3q.cfg', 'era5_ml_qrqs.cfg'
 CO_SINGLE_LEVEL_FILES = ['era5_ml_lnsp.cfg', 'era5_ml_zs.cfg', 'era5_sfc_cape.cfg', 'era5_sfc_cisst.cfg',
                          'era5_sfc_pcp.cfg', 'era5_sfc_rad.cfg', 'era5_sfc_soil.cfg', 'era5_sfc_tcol.cfg',
                          'era5_sfc.cfg']
+SPLITTING_DATASETS = ['soil', 'pcp']
 
 
 def date_range(start_date: str, end_date: str, freq: str = "D") -> t.List[datetime.datetime]:
@@ -144,3 +147,30 @@ def raw_data_download_dataflow_job(python_path: str, project: str, region: str,
         f"--manifest-location {manifest_location} "
     )
     subprocess_run(command)
+
+
+def data_splitting_dataflow_job(python_path: str, project: str, region: str,
+                                bucket: str, sdk_container_image: str, date: str):
+    """Launches a Dataflow job to splitting soil & pcp weather data."""
+    year = date[:4]
+    month = year + date[5:7]
+    typeOfLevel = '{' + 'typeOfLevel' + '}'
+    shortName = '{' + 'shortName' + '}'
+    zero = '{' + '0' + '}'
+    first = '{' + '1' + '}'
+    commands = []
+    for DATASET in SPLITTING_DATASETS:
+        command = (
+            f'{python_path} /weather/weather_sp/weather-sp --input-pattern '
+            f' "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
+            f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
+            f'--runner DataflowRunner --project {project} --region {region} '
+            f'--temp_location gs://{bucket}/tmp --disk_size_gb 3600 '
+            f'--job_name split-{DATASET}-data-{month} '
+            f'--sdk_container_image {sdk_container_image} '
+        )
+        commands.append(command)
+
+    with ThreadPoolExecutor(max_workers=4) as tp:
+        for command in commands:
+            tp.submit(subprocess_run, command)

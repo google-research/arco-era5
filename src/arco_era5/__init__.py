@@ -51,5 +51,6 @@ from .utils import (
     subprocess_run,
     convert_to_date,
     parse_arguments_raw_to_zarr_to_bq,
-    raw_data_download_dataflow_job
+    raw_data_download_dataflow_job,
+    data_splitting_dataflow_job
     )

@@ -21,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
     add_licenses_in_config_files,
     check_data_availability,
+    data_splitting_dataflow_job,
     date_range,
     ingest_data_in_zarr_dataflow_job,
     get_last_sixth_date,
@@ -69,32 +70,6 @@ BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 
 dates_data = get_last_sixth_date()
-
-
-def data_splitting_dataflow_job(date: str):
-    """Launches a Dataflow job to splitting soil & pcp weather data."""
-    year = date[:4]
-    month = year + date[5:7]
-    typeOfLevel = '{' + 'typeOfLevel' + '}'
-    shortName = '{' + 'shortName' + '}'
-    zero = '{' + '0' + '}'
-    first = '{' + '1' + '}'
-    commands = []
-    for DATASET in SPLITTING_DATASETS:
-        command = (
-            f'{PYTHON_PATH} /weather/weather_sp/weather-sp --input-pattern '
-            f' "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
-            f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
-            f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
-            f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 '
-            f'--job_name split-{DATASET}-data-{month} '
-            f'--sdk_container_image {WEATHER_TOOLS_SDK_CONTAINER_IMAGE} '
-        )
-        commands.append(command)
-
-    with ThreadPoolExecutor(max_workers=4) as tp:
-        for command in commands:
-            tp.submit(subprocess_run, command)
 
 
 def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region: str,
@@ -183,8 +158,9 @@ if __name__ == "__main__":
 
         if dates_data.get('first_day_third_prev', None):
             logger.info("Raw data Splitting started.")
-            data_splitting_dataflow_job(
-                dates_data['first_day_third_prev'].strftime("%Y/%m"))
+            data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                        WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                        dates_data['first_day_third_prev'].strftime("%Y/%m"))
             logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
@@ -197,8 +173,9 @@ if __name__ == "__main__":
                                                WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
                                                MANIFEST_LOCATION, DIRECTORY, 'ERA5T_DAILY')
                 if dates_data.get('first_day_third_prev'):
-                    data_splitting_dataflow_job(
-                        dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                    data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                                WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                                dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
         with ThreadPoolExecutor(max_workers=8) as tp:

@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import re
 
 from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
+    add_licenses_in_config_files,
     check_data_availability,
     data_splitting_dataflow_job,
     date_range,
@@ -30,8 +31,7 @@ from arco_era5 import (
     replace_non_alphanumeric_with_hyphen,
     update_zarr_metadata,
     subprocess_run,
-    update_config_file,
-    add_licenses_in_config_files
+    update_date_in_config_file,
     )
 
 # Logger Configuration
@@ -39,6 +39,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DIRECTORY = "/arco-era5/raw"
+AR_FILES = ['/arco-era5/raw/era5_pl_hourly.cfg', '/arco-era5/raw/era5_sl_hourly.cfg']
+CO_MODEL_LEVEL_FILES = ['era5_ml_dve.cfg', 'era5_ml_o3q.cfg', 'era5_ml_qrqs.cfg', 'era5_ml_tw.cfg']
+CO_MODEL_LEVEL_FILES = [ f'{DIRECTORY}/{file}' for file in CO_MODEL_LEVEL_FILES ]
+CO_SINGLE_LEVEL_FILES = ['era5_ml_lnsp.cfg', 'era5_ml_zs.cfg', 'era5_sfc_cape.cfg', 'era5_sfc_cisst.cfg',
+                         'era5_sfc_pcp.cfg', 'era5_sfc_rad.cfg', 'era5_sfc_soil.cfg', 'era5_sfc_tcol.cfg',
+                         'era5_sfc.cfg']
+CO_SINGLE_LEVEL_FILES = [ f'{DIRECTORY}/{file}' for file in CO_SINGLE_LEVEL_FILES ]
+
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
@@ -49,7 +57,6 @@ ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
 
-SPLITTING_DATASETS = ['soil', 'pcp']
 ZARR_FILES_LIST = [
     'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
     'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2',
@@ -61,7 +68,7 @@ ZARR_FILES_LIST = [
 BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 
-dates_data = get_previous_month_dates()
+dates_data = get_previous_month_dates(last_month=True)
 
 
 def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region: str,
@@ -136,36 +143,39 @@ if __name__ == "__main__":
             secret_key_value = get_secret(secret_key)
             licenses += f'parameters.api{count}\n\
                 api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
-        
+
         logger.info("Config file updation started.")
         add_licenses_in_config_files(DIRECTORY, licenses)
-        update_config_file(DIRECTORY, dates_data)
+        dates_data['ERA5T_monthly'] = True
+        update_date_in_config_file(DIRECTORY, dates_data)
         logger.info("Config file updation completed.")
-        
+
         logger.info("Raw data downloading started.")
         raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                        WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                       MANIFEST_LOCATION, DIRECTORY)
+                                       MANIFEST_LOCATION, DIRECTORY, 'ERA5T_MONTHLY')
         logger.info("Raw data downloaded successfully.")
 
-        logger.info("Raw data Splitting started.")
-        data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
-                                    WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                    dates_data['first_day_third_prev'].strftime("%Y/%m"))
-        logger.info("Raw data Splitting successfully.")
+        if dates_data.get('first_day_third_prev', None):
+            logger.info("Raw data Splitting started.")
+            data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                        WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                        dates_data['first_day_third_prev'].strftime("%Y/%m"))
+            logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
         data_is_missing = True
         while data_is_missing:
-            data_is_missing = check_data_availability(data_date_range)
+            data_is_missing = check_data_availability(data_date_range, 'ERA5T_MONTHLY')
             if data_is_missing:
                 logger.warning("Data is missing.")
                 raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                                WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                               MANIFEST_LOCATION, DIRECTORY)
-                data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
-                                            WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                            dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                                               MANIFEST_LOCATION, DIRECTORY, 'ERA5T_MONTHLY')
+                if dates_data.get('first_day_third_prev'):
+                    data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                                WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                                dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
         with ThreadPoolExecutor(max_workers=8) as tp:
@@ -175,6 +185,6 @@ if __name__ == "__main__":
                           dates_data["first_day_third_prev"],
                           dates_data["last_day_third_prev"], parsed_args.init_date)
 
-        logger.info(f"Automatic update for ARCO-ERA5 completed for {dates_data['sl_month']}.")
+        logger.info(f"Automatic update for ARCO-ERA5T completed for {dates_data['sl_month']}.")
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
