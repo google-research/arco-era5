@@ -25,6 +25,7 @@ from arco_era5 import (
     get_previous_month_dates,
     get_secret,
     parse_arguments_raw_to_zarr_to_bq,
+    raw_data_download_dataflow_job,
     replace_non_alphanumeric_with_hyphen,
     update_zarr_metadata,
     subprocess_run,
@@ -60,21 +61,6 @@ BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 
 dates_data = get_previous_month_dates()
-
-
-def raw_data_download_dataflow_job():
-    """Launches a Dataflow job to process weather data."""
-    current_day = datetime.date.today()
-    job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
-
-    command = (
-        f"{PYTHON_PATH} /weather/weather_dl/weather-dl /arco-era5/raw/*.cfg "
-        f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
-        f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
-        f"--sdk_container_image {WEATHER_TOOLS_SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
-        f"--manifest-location {MANIFEST_LOCATION} "
-    )
-    subprocess_run(command)
 
 
 def data_splitting_dataflow_job(date: str):
@@ -175,12 +161,16 @@ if __name__ == "__main__":
             secret_key_value = get_secret(secret_key)
             licenses += f'parameters.api{count}\n\
                 api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
+        
         logger.info("Config file updation started.")
         add_licenses_in_config_files(DIRECTORY, licenses)
         update_config_file(DIRECTORY, dates_data)
         logger.info("Config file updation completed.")
+        
         logger.info("Raw data downloading started.")
-        raw_data_download_dataflow_job()
+        raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                       WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                       MANIFEST_LOCATION, DIRECTORY)
         logger.info("Raw data downloaded successfully.")
 
         logger.info("Raw data Splitting started.")
@@ -194,7 +184,9 @@ if __name__ == "__main__":
             data_is_missing = check_data_availability(data_date_range)
             if data_is_missing:
                 logger.warning("Data is missing.")
-                raw_data_download_dataflow_job()
+                raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                               WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                               MANIFEST_LOCATION, DIRECTORY)
                 data_splitting_dataflow_job(
                     dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")

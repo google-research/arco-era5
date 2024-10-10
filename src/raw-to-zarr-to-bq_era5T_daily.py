@@ -26,6 +26,7 @@ from arco_era5 import (
     get_last_sixth_date,
     get_secret,
     parse_arguments_raw_to_zarr_to_bq,
+    raw_data_download_dataflow_job,
     replace_non_alphanumeric_with_hyphen,
     update_zarr_metadata,
     subprocess_run,
@@ -68,25 +69,6 @@ BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 
 dates_data = get_last_sixth_date()
-
-def raw_data_download_dataflow_job(type: str = None):
-    """Launches a Dataflow job to process weather data."""
-    current_day = datetime.date.today()
-    job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
-    if type == 'ERA5T_DAILY':
-        files = ' '.join(AR_FILES + CO_MODEL_LEVEL_FILES)
-    elif type == 'ERA5T_MONTHLY':
-        files = ' '.join(CO_SINGLE_LEVEL_FILES)
-    else:
-        files = ' '.join(AR_FILES + CO_MODEL_LEVEL_FILES + CO_SINGLE_LEVEL_FILES)
-    command = (
-        f"{PYTHON_PATH} /weather/weather_dl/weather-dl {files} "
-        f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
-        f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
-        f"--sdk_container_image {WEATHER_TOOLS_SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
-        f"--manifest-location {MANIFEST_LOCATION} "
-    )
-    subprocess_run(command)
 
 
 def data_splitting_dataflow_job(date: str):
@@ -194,7 +176,9 @@ if __name__ == "__main__":
         logger.info("Config file updation completed.")
 
         logger.info("Raw data downloading started.")
-        raw_data_download_dataflow_job('ERA5T_DAILY')
+        raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                       WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                       MANIFEST_LOCATION, DIRECTORY, 'ERA5T_DAILY')
         logger.info("Raw data downloaded successfully.")
 
         if dates_data.get('first_day_third_prev', None):
@@ -209,7 +193,9 @@ if __name__ == "__main__":
             data_is_missing = check_data_availability(data_date_range, 'ERA5T_DAILY')
             if data_is_missing:
                 logger.warning("Data is missing.")
-                raw_data_download_dataflow_job('ERA5T_DAILY')
+                raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                               WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                               MANIFEST_LOCATION, DIRECTORY, 'ERA5T_DAILY')
                 if dates_data.get('first_day_third_prev'):
                     data_splitting_dataflow_job(
                         dates_data['first_day_third_prev'].strftime("%Y/%m"))
