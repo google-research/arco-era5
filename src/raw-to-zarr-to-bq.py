@@ -19,7 +19,9 @@ import re
 
 from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
+    add_licenses_in_config_files,
     check_data_availability,
+    update_raw_data,
     data_splitting_dataflow_job,
     date_range,
     ingest_data_in_zarr_dataflow_job,
@@ -30,8 +32,8 @@ from arco_era5 import (
     replace_non_alphanumeric_with_hyphen,
     update_zarr_metadata,
     subprocess_run,
-    update_config_file,
-    add_licenses_in_config_files
+    update_date_in_config_file,
+    update_target_path_in_config_file
     )
 
 # Logger Configuration
@@ -60,6 +62,7 @@ ZARR_FILES_LIST = [
 ]
 BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
+TEMP_TARGET_PATH = "gs://gcp-public-data-arco-era5/raw-era5"
 
 dates_data = get_previous_month_dates()
 
@@ -139,7 +142,8 @@ if __name__ == "__main__":
         
         logger.info("Config file updation started.")
         add_licenses_in_config_files(DIRECTORY, licenses)
-        update_config_file(DIRECTORY, dates_data)
+        update_date_in_config_file(DIRECTORY, dates_data)
+        update_target_path_in_config_file(DIRECTORY, TEMP_TARGET_PATH)
         logger.info("Config file updation completed.")
         
         logger.info("Raw data downloading started.")
@@ -174,6 +178,9 @@ if __name__ == "__main__":
                 tp.submit(perform_data_operations, z_file, table, region,
                           dates_data["first_day_third_prev"],
                           dates_data["last_day_third_prev"], parsed_args.init_date)
+        
+        # update raw ERA5T data with the ERA5.
+        update_raw_data(data_date_range)
 
         logger.info(f"Automatic update for ARCO-ERA5 completed for {dates_data['sl_month']}.")
     except Exception as e:

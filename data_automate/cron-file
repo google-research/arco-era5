@@ -1,4 +1,6 @@
 # This cron job will run the `raw-to-zarr-to-bq.py` file on the every `7th day of the month` and logs of the job will be stored 
-# into this file: /var/log/cron.log
-0 0 7 * * /opt/conda/envs/weather-tools-with-arco-era5/bin/python /arco-era5/src/raw-to-zarr-to-bq.py  > /var/log/cron.log 2>&1
+# into this file: /var/log/era5.log. respectively other jobs works, too.
+0 0 7 * * /opt/conda/envs/weather-tools-with-arco-era5/bin/python /arco-era5/src/raw-to-zarr-to-bq.py  > /var/log/era5.log 2>&1
+0 0 6 * * /opt/conda/envs/weather-tools-with-arco-era5/bin/python /arco-era5/src/raw-to-zarr-to-bq_era5T_monthly.py  > /var/log/era5t_monthly.log 2>&1
+0 0 * * * /opt/conda/envs/weather-tools-with-arco-era5/bin/python /arco-era5/src/raw-to-zarr-to-bq_era5T_daily.py  > /var/log/era5t_daily.log 2>&1
 # END CRON JOB

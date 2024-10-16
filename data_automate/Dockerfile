@@ -62,5 +62,5 @@ RUN chmod 0644 /etc/cron.d/crontab
 RUN ls /usr/bin/crontab
 RUN /usr/bin/crontab /etc/cron.d/crontab
 
-RUN touch /var/log/cron.log
-CMD printenv | grep -v "no_proxy" >> /etc/environment && cron && tail -f /var/log/cron.log
+RUN touch /var/log/era5t_daily.log /var/log/era5t_monthly.log /var/log/era5.log
+CMD printenv | grep -v "no_proxy" >> /etc/environment && cron && tail -f /var/log/era5t_daily.log /var/log/era5t_monthly.log /var/log/era5.log

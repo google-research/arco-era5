@@ -194,6 +194,28 @@ def update_date_in_config_file(directory: str, dates_data: t.Dict[str, t.Any]) -
             new_config_file(config_file, config_args=dates_data)
 
 
+def update_target_path_in_config_file(directory: str, new_target_path: str) -> None:
+    """Update the target path in configuration files in the specified directory.
+
+    Parameters:
+        directory (str): The path to the directory containing the configuration files.
+        new_target_path (str): The new target path which is updated with the old target path in config.
+    """
+    for filename in os.listdir(directory):
+        if filename.endswith(".cfg"):
+            config_file = os.path.join(directory, filename)
+            config = configparser.ConfigParser(interpolation=None)
+            config.read(config_file)
+            original_path = config.get("parameters", "target_path")
+
+            # Replace the base path
+            updated_path = original_path.replace("gs://gcp-public-data-arco-era5/raw", new_target_path)
+            config.set("parameters", "target_path", updated_path)
+
+            with open(config_file, "w") as configfile:
+                config.write(configfile) 
+
+
 def get_secret(secret_key: str) -> dict:
     """Retrieve the secret value from the Google Cloud Secret Manager.
 

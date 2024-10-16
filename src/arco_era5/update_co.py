@@ -21,24 +21,14 @@ import tempfile
 import zarr
 
 import apache_beam as beam
+import numpy as np
 import typing as t
 import xarray as xr
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-from itertools import product
-
-from .utils import date_range
 
 logger = logging.getLogger(__name__)
-
-SINGLE_LEVEL_SUBDIR_TEMPLATE = (
-    "ERA5GRIB/HRES/Month/{year}/{year}{month:02d}_hres_{chunk}.grb2"
-)
-
-MODELLEVEL_SUBDIR_TEMPLATE = (
-    "ERA5GRIB/HRES/Daily/{year}/{year}{month:02d}{day:02d}_hres_{chunk}.grb2"
-)
 
 VARIABLE_DICT: t.Dict[str, t.List[str]] = {
     'dve': ['d', 'vo'],  # model-level-wind
@@ -129,36 +119,6 @@ def opener(fname: str) -> t.Any:
         yield tmp_name
 
 
-def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[str],
-                         is_single_level: bool = False) -> t.List[str]:
-    """A method for generating the url using the combination of chunks and time range.
-
-    Args:
-        start (str): starting date for data files.
-        end (str): last date for data files.
-        root_path (str): raw file url prefix.
-        chunks: (t.List(str)): List of chunks to process.
-        is_single_level: (bool): Is the call for single level or model level
-
-    Returns:
-        t.List: List of file urls to process.
-    """
-    input_paths = []
-    for time, chunk in product(date_range(start, end, freq="MS" if is_single_level else "D"), chunks):
-        if is_single_level:
-            url = f"{root_path}/{SINGLE_LEVEL_SUBDIR_TEMPLATE.format(year=time.year, month=time.month, day=time.day, chunk=chunk)}"
-        else:
-            url = f"{root_path}/{MODELLEVEL_SUBDIR_TEMPLATE.format(year=time.year, month=time.month, day=time.day, chunk=chunk)}"
-
-        if '_' in chunk:
-            chunk_, level, var = chunk.split('_')
-            url = url.replace(chunk, chunk_)
-            url = f"{url}_{level}_{var}.grib"
-        input_paths.append(url)
-
-    return input_paths
-
-
 @dataclass
 class GenerateOffset(beam.PTransform):
     """A Beam PTransform for generating the offset along with time dimension."""
@@ -215,7 +175,10 @@ class UpdateSlice(beam.PTransform):
             for vname in vars:
                 logger.info(f"Started {vname} from {url}")
                 zv = zf[vname]
-                zv[region] = ds[vname].values
+                ans = np.array_equal(zv[region], ds[vname].values, equal_nan=True)
+                if not ans:
+                    logger.info(f"Variable {vname} from {url} not ingested properly.")
+                    zv[region] = ds[vname].values
                 logger.info(f"Done {vname} from {url}")
             logger.info(f"Finished for {url}")
             del zv
