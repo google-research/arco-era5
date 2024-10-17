@@ -175,10 +175,7 @@ class UpdateSlice(beam.PTransform):
             for vname in vars:
                 logger.info(f"Started {vname} from {url}")
                 zv = zf[vname]
-                ans = np.array_equal(zv[region], ds[vname].values, equal_nan=True)
-                if not ans:
-                    logger.info(f"Variable {vname} from {url} not ingested properly.")
-                    zv[region] = ds[vname].values
+                zv[region] = ds[vname].values
                 logger.info(f"Done {vname} from {url}")
             logger.info(f"Finished for {url}")
             del zv

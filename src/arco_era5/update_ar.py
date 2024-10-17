@@ -50,10 +50,7 @@ class UpdateSlice(beam.PTransform):
         for vname in ds.data_vars:
             logger.info(f"Started {vname} for {date.strftime('%Y-%m-%d')}")
             zv = zf[vname]
-            ans = np.array_equal(zv[region], ds[vname].values, equal_nan=True)
-            if not ans:
-                logger.info(f"Variable {vname} for {date.strftime('%Y-%m-%d')} not ingested properly.")
-                zv[region] = ds[vname].values
+            zv[region] = ds[vname].values
             logger.info(f"Done {vname} for {date.strftime('%Y-%m-%d')}")
         del zv
         del ds
