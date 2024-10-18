@@ -21,7 +21,6 @@ from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
     add_licenses_in_config_files,
     check_data_availability,
-    update_raw_data,
     data_splitting_dataflow_job,
     date_range,
     ingest_data_in_zarr_dataflow_job,
@@ -172,15 +171,7 @@ if __name__ == "__main__":
                                             dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
-        with ThreadPoolExecutor(max_workers=8) as tp:
-            for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
-                                             REGION_LIST):
-                tp.submit(perform_data_operations, z_file, table, region,
-                          dates_data["first_day_third_prev"],
-                          dates_data["last_day_third_prev"], parsed_args.init_date)
-        
-        # update raw ERA5T data with the ERA5.
-        update_raw_data(data_date_range)
+        # update raw ERA5T data with the ERA5. ## Pending
 
         logger.info(f"Automatic update for ARCO-ERA5 completed for {dates_data['sl_month']}.")
     except Exception as e:

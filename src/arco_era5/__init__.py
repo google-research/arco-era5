@@ -55,5 +55,4 @@ from .utils import (
     subprocess_run,
     parse_arguments_raw_to_zarr_to_bq,
     raw_data_download_dataflow_job,
-    update_raw_data
     )
