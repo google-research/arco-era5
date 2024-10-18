@@ -23,7 +23,6 @@ import typing as t
 
 from concurrent.futures import ThreadPoolExecutor
 
-
 logger = logging.getLogger(__name__)
 
 AR_FILES = ['era5_pl_hourly.cfg', 'era5_sl_hourly.cfg']

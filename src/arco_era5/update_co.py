@@ -29,11 +29,13 @@ from dataclasses import dataclass
 from itertools import product
 
 from .utils import date_range
+
 logger = logging.getLogger(__name__)
 
 SINGLE_LEVEL_SUBDIR_TEMPLATE = (
     "ERA5GRIB/HRES/Month/{year}/{year}{month:02d}_hres_{chunk}.grb2"
 )
+
 MODELLEVEL_SUBDIR_TEMPLATE = (
     "ERA5GRIB/HRES/Daily/{year}/{year}{month:02d}{day:02d}_hres_{chunk}.grb2"
 )

@@ -34,7 +34,7 @@ from .source_data import (
     _read_nc_dataset
     )
 from .update_ar import UpdateSlice as ARUpdateSlice
-from .update_co import GenerateOffset, UpdateSlice as COUpdateSlice
+from .update_co import GenerateOffset, UpdateSlice as COUpdateSlice, generate_input_paths
 from .update_config_files import (
     get_secret,
     update_date_in_config_file,

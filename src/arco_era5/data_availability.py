@@ -21,7 +21,7 @@ from .source_data import (
     GCP_DIRECTORY,
     SINGLE_LEVEL_VARIABLES,
     MULTILEVEL_VARIABLES,
-    PRESSURE_LEVELS_GROUPS
+    PRESSURE_LEVELS_GROUPS,
 )
 from .update_co import generate_input_paths
 
@@ -50,6 +50,7 @@ SINGLE_LEVEL_CHUNKS = [
     "pcp_surface_rsn", "pcp_surface_sd", "pcp_surface_sf",
     "pcp_surface_smlt", "pcp_surface_tp"]
 PRESSURE_LEVEL = PRESSURE_LEVELS_GROUPS["full_37"]
+
 
 def check_data_availability(data_date_range: t.List[datetime.datetime], type: str = None) -> bool:
     """Checks the availability of data for a given date range.
