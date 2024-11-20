@@ -12,7 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .constant import variables_full_names, zarr_files
-from .data_availability import check_data_availability
+from .data_availability import (
+    check_data_availability,
+    generate_input_paths_of_ar_data,
+    MODEL_LEVEL_WIND_VARIABLE,
+    MODEL_LEVEL_MOISTURE_VARIABLE,
+    SINGLE_LEVEL_SURFACE_VARIABLE,
+    SINGLE_LEVEL_REANALYSIS_VARIABLE,
+    SINGLE_LEVEL_FORECAST_VARIABLE
+    )
 from .ingest_data_in_zarr import ingest_data_in_zarr_dataflow_job
 from .pangeo import run, parse_args
 from .resize_zarr import resize_zarr_target, update_zarr_metadata
@@ -34,7 +42,7 @@ from .source_data import (
     _read_nc_dataset
     )
 from .update_ar import UpdateSlice as ARUpdateSlice
-from .update_co import GenerateOffset, UpdateSlice as COUpdateSlice, generate_input_paths
+from .update_co import GenerateOffset, UpdateSlice as COUpdateSlice, generate_input_paths, opener
 from .update_config_files import (
     get_secret,
     update_date_in_config_file,
@@ -50,7 +58,6 @@ from .utils import (
     convert_to_date,
     data_splitting_dataflow_job,
     date_range,
-    generate_input_paths,
     replace_non_alphanumeric_with_hyphen,
     subprocess_run,
     parse_arguments_raw_to_zarr_to_bq,

@@ -34,16 +34,17 @@ AR_SINGLELEVEL_DIR_TEMPLATE = (
     "gs://gcp-public-data-arco-era5/raw/date-variable-single_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/surface.nc")
 
 # Data Chunks
-MODEL_LEVEL_CHUNKS = ["dve", "tw", "o3q", "qrqs"]
-SINGLE_LEVEL_CHUNKS = [
-    "cape", "cisst", "sfc", "tcol", "soil_depthBelowLandLayer_istl1",
+MODEL_LEVEL_WIND_VARIABLE = ["dve", "tw"]
+MODEL_LEVEL_MOISTURE_VARIABLE = ["o3q", "qrqs"]
+SINGLE_LEVEL_SURFACE_VARIABLE = ["lnsp", "zs"]
+SINGLE_LEVEL_REANALYSIS_VARIABLE = ["cape", "cisst", "soil_depthBelowLandLayer_istl1",
     "soil_depthBelowLandLayer_istl2", "soil_depthBelowLandLayer_istl3",
     "soil_depthBelowLandLayer_istl4", "soil_depthBelowLandLayer_stl1",
     "soil_depthBelowLandLayer_stl2", "soil_depthBelowLandLayer_stl3",
     "soil_depthBelowLandLayer_stl4", "soil_depthBelowLandLayer_swvl1",
     "soil_depthBelowLandLayer_swvl2", "soil_depthBelowLandLayer_swvl3",
-    "soil_depthBelowLandLayer_swvl4", "soil_surface_tsn", "lnsp",
-    "zs", "rad", "pcp_surface_cp", "pcp_surface_crr",
+    "soil_depthBelowLandLayer_swvl4", "soil_surface_tsn", "tcol", "sfc" ]
+SINGLE_LEVEL_FORECAST_VARIABLE = ["rad", "pcp_surface_cp", "pcp_surface_crr",
     "pcp_surface_csf", "pcp_surface_csfr", "pcp_surface_es",
     "pcp_surface_lsf", "pcp_surface_lsp", "pcp_surface_lspf",
     "pcp_surface_lsrr", "pcp_surface_lssfr", "pcp_surface_ptype",
@@ -51,7 +52,22 @@ SINGLE_LEVEL_CHUNKS = [
     "pcp_surface_smlt", "pcp_surface_tp"]
 PRESSURE_LEVEL = PRESSURE_LEVELS_GROUPS["full_37"]
 
-
+def generate_input_paths_of_ar_data(date: datetime.datetime, variables: t.List[t.Tuple]) -> str:
+    all_urls = [] 
+    for chunk in variables:
+        if chunk in MULTILEVEL_VARIABLES:
+            for pressure in PRESSURE_LEVEL:
+                all_urls.append(PRESSURELEVEL_DIR_TEMPLATE.format(year=date.year,
+                                                    month=date.month,
+                                                    day=date.day, chunk=chunk,
+                                                    pressure=pressure))
+        else:
+            if chunk == 'geopotential_at_surface':
+                chunk = 'geopotential'
+            all_urls.append(AR_SINGLELEVEL_DIR_TEMPLATE.format(
+                    year=date.year, month=date.month, day=date.day, chunk=chunk))
+    return all_urls
+    
 def check_data_availability(data_date_range: t.List[datetime.datetime], type: str = None) -> bool:
     """Checks the availability of data for a given date range.
 
@@ -68,25 +84,14 @@ def check_data_availability(data_date_range: t.List[datetime.datetime], type: st
 
     all_uri = []
     if type != 'ERA5T_MONTHLY':
-        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, MODEL_LEVEL_CHUNKS))
+        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, MODEL_LEVEL_WIND_VARIABLE + MODEL_LEVEL_MOISTURE_VARIABLE))
         for date in data_date_range:
-            for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:
-                if chunk in MULTILEVEL_VARIABLES:
-                    for pressure in PRESSURE_LEVEL:
-                        all_uri.append(
-                            PRESSURELEVEL_DIR_TEMPLATE.format(year=date.year,
-                                                            month=date.month,
-                                                            day=date.day, chunk=chunk,
-                                                            pressure=pressure))
-                else:
-                    if chunk == 'geopotential_at_surface':
-                        chunk = 'geopotential'
-                    all_uri.append(
-                        AR_SINGLELEVEL_DIR_TEMPLATE.format(
-                            year=date.year, month=date.month, day=date.day, chunk=chunk))
+            all_uri.extend(generate_input_paths_of_ar_data(date, MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES))
 
     if type != 'ERA5T_DAILY':   
-        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, SINGLE_LEVEL_CHUNKS, True))
+        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY,
+                                            (SINGLE_LEVEL_SURFACE_VARIABLE + SINGLE_LEVEL_FORECAST_VARIABLE 
+                                             + SINGLE_LEVEL_REANALYSIS_VARIABLE), True))
 
     data_is_missing = False
     for path in all_uri:
