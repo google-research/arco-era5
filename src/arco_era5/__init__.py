@@ -39,10 +39,11 @@ from .source_data import (
     parse_arguments,
     get_pressure_levels_arg,
     LoadTemporalDataForDateDoFn,
-    _read_nc_dataset
+    _read_nc_dataset,
+    offset_along_time_axis
     )
 from .update_ar import UpdateSlice as ARUpdateSlice
-from .update_co import GenerateOffset, UpdateSlice as COUpdateSlice, generate_input_paths, opener
+from .update_co import generate_offset, GenerateOffset, UpdateSlice as COUpdateSlice, generate_input_paths, opener
 from .update_config_files import (
     get_secret,
     update_date_in_config_file,
