@@ -19,9 +19,9 @@ import typing as t
 
 from .source_data import (
     GCP_DIRECTORY,
-    SINGLE_LEVEL_VARIABLES,
     MULTILEVEL_VARIABLES,
     PRESSURE_LEVELS_GROUPS,
+    SINGLE_LEVEL_VARIABLES,
 )
 from .update_co import generate_input_paths
 
@@ -52,7 +52,20 @@ SINGLE_LEVEL_FORECAST_VARIABLE = ["rad", "pcp_surface_cp", "pcp_surface_crr",
     "pcp_surface_smlt", "pcp_surface_tp"]
 PRESSURE_LEVEL = PRESSURE_LEVELS_GROUPS["full_37"]
 
-def generate_input_paths_of_ar_data(date: datetime.datetime, variables: t.List[t.Tuple]) -> str:
+def generate_input_paths_of_ar_data(date: datetime.datetime,
+                                    variables: t.List[str]) -> t.List[str]:
+    """
+    Generate raw files path(.nc format) for the AR data based on the specified
+    date and variables.
+
+    Args:
+        date (datetime): The date for which the AR raw file paths is required.
+        variables (list[str]): An variables to fetch. Multi-level and
+                               single-level variables are handled differently.
+
+    Returns:
+        List[str]: A list of URLs for the requested AR data.
+    """
     all_urls = [] 
     for chunk in variables:
         if chunk in MULTILEVEL_VARIABLES:
@@ -68,14 +81,20 @@ def generate_input_paths_of_ar_data(date: datetime.datetime, variables: t.List[t
                     year=date.year, month=date.month, day=date.day, chunk=chunk))
     return all_urls
     
-def check_data_availability(data_date_range: t.List[datetime.datetime], type: str = None) -> bool:
-    """Checks the availability of data for a given date range.
+def check_data_availability(data_date_range: t.List[datetime.datetime],
+                            type: t.Optional[str] = None) -> bool:
+    """
+    Check the availability of data for a given date range and type.
 
     Args:
-        data_date_range (List[datetime.datetime]): Date range for CO data.
+        data_date_range (List[datetime]): A list of dates defining the date range 
+            for which data availability should be checked.
+        data_type (Optional[str]): The type of data to check availability for. 
+            Can be 'ERA5T_MONTHLY', 'ERA5T_DAILY', or None for a full check. 
+            Defaults to None.
 
     Returns:
-        int: 1 if data is missing, 0 if data is available.
+        bool: True if any data is missing, False if all data is available.
     """
 
     fs = gcsfs.GCSFileSystem()
@@ -83,15 +102,22 @@ def check_data_availability(data_date_range: t.List[datetime.datetime], type: st
     end_date = data_date_range[-1].strftime("%Y/%m/%d")
 
     all_uri = []
-    if type != 'ERA5T_MONTHLY':
-        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, MODEL_LEVEL_WIND_VARIABLE + MODEL_LEVEL_MOISTURE_VARIABLE))
+    if type != 'ERA5T_MONTHLY':  # ERA5T_DAILY(model_level of CO & AR)
+        all_uri.extend(
+            generate_input_paths(
+                start_date, end_date, GCP_DIRECTORY,
+                MODEL_LEVEL_WIND_VARIABLE + MODEL_LEVEL_MOISTURE_VARIABLE))
         for date in data_date_range:
-            all_uri.extend(generate_input_paths_of_ar_data(date, MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES))
+            all_uri.extend(
+                generate_input_paths_of_ar_data(
+                    date, MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES))
 
-    if type != 'ERA5T_DAILY':   
-        all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY,
-                                            (SINGLE_LEVEL_SURFACE_VARIABLE + SINGLE_LEVEL_FORECAST_VARIABLE 
-                                             + SINGLE_LEVEL_REANALYSIS_VARIABLE), True))
+    if type != 'ERA5T_DAILY':  # ERA5T_MONTHLY(single_level of CO)
+        all_uri.extend(
+            generate_input_paths(
+                start_date, end_date, GCP_DIRECTORY,
+                (SINGLE_LEVEL_SURFACE_VARIABLE + SINGLE_LEVEL_FORECAST_VARIABLE 
+                 + SINGLE_LEVEL_REANALYSIS_VARIABLE), True))
 
     data_is_missing = False
     for path in all_uri:

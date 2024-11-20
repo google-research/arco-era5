@@ -44,6 +44,7 @@ from arco_era5 import (
     update_target_path_in_config_file,
     GCP_DIRECTORY,
     HOURS_PER_DAY,
+    INIT_DATE,
     MODEL_LEVEL_WIND_VARIABLE,
     MODEL_LEVEL_MOISTURE_VARIABLE,
     MULTILEVEL_VARIABLES,
@@ -57,7 +58,6 @@ from arco_era5 import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-INIT_DATE ="1900-01-01"
 DIRECTORY = "/arco-era5/raw"
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")

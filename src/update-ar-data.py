@@ -22,6 +22,7 @@ from arco_era5 import (
     LoadTemporalDataForDateDoFn,
     GCP_DIRECTORY,
     ARUpdateSlice,
+    INIT_TIME
 )
 
 logging.getLogger().setLevel(logging.INFO)
@@ -38,7 +39,7 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='End date, iso format string.')
     parser.add_argument("--pressure_levels_group", type=str, default="weatherbench_13",
                         help="Group label for the set of pressure levels to use.")
-    parser.add_argument("--init_date", type=str, default='1900-01-01',
+    parser.add_argument("--init_date", type=str, default=INIT_TIME,
                         help="Date to initialize the zarr store.")
 
     return parser.parse_known_args()

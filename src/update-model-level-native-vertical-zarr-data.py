@@ -18,6 +18,7 @@ import logging
 import typing as t
 
 from arco_era5 import (
+    INIT_TIME,
     hourly_dates,
     LoadDataForDayDoFn,
     UpdateModelLevelNativeVerticalDataSlice
@@ -35,7 +36,7 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='Start date, iso format string.')
     parser.add_argument('-e', "--end_date", required=True,
                         help='End date, iso format string.')
-    parser.add_argument("--init_date", type=str, default='1900-01-01',
+    parser.add_argument("--init_date", type=str, default=INIT_TIME,
                         help="Date to initialize the zarr store.")
 
     return parser.parse_known_args()

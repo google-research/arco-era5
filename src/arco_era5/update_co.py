@@ -159,14 +159,21 @@ def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[st
     return input_paths
 
 
-def generate_offset(url: str, is_single_level: bool, init_date: str, timestamps_per_file: int) -> t.Tuple[slice, str]:
-    """A method for generating the offset along with time dimension.
+def generate_offset(url: str, is_single_level: bool, init_date: str,
+                    timestamps_per_file: int) -> t.Tuple[slice, str]:
+    """
+    Generate the time offset and chunk identifier from a GRIB file URL.
 
     Args:
-        url (str): The cloud storage path to the grib file.
+        url (str): url of GRIB file.
+        is_single_level (bool): Whether the GRIB file contains single-level's data.
+        init_date (str): The initialization date in 'YYYY-MM-DD' format.
+        timestamps_per_file (int): The number of timestamps present in each file.
 
     Returns:
-        t.Tuple: url with included variables and time offset.
+        Tuple[slice, str]: A tuple containing:
+            - A `slice` object representing the time offset range.
+            - The chunk identifier extracted from the file name.
     """
     file_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
     int_date, chunk = file_name.split('_hres_')
@@ -192,7 +199,10 @@ class GenerateOffset(beam.PTransform):
     is_single_level: bool = False
 
     def apply(self, url: str) -> t.Tuple[str, slice, t.List[str]]:
-        offset_slice, chunk = generate_offset(url, self.is_single_level, self.init_date, self.timestamps_per_file)
+        offset_slice, chunk = generate_offset(url,
+                                              self.is_single_level,
+                                              self.init_date,
+                                              self.timestamps_per_file)
         return url, offset_slice, VARIABLE_DICT[chunk]
 
     def expand(self, pcoll: beam.PCollection) -> beam.PCollection:

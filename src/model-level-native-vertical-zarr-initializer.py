@@ -33,7 +33,7 @@ import pandas as pd
 import xarray as xr
 import dask.array as da
 
-from arco_era5 import _read_nc_dataset, zarr_files, GCP_DIRECTORY
+from arco_era5 import _read_nc_dataset, zarr_files, GCP_DIRECTORY, INIT_TIME
 
 grib_variables = {
     'cc': 'fraction_of_cloud_cover',
@@ -63,7 +63,7 @@ def parse_arguments(desc: str) -> argparse.Namespace:
                         help='Start date, iso format string.')
     parser.add_argument('-e', "--end_date", default='2020-01-02',
                         help='End date, iso format string.')
-    parser.add_argument("--init_date", type=str, default='1900-01-01',
+    parser.add_argument("--init_date", type=str, default=INIT_TIME,
                         help="Date to initialize the zarr store.")
     parser.add_argument("--from_init_date", action='store_true', default=False,
                         help="To initialize the store from some previous date (--init_date). i.e. 1900-01-01")

@@ -32,6 +32,7 @@ import xarray_beam as xb
 
 TIME_RESOLUTION_HOURS = 1
 HOURS_PER_DAY = 24
+INIT_TIME = '1900-01-01'
 
 GCP_DIRECTORY = "gs://gcp-public-data-arco-era5/raw"
 
@@ -701,7 +702,7 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
     parser.add_argument("--time_chunk_size", type=int, required=True,
                         help="Number of 1-hourly timesteps to include in a \
                         single chunk. Must evenly divide 24.")
-    parser.add_argument("--init_date", type=str, default='1900-01-01',
+    parser.add_argument("--init_date", type=str, default=INIT_TIME,
                         help="Date to initialize the zarr store.")
     parser.add_argument("--from_init_date", action='store_true', default=False,
                         help="To initialize the store from some previous date (--init_date). i.e. 1900-01-01")

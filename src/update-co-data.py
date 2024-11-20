@@ -15,7 +15,7 @@ import logging
 import argparse
 from typing import List, Tuple
 import apache_beam as beam
-from arco_era5 import GenerateOffset, COUpdateSlice, GCP_DIRECTORY, generate_input_paths
+from arco_era5 import GenerateOffset, COUpdateSlice, GCP_DIRECTORY, generate_input_paths, HOURS_PER_DAY
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -54,7 +54,7 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
     parser.add_argument('-c', '--chunks', metavar='chunks', nargs='+',
                         default=model_level_default_chunks,
                         help='Chunks of variables to merge together.')
-    parser.add_argument('--time_per_day', type=int, default=24,
+    parser.add_argument('--time_per_day', type=int, default=HOURS_PER_DAY,
                         help='Timestamps Per Day.')
 
     return parser.parse_known_args()
