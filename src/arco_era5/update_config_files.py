@@ -112,6 +112,12 @@ def get_month_range(date: datetime.date) -> t.Tuple[datetime.date, datetime.date
 
 
 def get_last_sixth_date() -> t.Dict[str, t.Any]:
+    """
+    Calculate the date six days ago from the current date.
+
+    Returns:
+        Dict[str, Any]: A dictionary with the key 'six_days_ago' and the corresponding date value.
+    """
     current_date = datetime.datetime.now().date()
     sixth_last_date = current_date - datetime.timedelta(days=6)
     
@@ -119,14 +125,18 @@ def get_last_sixth_date() -> t.Dict[str, t.Any]:
 
 
 def get_previous_month_dates(last_month: bool = False) -> MonthDates:
-    """Return a dictionary containing the first and third previous month's dates from
+    """Return a dictionary containing the first or third previous month's dates from
     the current date.
+
+    Args:
+        last_month (bool, optional): If True, calculates relative to the last month.
+            Defaults to False (relative to the third last month).
 
     Returns:
         dict: A dictionary containing the following key-value pairs:
-            - 'first_day_third_prev': The first day of the third previous month
+            - 'first_day': The first day of the first/third previous month
                                         (datetime.date).
-            - 'last_day_third_prev': The last day of the third previous month
+            - 'last_day': The last day of the first/third previous month
                                         (datetime.date).
             - 'sl_year': The year of the third previous month in 'YYYY' format (str).
             - 'sl_month': The month of the third previous month in 'MM' format (str).
@@ -135,13 +145,13 @@ def get_previous_month_dates(last_month: bool = False) -> MonthDates:
     today = datetime.date.today()
     # Calculate the correct previous third month considering months from 1 to 12
     third_prev_month = today - datetime.timedelta(days= (0 if last_month else 2)*366/12)
-    first_day_third_prev, last_day_third_prev = get_month_range(third_prev_month)
-    first_date_third_prev = first_day_third_prev
+    first_day, last_day = get_month_range(third_prev_month)
+    first_date_third_prev = first_day
     sl_year, sl_month = str(first_date_third_prev)[:4], str(first_date_third_prev)[5:7]
 
     return {
-        'first_day_third_prev': first_day_third_prev,
-        'last_day_third_prev': last_day_third_prev,
+        'first_day': first_day,
+        'last_day': last_day,
         'sl_year': sl_year,
         'sl_month': sl_month,
     }
@@ -179,7 +189,7 @@ def add_licenses_in_config_files(directory: str, licenses: str) -> None:
             
 
 def update_date_in_config_file(directory: str, dates_data: t.Dict[str, t.Any]) -> None:
-    """Update the configuration files in the specified directory.
+    """Update the date in the configuration files in the specified directory.
 
     Parameters:
         directory (str): The path to the directory containing the configuration files.

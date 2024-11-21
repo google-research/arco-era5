@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import datetime
 import json
 import logging
 import os
@@ -23,15 +22,15 @@ from arco_era5 import (
     check_data_availability,
     data_splitting_dataflow_job,
     date_range,
-    ingest_data_in_zarr_dataflow_job,
     get_previous_month_dates,
     get_secret,
+    ingest_data_in_zarr_dataflow_job,
     parse_arguments_raw_to_zarr_to_bq,
     raw_data_download_dataflow_job,
     replace_non_alphanumeric_with_hyphen,
-    update_zarr_metadata,
     subprocess_run,
     update_date_in_config_file,
+    update_zarr_metadata,
     )
 
 # Logger Configuration
@@ -39,14 +38,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DIRECTORY = "/arco-era5/raw"
-AR_FILES = ['/arco-era5/raw/era5_pl_hourly.cfg', '/arco-era5/raw/era5_sl_hourly.cfg']
-CO_MODEL_LEVEL_FILES = ['era5_ml_dve.cfg', 'era5_ml_o3q.cfg', 'era5_ml_qrqs.cfg', 'era5_ml_tw.cfg']
-CO_MODEL_LEVEL_FILES = [ f'{DIRECTORY}/{file}' for file in CO_MODEL_LEVEL_FILES ]
-CO_SINGLE_LEVEL_FILES = ['era5_ml_lnsp.cfg', 'era5_ml_zs.cfg', 'era5_sfc_cape.cfg', 'era5_sfc_cisst.cfg',
-                         'era5_sfc_pcp.cfg', 'era5_sfc_rad.cfg', 'era5_sfc_soil.cfg', 'era5_sfc_tcol.cfg',
-                         'era5_sfc.cfg']
-CO_SINGLE_LEVEL_FILES = [ f'{DIRECTORY}/{file}' for file in CO_SINGLE_LEVEL_FILES ]
-
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
@@ -130,7 +121,7 @@ if __name__ == "__main__":
 
         logger.info(f"Automatic update for ARCO-ERA5 started for {dates_data['sl_month']}.")
         data_date_range = date_range(
-            dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
+            dates_data["first_day"], dates_data["last_day"]
         )
 
         for env_var in os.environ:
@@ -156,11 +147,11 @@ if __name__ == "__main__":
                                        MANIFEST_LOCATION, DIRECTORY, 'ERA5T_MONTHLY')
         logger.info("Raw data downloaded successfully.")
 
-        if dates_data.get('first_day_third_prev', None):
+        if dates_data.get('first_day', None):
             logger.info("Raw data Splitting started.")
             data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                         WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                        dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                                        dates_data['first_day'].strftime("%Y/%m"))
             logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
@@ -172,18 +163,18 @@ if __name__ == "__main__":
                 raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                                WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
                                                MANIFEST_LOCATION, DIRECTORY, 'ERA5T_MONTHLY')
-                if dates_data.get('first_day_third_prev'):
+                if dates_data.get('first_day'):
                     data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                                 WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                                dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                                                dates_data['first_day'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
         with ThreadPoolExecutor(max_workers=8) as tp:
             for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
                                              REGION_LIST):
                 tp.submit(perform_data_operations, z_file, table, region,
-                          dates_data["first_day_third_prev"],
-                          dates_data["last_day_third_prev"], parsed_args.init_date)
+                          dates_data["first_day"],
+                          dates_data["last_day"], parsed_args.init_date)
 
         logger.info(f"Automatic update for ARCO-ERA5T completed for {dates_data['sl_month']}.")
     except Exception as e:

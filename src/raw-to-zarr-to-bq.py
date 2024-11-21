@@ -11,37 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import datetime
 import json
 import logging
 import os
 import re
 import zarr
 
-import numpy as np
 import xarray as xr
 
 from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
-    add_licenses_in_config_files,
-    check_data_availability,
-    data_splitting_dataflow_job,
-    date_range,
-    ingest_data_in_zarr_dataflow_job,
-    generate_input_paths,
-    generate_input_paths_of_ar_data,
-    generate_offset,
-    get_previous_month_dates,
-    get_secret,
-    offset_along_time_axis,
-    opener,
-    parse_arguments_raw_to_zarr_to_bq,
-    raw_data_download_dataflow_job,
-    replace_non_alphanumeric_with_hyphen,
-    update_zarr_metadata,
-    subprocess_run,
-    update_date_in_config_file,
-    update_target_path_in_config_file,
     GCP_DIRECTORY,
     HOURS_PER_DAY,
     INIT_DATE,
@@ -52,6 +31,25 @@ from arco_era5 import (
     SINGLE_LEVEL_REANALYSIS_VARIABLE,
     SINGLE_LEVEL_SURFACE_VARIABLE,
     SINGLE_LEVEL_VARIABLES,
+    add_licenses_in_config_files,
+    check_data_availability,
+    data_splitting_dataflow_job,
+    date_range,
+    generate_input_paths,
+    generate_input_paths_of_ar_data,
+    generate_offset,
+    get_previous_month_dates,
+    get_secret,
+    ingest_data_in_zarr_dataflow_job,
+    offset_along_time_axis,
+    opener,
+    parse_arguments_raw_to_zarr_to_bq,
+    raw_data_download_dataflow_job,
+    replace_non_alphanumeric_with_hyphen,
+    subprocess_run,
+    update_date_in_config_file,
+    update_target_path_in_config_file,
+    update_zarr_metadata,
     )
 
 # Logger Configuration
@@ -69,14 +67,22 @@ ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
 
-SPLITTING_DATASETS = ['soil', 'pcp']
 BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
 TEMP_TARGET_PATH = "gs://gcp-public-data-arco-era5/raw-era5"
 
+zarr_to_netcdf_file_mapping = {
+    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3': MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES,
+    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2' : MODEL_LEVEL_MOISTURE_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2' : MODEL_LEVEL_WIND_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2': SINGLE_LEVEL_FORECAST_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2': SINGLE_LEVEL_REANALYSIS_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2': SINGLE_LEVEL_SURFACE_VARIABLE
+}
+
 dates_data = get_previous_month_dates()
 data_date_range = date_range(
-    dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
+    dates_data["first_day"], dates_data["last_day"]
 )
 start_date = data_date_range[0].strftime("%Y/%m/%d")
 end_date = data_date_range[-1].strftime("%Y/%m/%d")
@@ -133,53 +139,89 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         logger.error(
             f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
 
-zarr_to_netcdf_file_mapping = {
-    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3': MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES,
-    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2' : MODEL_LEVEL_MOISTURE_VARIABLE,
-    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2' : MODEL_LEVEL_WIND_VARIABLE,
-    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2': SINGLE_LEVEL_FORECAST_VARIABLE,
-    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2': SINGLE_LEVEL_REANALYSIS_VARIABLE,
-    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2': SINGLE_LEVEL_SURFACE_VARIABLE
-}
 
+def open_dataset_from_url(url: str, engine: str) -> xr.Dataset:
+    """
+    Opens a dataset from a given URL using the specified engine(i.e. Netcdf4, grib).
 
-def open_dataset(url: str, engine: str):
+    Args:
+        url (str): The URL of the dataset to open.
+        engine (str): The engine to use for reading the dataset.
+
+    Returns:
+        xr.Dataset: The opened xarray dataset.
+    """
     with opener(url) as file:
-        ds = xr.open_dataset(file, engine=engine)
-        return ds
+        return xr.open_dataset(file, engine=engine)
 
 
-def data_comparison(url1: str, url2: str, engine: str) -> bool:
-    data1 = open_dataset(url1, engine)
-    data2 = open_dataset(url2, engine)
+def compare_datasets(url1: str, url2: str, engine: str) -> bool:
+    """
+    Compares two xarray datasets from given URLs to check if they are equal.
 
-    return data1.equals(data2)
+    Args:
+        url1 (str): The URL of the first dataset.
+        url2 (str): The URL of the second dataset.
+        engine (str): The engine to use for reading the datasets.
+
+    Returns:
+        bool: True if the datasets are equal, False otherwise.
+    """
+    dataset1 = open_dataset_from_url(url1, engine)
+    dataset2 = open_dataset_from_url(url2, engine)
+
+    return dataset1.equals(dataset2)
 
 
-def get_offset_region_for_ar_data(raw_file: str) -> slice:
+def calculate_time_offset_for_ar_data(raw_file: str) -> slice:
+    """
+    Calculates the time offset for AR data.
+
+    Args:
+        raw_file (str): Path to the raw data file.
+
+    Returns:
+        slice: The time offset region as a slice object.
+    """
     year, month, day = raw_file.split('/')[5:8]
     offset = offset_along_time_axis(INIT_DATE, year, month, day)
-    region = slice(offset, offset + HOURS_PER_DAY)
-    return region
+    return slice(offset, offset + HOURS_PER_DAY)
 
 
-def update_era5t_data_with_era5_data(z_file: str, new_raw_file: str, engine: str):
+def synchronize_era5t_with_era5_data(z_file: str, new_raw_file: str, engine: str) -> None:
+    """
+    Updates ERA5T data using corresponding ERA5 data.
+
+    Args:
+        z_file (str): Path to the Zarr file containing ERA5T data.
+        new_raw_file (str): Path to the raw ERA5 data file.
+        engine (str): The engine used for reading raw  the datasets.
+
+    Returns:
+        None
+    """
     zf = zarr.open(z_file)
-    ds = open_dataset(new_raw_file, engine)
-    logger.info(f'data updation starts for {z_file}.')
-    if "model-level" or "single-level" in z_file:
-        single_level = True if "single-level" in z_file else False
+    ds = open_dataset_from_url(new_raw_file, engine)
+    logger.info(f"Data update process starts for {z_file}.")
+
+    # Determine the appropriate time region
+    if "model-level" in z_file or "single-level" in z_file:
+        single_level = "single-level" in z_file
         region, _ = generate_offset(new_raw_file, single_level, INIT_DATE, HOURS_PER_DAY)
     else:
-        region = get_offset_region_for_ar_data(new_raw_file)
+        region = calculate_time_offset_for_ar_data(new_raw_file)
 
-    for vname in ds.data_vars:
-        zv = zf[vname]
-        zv[region] = ds[vname].values
-    logger.info(f'data updation completed for {z_file}.')
+    # Update variables
+    for variable_name in ds.data_vars:
+        zv = zf[variable_name]
+        zv[region] = ds[variable_name].values
+
+    logger.info(f"Data update process completed for {z_file}.")
 
 
-def update_era5t_data(z_file: str):
+def update_era5t_data(z_file: str) -> None:
+    """Synchronizes ERA5T data with ERA5 data."""
+
     variables = zarr_to_netcdf_file_mapping[z_file]
     era5t_raw_files = []
     if "model-level" in z_file:
@@ -190,17 +232,18 @@ def update_era5t_data(z_file: str):
         for date in data_date_range:
             era5t_raw_files.extend(generate_input_paths_of_ar_data(date, variables))
     
-    era5_raw_files = (map(lambda url: url.replace("gs://gcp-public-data-arco-era5/raw", 
-                                           TEMP_TARGET_PATH), era5t_raw_files))
+    era5_raw_files = [
+        url.replace("gs://gcp-public-data-arco-era5/raw", TEMP_TARGET_PATH)
+        for url in era5t_raw_files
+    ]
     
     for old_file, new_file in zip(era5t_raw_files, era5_raw_files):
-        logger.info(f"data comparison of {old_file} is started.")
-        engine = 'netcdf4' if "/ar/" in z_file else 'cfgrib'
-        equal_data = data_comparison(old_file, new_file, engine)
-        if not equal_data:
-            logger.info(f'data is not equal for the file {new_file}.')
-            update_era5t_data_with_era5_data(z_file, new_file, engine)
-        logger.info(f"data comparison of {old_file} is completed.")
+        logger.info(f"Comparing data between {old_file} and {new_file}.")
+        engine = "netcdf4" if "/ar/" in z_file else "cfgrib"
+        if not compare_datasets(old_file, new_file, engine):
+            logger.info(f"Data mismatch detected for {new_file}. Updating data.")
+            synchronize_era5t_with_era5_data(z_file, new_file, engine)
+        logger.info(f"Data comparison completed for {old_file}.")
 
 
 if __name__ == "__main__":
@@ -234,7 +277,7 @@ if __name__ == "__main__":
         logger.info("Raw data Splitting started.")
         data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                     WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                    dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                                    dates_data['first_day'].strftime("%Y/%m"))
         logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
@@ -248,7 +291,7 @@ if __name__ == "__main__":
                                                MANIFEST_LOCATION, DIRECTORY)
                 data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                             WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                            dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                                            dates_data['first_day'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
         # update raw ERA5T data with the ERA5. ## Pending

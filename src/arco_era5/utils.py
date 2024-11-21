@@ -124,8 +124,23 @@ def parse_arguments_raw_to_zarr_to_bq(desc: str) -> t.Tuple[argparse.Namespace,
 def raw_data_download_dataflow_job(python_path: str, project: str, region: str,
                                    bucket: str, sdk_container_image: str,
                                    manifest_location: str, directory: str,
-                                   type: str = None):
-    """Launches a Dataflow job to process weather data."""
+                                   type: str = None) -> None:
+    """
+    Launches a Dataflow job to download weather data.
+    
+    Args:
+        python_path (str): Path to the Python executable.
+        project (str): Google Cloud project ID.
+        region (str): Google Cloud region.
+        bucket (str): Google Cloud Storage bucket for temporary data.
+        sdk_container_image (str): SDK container image for Dataflow.
+        manifest_location (str): Path to the manifest table.
+        directory (str): Directory containing input files.
+        job_type (Optional[str]): Type of job ('ERA5T_DAILY', 'ERA5T_MONTHLY', or None).
+
+    Raises:
+        subprocess.CalledProcessError: If the Dataflow job command fails.
+    """
 
     AR_FILES = [ f'{directory}/{file}' for file in AR_FILES ]
     CO_MODEL_LEVEL_FILES = [ f'{directory}/{file}' for file in CO_MODEL_LEVEL_FILES ]
@@ -153,8 +168,21 @@ def raw_data_download_dataflow_job(python_path: str, project: str, region: str,
 
 
 def data_splitting_dataflow_job(python_path: str, project: str, region: str,
-                                bucket: str, sdk_container_image: str, date: str):
-    """Launches a Dataflow job to splitting soil & pcp weather data."""
+                                bucket: str, sdk_container_image: str, date: str) -> None:
+    """
+    Launches a Dataflow job to splitting soil & pcp weather data for a given date.
+    
+     Args:
+        python_path (str): Path to the Python executable.
+        project (str): Google Cloud project ID.
+        region (str): Google Cloud region.
+        bucket (str): Google Cloud Storage bucket for temporary data.
+        sdk_container_image (str): SDK container image for Dataflow.
+        date (str): The target date in 'YYYY-MM' format for the data splitting job.
+
+    Raises:
+        subprocess.CalledProcessError: If any of the Dataflow job commands fail.
+    """
     year = date[:4]
     month = year + date[5:7]
     typeOfLevel = '{' + 'typeOfLevel' + '}'

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import datetime
 import json
 import logging
 import os
@@ -23,15 +22,15 @@ from arco_era5 import (
     check_data_availability,
     data_splitting_dataflow_job,
     date_range,
-    ingest_data_in_zarr_dataflow_job,
     get_last_sixth_date,
     get_secret,
+    ingest_data_in_zarr_dataflow_job,
     parse_arguments_raw_to_zarr_to_bq,
     raw_data_download_dataflow_job,
     replace_non_alphanumeric_with_hyphen,
-    update_zarr_metadata,
     subprocess_run,
     update_date_in_config_file,
+    update_zarr_metadata,
     )
 
 # Logger Configuration
@@ -39,14 +38,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DIRECTORY = "/arco-era5/raw"
-AR_FILES = ['/arco-era5/raw/era5_pl_hourly.cfg', '/arco-era5/raw/era5_sl_hourly.cfg']
-CO_MODEL_LEVEL_FILES = ['era5_ml_dve.cfg', 'era5_ml_o3q.cfg', 'era5_ml_qrqs.cfg', 'era5_ml_tw.cfg']
-CO_MODEL_LEVEL_FILES = [ f'{DIRECTORY}/{file}' for file in CO_MODEL_LEVEL_FILES ]
-CO_SINGLE_LEVEL_FILES = ['era5_ml_lnsp.cfg', 'era5_ml_zs.cfg', 'era5_sfc_cape.cfg', 'era5_sfc_cisst.cfg',
-                         'era5_sfc_pcp.cfg', 'era5_sfc_rad.cfg', 'era5_sfc_soil.cfg', 'era5_sfc_tcol.cfg',
-                         'era5_sfc.cfg']
-CO_SINGLE_LEVEL_FILES = [ f'{DIRECTORY}/{file}' for file in CO_SINGLE_LEVEL_FILES ]
-
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
