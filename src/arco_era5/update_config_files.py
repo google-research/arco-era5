@@ -77,20 +77,20 @@ def new_config_file(config_file: str, config_args: ConfigArgs) -> None:
     config = configparser.ConfigParser()
     config.read(config_file)
 
-    if last_sixth_date and not year_wise_date: # ERA5T Daily
+    if last_sixth_date and not year_wise_date:  # ERA5T Daily
         config.set("selection", "date", f"{last_sixth_date}")
-    elif ERA5T_monthly and year_wise_date: # ERA5T Monthly
+    elif ERA5T_monthly and year_wise_date:  # ERA5T Monthly
         config.set("selection", "year", sl_year)
         config.set("selection", "month", sl_month)
         config.set("selection", "day", "all")
-    elif not last_sixth_date and not ERA5T_monthly: # ERA5
+    elif not last_sixth_date and not ERA5T_monthly:  # ERA5
         if year_wise_date:
             config.set("selection", "year", sl_year)
             config.set("selection", "month", sl_month)
             config.set("selection", "day", "all")
         else:
             config.set("selection", "date",
-                    f"{first_day_third_prev}/to/{last_day_third_prev}")
+                       f"{first_day_third_prev}/to/{last_day_third_prev}")
 
     with open(config_file, "w") as file:
         config.write(file, space_around_delimiters=False)
@@ -120,8 +120,8 @@ def get_last_sixth_date() -> t.Dict[str, t.Any]:
     """
     current_date = datetime.datetime.now().date()
     sixth_last_date = current_date - datetime.timedelta(days=6)
-    
-    return { 'last_sixth_date' : sixth_last_date}
+
+    return {'last_sixth_date': sixth_last_date}
 
 
 def get_previous_month_dates(last_month: bool = False) -> MonthDates:
@@ -170,7 +170,7 @@ def add_licenses_in_config_files(directory: str, licenses: str) -> None:
 
             config = configparser.ConfigParser()
             config.read(config_file)
-            
+
             sections_list = licenses.split("\n\n")
             for section in sections_list[:-1]:
                 sections = section.split("\n")
@@ -186,7 +186,7 @@ def add_licenses_in_config_files(directory: str, licenses: str) -> None:
 
             with open(config_file, "w") as file:
                 config.write(file, space_around_delimiters=False)
-            
+
 
 def update_date_in_config_file(directory: str, dates_data: t.Dict[str, t.Any]) -> None:
     """Update the date in the configuration files in the specified directory.
@@ -209,7 +209,8 @@ def update_target_path_in_config_file(directory: str, new_target_path: str) -> N
 
     Parameters:
         directory (str): The path to the directory containing the configuration files.
-        new_target_path (str): The new target path which is updated with the old target path in config.
+        new_target_path (str): The new target path which is updated with the old
+        target path in config.
     """
     for filename in os.listdir(directory):
         if filename.endswith(".cfg"):
@@ -219,11 +220,12 @@ def update_target_path_in_config_file(directory: str, new_target_path: str) -> N
             original_path = config.get("parameters", "target_path")
 
             # Replace the base path
-            updated_path = original_path.replace("gs://gcp-public-data-arco-era5/raw", new_target_path)
+            updated_path = original_path.replace(
+                "gs://gcp-public-data-arco-era5/raw", new_target_path)
             config.set("parameters", "target_path", updated_path)
 
             with open(config_file, "w") as configfile:
-                config.write(configfile) 
+                config.write(configfile)
 
 
 def get_secret(secret_key: str) -> dict:

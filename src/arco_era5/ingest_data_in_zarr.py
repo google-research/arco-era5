@@ -49,7 +49,8 @@ CO_FILES_MAPPING = {
 
 def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: str,
                                      end_date: str, init_date: str, project: str,
-                                     bucket: str, sdk_container_image: str,  python_path: str) -> None:
+                                     bucket: str, sdk_container_image: str,
+                                     python_path: str) -> None:
     """Ingests data into a Zarr store and runs a Dataflow job.
 
     Args:

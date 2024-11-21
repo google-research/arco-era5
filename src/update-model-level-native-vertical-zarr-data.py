@@ -41,6 +41,7 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
 
     return parser.parse_known_args()
 
+
 known_args, pipeline_args = parse_arguments('')
 dates = hourly_dates(known_args.start_date, known_args.end_date)
 
@@ -49,5 +50,6 @@ with beam.Pipeline(argv=pipeline_args) as p:
         p
         | "CreateDayIterator" >> beam.Create(dates)
         | "LoadDataForDay" >> beam.ParDo(LoadDataForDayDoFn(start_date=known_args.init_date))
-        | "UpdateDataSlice" >> UpdateModelLevelNativeVerticalDataSlice(target=known_args.output_path, init_date=known_args.init_date)
+        | "UpdateDataSlice" >> UpdateModelLevelNativeVerticalDataSlice(
+            target=known_args.output_path, init_date=known_args.init_date)
     )

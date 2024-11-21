@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 AR_FILES = ['era5_pl_hourly.cfg', 'era5_sl_hourly.cfg']
 CO_MODEL_LEVEL_FILES = ['era5_ml_dve.cfg', 'era5_ml_o3q.cfg', 'era5_ml_qrqs.cfg', 'era5_ml_tw.cfg']
-CO_SINGLE_LEVEL_FILES = ['era5_ml_lnsp.cfg', 'era5_ml_zs.cfg', 'era5_sfc_cape.cfg', 'era5_sfc_cisst.cfg',
-                         'era5_sfc_pcp.cfg', 'era5_sfc_rad.cfg', 'era5_sfc_soil.cfg', 'era5_sfc_tcol.cfg',
-                         'era5_sfc.cfg']
+CO_SINGLE_LEVEL_FILES = ['era5_ml_lnsp.cfg', 'era5_ml_zs.cfg', 'era5_sfc_cape.cfg',
+                         'era5_sfc_cisst.cfg', 'era5_sfc_pcp.cfg', 'era5_sfc_rad.cfg',
+                         'era5_sfc_soil.cfg', 'era5_sfc_tcol.cfg', 'era5_sfc.cfg']
 SPLITTING_DATASETS = ['soil', 'pcp']
 
 
@@ -127,7 +127,7 @@ def raw_data_download_dataflow_job(python_path: str, project: str, region: str,
                                    type: str = None) -> None:
     """
     Launches a Dataflow job to download weather data.
-    
+
     Args:
         python_path (str): Path to the Python executable.
         project (str): Google Cloud project ID.
@@ -142,10 +142,10 @@ def raw_data_download_dataflow_job(python_path: str, project: str, region: str,
         subprocess.CalledProcessError: If the Dataflow job command fails.
     """
 
-    AR_FILES = [ f'{directory}/{file}' for file in AR_FILES ]
-    CO_MODEL_LEVEL_FILES = [ f'{directory}/{file}' for file in CO_MODEL_LEVEL_FILES ]
-    CO_SINGLE_LEVEL_FILES = [ f'{directory}/{file}' for file in CO_SINGLE_LEVEL_FILES ]
-    
+    AR_FILES = [f'{directory}/{file}' for file in AR_FILES]
+    CO_MODEL_LEVEL_FILES = [f'{directory}/{file}' for file in CO_MODEL_LEVEL_FILES]
+    CO_SINGLE_LEVEL_FILES = [f'{directory}/{file}' for file in CO_SINGLE_LEVEL_FILES]
+
     current_day = datetime.date.today()
 
     if type == 'ERA5T_DAILY':
@@ -171,7 +171,7 @@ def data_splitting_dataflow_job(python_path: str, project: str, region: str,
                                 bucket: str, sdk_container_image: str, date: str) -> None:
     """
     Launches a Dataflow job to splitting soil & pcp weather data for a given date.
-    
+
      Args:
         python_path (str): Path to the Python executable.
         project (str): Google Cloud project ID.

@@ -15,7 +15,11 @@ import logging
 import argparse
 from typing import List, Tuple
 import apache_beam as beam
-from arco_era5 import GenerateOffset, COUpdateSlice, GCP_DIRECTORY, generate_input_paths, HOURS_PER_DAY
+from arco_era5 import (GenerateOffset,
+                       COUpdateSlice,
+                       GCP_DIRECTORY,
+                       generate_input_paths,
+                       HOURS_PER_DAY)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

@@ -62,7 +62,7 @@ REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
 MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
 PYTHON_PATH = os.environ.get("PYTHON_PATH")
-WEATHER_TOOLS_SDK_CONTAINER_IMAGE  = os.environ.get("WEATHER_TOOLS_SDK_CONTAINER_IMAGE")
+WEATHER_TOOLS_SDK_CONTAINER_IMAGE = os.environ.get("WEATHER_TOOLS_SDK_CONTAINER_IMAGE")
 ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
@@ -73,8 +73,8 @@ TEMP_TARGET_PATH = "gs://gcp-public-data-arco-era5/raw-era5"
 
 zarr_to_netcdf_file_mapping = {
     'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3': MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES,
-    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2' : MODEL_LEVEL_MOISTURE_VARIABLE,
-    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2' : MODEL_LEVEL_WIND_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2': MODEL_LEVEL_MOISTURE_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2': MODEL_LEVEL_WIND_VARIABLE,
     'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2': SINGLE_LEVEL_FORECAST_VARIABLE,
     'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2': SINGLE_LEVEL_REANALYSIS_VARIABLE,
     'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2': SINGLE_LEVEL_SURFACE_VARIABLE
@@ -86,6 +86,7 @@ data_date_range = date_range(
 )
 start_date = data_date_range[0].strftime("%Y/%m/%d")
 end_date = data_date_range[-1].strftime("%Y/%m/%d")
+
 
 def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region: str,
                                          zarr_kwargs: str) -> None:
@@ -122,7 +123,8 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
     try:
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         PROJECT, BUCKET, ARCO_ERA5_SDK_CONTAINER_IMAGE, PYTHON_PATH)
+                                         PROJECT, BUCKET, ARCO_ERA5_SDK_CONTAINER_IMAGE,
+                                         PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
         logger.info(f"update metadata for zarr file: {z_file} started.")
         update_zarr_metadata(z_file, end_date)
@@ -130,7 +132,7 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"
-        # TODO([#414](https://github.com/google/weather-tools/issues/414)): Faster ingestion into BQ by converting 
+        # TODO([#414](https://github.com/google/weather-tools/issues/414)): Faster ingestion into BQ by converting
         # the chunk into pd.Dataframe
         # logger.info(f"Data ingesting into BQ table: {table} started.")
         # ingest_data_in_bigquery_dataflow_job(z_file, table, region, zarr_kwargs)
@@ -227,16 +229,17 @@ def update_era5t_data(z_file: str) -> None:
     if "model-level" in z_file:
         era5t_raw_files = generate_input_paths(start_date, end_date, GCP_DIRECTORY, variables)
     elif "single-level" in z_file:
-        era5t_raw_files = generate_input_paths(start_date, end_date, GCP_DIRECTORY, variables, True)
+        era5t_raw_files = generate_input_paths(start_date, end_date, GCP_DIRECTORY, variables,
+                                               True)
     elif "/ar/" in z_file:
         for date in data_date_range:
             era5t_raw_files.extend(generate_input_paths_of_ar_data(date, variables))
-    
+
     era5_raw_files = [
         url.replace("gs://gcp-public-data-arco-era5/raw", TEMP_TARGET_PATH)
         for url in era5t_raw_files
     ]
-    
+
     for old_file, new_file in zip(era5t_raw_files, era5_raw_files):
         logger.info(f"Comparing data between {old_file} and {new_file}.")
         engine = "netcdf4" if "/ar/" in z_file else "cfgrib"
@@ -261,13 +264,13 @@ if __name__ == "__main__":
             secret_key_value = get_secret(secret_key)
             licenses += f'parameters.api{count}\n\
                 api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
-        
+
         logger.info("Config file updation started.")
         add_licenses_in_config_files(DIRECTORY, licenses)
         update_date_in_config_file(DIRECTORY, dates_data)
         update_target_path_in_config_file(DIRECTORY, TEMP_TARGET_PATH)
         logger.info("Config file updation completed.")
-        
+
         logger.info("Raw data downloading started.")
         raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
                                        WEATHER_TOOLS_SDK_CONTAINER_IMAGE,

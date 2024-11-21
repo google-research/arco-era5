@@ -43,7 +43,7 @@ REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
 MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
 PYTHON_PATH = os.environ.get("PYTHON_PATH")
-WEATHER_TOOLS_SDK_CONTAINER_IMAGE  = os.environ.get("WEATHER_TOOLS_SDK_CONTAINER_IMAGE")
+WEATHER_TOOLS_SDK_CONTAINER_IMAGE = os.environ.get("WEATHER_TOOLS_SDK_CONTAINER_IMAGE")
 ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
@@ -98,7 +98,8 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
     try:
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         PROJECT, BUCKET, ARCO_ERA5_SDK_CONTAINER_IMAGE, PYTHON_PATH)
+                                         PROJECT, BUCKET,
+                                         ARCO_ERA5_SDK_CONTAINER_IMAGE, PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
         logger.info(f"update metadata for zarr file: {z_file} started.")
         update_zarr_metadata(z_file, end_date)
@@ -106,7 +107,7 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"
-        # TODO([#414](https://github.com/google/weather-tools/issues/414)): Faster ingestion into BQ by converting 
+        # TODO([#414](https://github.com/google/weather-tools/issues/414)): Faster ingestion into BQ by converting
         # the chunk into pd.Dataframe
         # logger.info(f"Data ingesting into BQ table: {table} started.")
         # ingest_data_in_bigquery_dataflow_job(z_file, table, region, zarr_kwargs)
@@ -164,9 +165,10 @@ if __name__ == "__main__":
                                                WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
                                                MANIFEST_LOCATION, DIRECTORY, 'ERA5T_DAILY')
                 if dates_data.get('first_day_third_prev'):
-                    data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
-                                                WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
-                                                dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                    data_splitting_dataflow_job(
+                        PYTHON_PATH, PROJECT, REGION, BUCKET,
+                        WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                        dates_data['first_day_third_prev'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
         with ThreadPoolExecutor(max_workers=8) as tp:
@@ -176,6 +178,7 @@ if __name__ == "__main__":
                           dates_data["last_sixth_date"],
                           dates_data["last_sixth_date"], parsed_args.init_date)
 
-        logger.info(f"Automatic update for ARCO-ERA5T completed for {dates_data['last_sixth_date']}.")
+        logger.info(
+            f"Automatic update for ARCO-ERA5T completed for {dates_data['last_sixth_date']}.")
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
