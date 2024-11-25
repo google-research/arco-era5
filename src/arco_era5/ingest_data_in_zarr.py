@@ -90,6 +90,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--temp_location gs://{bucket}/temp --runner DataflowRunner "
             f"--project {project} --region {region} --experiments use_runner_v2 "
             f"--worker_machine_type n2-highmem-8 --disk_size_gb 250 "
+            f"--setup_file /arco-era5/setup.py "
             f"--job_name {job_name} --number_of_worker_harness_threads 1 "
             f"--sdk_container_image {sdk_container_image} "
             f"--init_date {init_date}")
