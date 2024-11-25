@@ -37,14 +37,6 @@ from dataclasses import dataclass
 from .constant import variables_full_names, zarr_files
 logger = logging.getLogger(__name__)
 
-try:
-    import metview as mv
-    Fieldset = mv.bindings.Fieldset
-except (ModuleNotFoundError, ImportError, FileNotFoundError):
-    logger.error('Metview could not be imported.')
-    mv = None  # noqa
-    Fieldset = Any
-
 TIME_RESOLUTION_HOURS = 1
 HOURS_PER_DAY = 24
 
@@ -88,6 +80,11 @@ class LoadDataForDayDoFn(beam.DoFn):
         Returns:
             xr.Dataset: The processed dataset.
         """
+        try:
+            import metview as mv
+        except (ModuleNotFoundError, ImportError, FileNotFoundError):
+            logger.error('Metview could not be imported.')
+            mv = None  # noqa
         try:
             wind_fieldset, moisture_fieldset, surface_fieldset = data_list
 
@@ -143,6 +140,12 @@ class LoadDataForDayDoFn(beam.DoFn):
         wind_slice = ml_wind.sel(time=current_timestamp).compute()
         moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
         surface_slice = sl_surface.sel(time=current_timestamp).compute()
+
+        try:
+            import metview as mv
+        except (ModuleNotFoundError, ImportError, FileNotFoundError):
+            logger.error('Metview could not be imported.')
+            mv = None  # noqa
 
         wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
         moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())

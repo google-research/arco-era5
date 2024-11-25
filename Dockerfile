@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ARG py_version=3.9
+ARG py_version=3.8
 FROM apache/beam_python${py_version}_sdk:2.40.0 as beam_sdk
 FROM continuumio/miniconda3:latest
 
