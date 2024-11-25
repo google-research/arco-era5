@@ -30,7 +30,6 @@ ARG CONDA_ENV_NAME=era5
 RUN echo "source activate ${CONDA_ENV_NAME}" >> ~/.bashrc
 ENV PATH /opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
 
-RUN conda install -c conda-forge google-cloud-sdk==410.0.0 -y
 # Install gcloud alpha
 RUN apt-get update -y
 RUN gcloud components install alpha --quiet
