@@ -76,7 +76,7 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
             f"--project {project} --region {region} --experiments use_runner_v2 "
             f"--worker_machine_type n2-highmem-32 --disk_size_gb 250 "
             f"--setup_file /arco-era5/setup.py "
-            f"--job_name {job_name} --number_of_worker_harness_threads 1 "
+            f"--job_name {job_name} --number_of_worker_harness_threads 2 "
             f"--init_date {init_date}")
     else:
         chunks = CO_FILES_MAPPING[target_path.split('/')[-1].split('.')[0]]
