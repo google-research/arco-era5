@@ -31,8 +31,8 @@ class TestFetchFunctions(unittest.TestCase):
                 time=00/to/23\nparam=138/155\n"
             )
         self.config_args = {
-            "first_day_third_prev": datetime.date(2023, 5, 1),
-            "last_day_third_prev": datetime.date(2023, 5, 31),
+            "first_day": datetime.date(2023, 5, 1),
+            "last_day": datetime.date(2023, 5, 31),
             "sl_year": "2023",
             "sl_month": "05",
             "year_wise_date": False
@@ -59,7 +59,7 @@ class TestFetchFunctions(unittest.TestCase):
         self.assertIn(section_name, config.sections())
         self.assertEqual(
             config.get("selection", "date"),
-            f'{self.config_args["first_day_third_prev"]}/to/{self.config_args["last_day_third_prev"]}',
+            f'{self.config_args["first_day"]}/to/{self.config_args["last_day"]}',
         )
         self.assertEqual(config.get(section_name, 'api_url'),
                          section_api_url)
@@ -88,8 +88,8 @@ class TestFetchFunctions(unittest.TestCase):
     def test_get_previous_month_dates(self):
         # Test get_previous_month_dates function
         prev_month_data = get_previous_month_dates()
-        self.assertIn("first_day_third_prev", prev_month_data)
-        self.assertIn("last_day_third_prev", prev_month_data)
+        self.assertIn("first_day", prev_month_data)
+        self.assertIn("last_day", prev_month_data)
         self.assertIn("sl_year", prev_month_data)
         self.assertIn("sl_month", prev_month_data)
 

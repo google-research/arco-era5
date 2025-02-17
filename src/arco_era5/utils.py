@@ -14,14 +14,27 @@
 import argparse
 import datetime
 import logging
+import os
 import re
 import subprocess
 import sys
+import tempfile
 
 import pandas as pd
 import typing as t
 
+from enum import Enum
+from contextlib import contextmanager
+from google.cloud import run_v2
+
 logger = logging.getLogger(__name__)
+
+
+class ExecTypes(Enum):
+
+    ERA5 = "era5"
+    ERA5T_DAILY = "daily"
+    ERA5T_MONTHLY = "monthly"
 
 
 def date_range(start_date: str, end_date: str, freq: str = "D") -> t.List[datetime.datetime]:
@@ -108,5 +121,59 @@ def parse_arguments_raw_to_zarr_to_bq(desc: str) -> t.Tuple[argparse.Namespace,
 
     parser.add_argument("--init_date", type=str, default='1900-01-01',
                         help="Date to initialize the zarr store.")
+    parser.add_argument("--mode", type=str, default="era5",
+                        help="Mode to execute the flow. Supported values era5, daily, monthly")
 
     return parser.parse_known_args()
+
+
+def copy(src: str, dst: str) -> None:
+    """A method for generating the offset along with time dimension.
+
+    Args:
+        src (str): The cloud storage path to the grib file.
+        dst (str): A temp location to copy the file.
+    """
+    cmd = 'gsutil -m cp'
+    try:
+        subprocess.run(cmd.split() + [src, dst], check=True, capture_output=True,
+                       text=True, input="n/n")
+        return
+    except subprocess.CalledProcessError as e:
+        msg = f"Failed to copy file {src!r} to {dst!r} Error {e}"
+        logger.error(msg)
+
+
+@contextmanager
+def opener(fname: str) -> t.Any:
+    """A method to copy remote file into temp.
+
+    Args:
+        url (str): The cloud storage path to the grib file.
+    """
+    _, suffix = os.path.splitext(fname)
+    with tempfile.NamedTemporaryFile(suffix=suffix) as ntf:
+        tmp_name = ntf.name
+        logger.info(f"Copying '{fname}' to local file '{tmp_name}'")
+        copy(fname, tmp_name)
+        yield tmp_name
+
+
+def run_cloud_job(project: str, region: str, job: str, override_args: t.List[str]):
+    client = run_v2.JobsClient()
+    job_executor_path = client.job_path(
+        project, region, job
+    )
+    override_spec = {
+        "container_overrides": [{ "args": override_args }]
+    }
+    job_executor_request = run_v2.RunJobRequest(
+        name=job_executor_path,
+        overrides=override_spec,
+    )
+    try:
+        response = client.run_job(request=job_executor_request)
+        if response.running():
+            print("job_executor triggered.")
+    except Exception as e:
+        print(f"Error starting ee_job_executor: {e}")

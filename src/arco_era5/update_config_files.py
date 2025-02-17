@@ -14,11 +14,27 @@
 # ==============================================================================
 import configparser
 import datetime
+import glob
 import json
+import logging
 import os
+import re
 import typing as t
 
 from google.cloud import secretmanager
+
+from .utils import ExecTypes
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+FILES_TO_UPDATE = {
+    ExecTypes.ERA5.value: ["dve", "o3q", "qrqs", "tw", "pl", "sl", "lnsp", "zs", "sfc"],
+    ExecTypes.ERA5T_DAILY.value: ["dve", "o3q", "qrqs", "tw", "pl", "sl"],
+    ExecTypes.ERA5T_MONTHLY.value: ["lnsp", "zs", "sfc"]
+}
+
+API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 
 
 class ConfigArgs(t.TypedDict):
@@ -28,14 +44,14 @@ class ConfigArgs(t.TypedDict):
     Attributes:
         year_wise_date (bool): True if the configuration file contains 'year',
                                 'month' and 'day', False otherwise.
-        first_day_third_prev (datetime.date): The first day of the third previous month.
-        last_day_third_prev (datetime.date): The last day of the third previous month.
+        first_day (datetime.date): The first day of the third previous month.
+        last_day (datetime.date): The last day of the third previous month.
         sl_year (str): The year of the third previous month in 'YYYY' format.
         sl_month (str): The month of the third previous month in 'MM' format.
     """
     year_wise_date: bool
-    first_day_third_prev: datetime.date
-    last_day_third_prev: datetime.date
+    first_day: datetime.date
+    last_day: datetime.date
     sl_year: str
     sl_month: str
 
@@ -44,19 +60,19 @@ class MonthDates(t.TypedDict):
     """A class representing the first and third previous month's dates.
 
     Attributes:
-        first_day_third_prev (datetime.date): The first day of the third previous month.
-        last_day_third_prev (datetime.date): The last day of the third previous month.
+        first_day (datetime.date): The first day of the third previous month.
+        last_day (datetime.date): The last day of the third previous month.
         sl_year (str): The year of the third previous month in 'YYYY' format.
         sl_month (str): The month of the third previous month in 'MM' format.
     """
-    first_day_third_prev: datetime.date
-    last_day_third_prev: datetime.date
+    first_day: datetime.date
+    last_day: datetime.date
     sl_year: str
     sl_month: str
 
 
 def new_config_file(config_file: str, field_name: str, additional_content: str,
-                    config_args: ConfigArgs) -> None:
+                    config_args: ConfigArgs, temp_path: str = None) -> None:
     """Modify the specified configuration file with new values.
 
     Parameters:
@@ -70,13 +86,17 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
 
     # Unpack the values from config_args dictionary
     year_wise_date = config_args["year_wise_date"]
-    first_day_third_prev = config_args["first_day_third_prev"]
-    last_day_third_prev = config_args["last_day_third_prev"]
+    first_day = config_args["first_day"]
+    last_day = config_args["last_day"]
     sl_year = config_args["sl_year"]
     sl_month = config_args["sl_month"]
 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
     config.read(config_file)
+
+    if temp_path:
+        target_path = config.get("parameters", "target_path")
+        config.set("parameters", "target_path", target_path.replace("gs://gcp-public-data-arco-era5/raw", temp_path))
 
     if year_wise_date:
         config.set("selection", "year", sl_year)
@@ -84,7 +104,7 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
         config.set("selection", "day", "all")
     else:
         config.set("selection", field_name,
-                   f"{first_day_third_prev}/to/{last_day_third_prev}")
+                   f"{first_day}/to/{last_day}")
 
     sections_list = additional_content.split("\n\n")
     for section in sections_list[:-1]:
@@ -115,37 +135,63 @@ def get_month_range(date: datetime.date) -> t.Tuple[datetime.date, datetime.date
     return first_day, last_day
 
 
-def get_previous_month_dates() -> MonthDates:
-    """Return a dictionary containing the first and third previous month's dates from
-    the current date.
+def get_previous_month_dates(mode: str) -> MonthDates:
+    """Return a dictionary containing the first and last date to process.
 
     Returns:
         dict: A dictionary containing the following key-value pairs:
-            - 'first_day_third_prev': The first day of the third previous month
-                                        (datetime.date).
-            - 'last_day_third_prev': The last day of the third previous month
-                                        (datetime.date).
-            - 'sl_year': The year of the third previous month in 'YYYY' format (str).
-            - 'sl_month': The month of the third previous month in 'MM' format (str).
+            - 'first_day': The first day (datetime.date).
+            - 'last_day': The last day (datetime.date).
+            - 'sl_year': The year of the date in 'YYYY' format (str).
+            - 'sl_month': The month of the date in 'MM' format (str).
     """
 
     today = datetime.date.today()
-    # Calculate the correct previous third month considering months from 1 to 12
-    third_prev_month = today - datetime.timedelta(days=2*366/12)
-    first_day_third_prev, last_day_third_prev = get_month_range(third_prev_month)
-    first_date_third_prev = first_day_third_prev
-    sl_year, sl_month = str(first_date_third_prev)[:4], str(first_date_third_prev)[5:7]
+    if mode == ExecTypes.ERA5T_DAILY.value:
+        # Get date before 6 days
+        third_prev_month = today - datetime.timedelta(days=6)
+        first_day = last_day = third_prev_month
+    elif mode == ExecTypes.ERA5T_MONTHLY.value:
+        # Get date range for previous month
+        third_prev_month = today
+        first_day, last_day = get_month_range(third_prev_month)
+    else:
+        # Calculate the correct previous third month considering months from 1 to 12
+        third_prev_month = today - datetime.timedelta(days=2*366/12)
+        first_day, last_day = get_month_range(third_prev_month)
+    sl_year, sl_month = str(first_day)[:4], str(first_day)[5:7]
 
     return {
-        'first_day_third_prev': first_day_third_prev,
-        'last_day_third_prev': last_day_third_prev,
+        'first_day': first_day,
+        'last_day': last_day,
         'sl_year': sl_year,
         'sl_month': sl_month,
     }
 
 
+def get_api_keys() -> t.List[str]:
+    api_key_list = []
+    for env_var in os.environ:
+        if API_KEY_PATTERN.match(env_var):
+            api_key_value = os.environ.get(env_var)
+            api_key_list.append(api_key_value)
+    return api_key_list
+
+
+def generate_additional_content() -> str:
+    """Generate additional_content including API KEYS."""
+    api_key_list = get_api_keys()
+
+    additional_content = ""
+    for count, secret_key in enumerate(api_key_list):
+        secret_key_value = get_secret(secret_key)
+        additional_content += f'parameters.api{count}\n\
+            api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
+    return additional_content
+
+
 def update_config_file(directory: str, field_name: str,
-                       additional_content: str) -> None:
+                       mode: str, temp_path: str = None) -> None:
     """Update the configuration files in the specified directory.
 
     Parameters:
@@ -154,22 +200,30 @@ def update_config_file(directory: str, field_name: str,
         additional_content (str): The additional content to be added under the
                     '[selection]' section.
     """
-    dates_data = get_previous_month_dates()
+    dates_data = get_previous_month_dates(mode)
     config_args = {
-        "first_day_third_prev": dates_data['first_day_third_prev'],
-        "last_day_third_prev": dates_data['last_day_third_prev'],
+        "first_day": dates_data['first_day'],
+        "last_day": dates_data['last_day'],
         "sl_year": dates_data['sl_year'],
         "sl_month": dates_data['sl_month'],
     }
-    for filename in os.listdir(directory):
+    files_to_update = FILES_TO_UPDATE[mode]
+    if mode == ExecTypes.ERA5.value:
+        all_files = glob.glob(f"{directory}/*/*.cfg")
+    else:
+        all_files = glob.glob(f"{directory}/{mode}/*.cfg")
+        directory = f"{directory}/{mode}"
+    
+    additional_content = generate_additional_content()
+
+    for filename in all_files:
         config_args["year_wise_date"] = False
-        if filename.endswith(".cfg"):
+        if any(chunk in filename for chunk in files_to_update):
             if "lnsp" in filename or "zs" in filename or "sfc" in filename:
                 config_args["year_wise_date"] = True
-            config_file = os.path.join(directory, filename)
             # Pass the data as keyword arguments to the new_config_file function
-            new_config_file(config_file, field_name, additional_content,
-                            config_args=config_args)
+            new_config_file(filename, field_name, additional_content,
+                            config_args=config_args, temp_path=temp_path)
 
 
 def get_secret(secret_key: str) -> dict:
@@ -207,7 +261,7 @@ def remove_license_from_config_file(config_file_path: str, num_licenses: int) ->
         config.write(file, space_around_delimiters=False)
 
 
-def remove_licenses_from_directory(directory_path: str, num_licenses: int) -> None:
+def remove_licenses_from_directory(directory_path: str) -> None:
     """Remove licenses from all configuration files in a directory.
 
     Args:
@@ -216,6 +270,7 @@ def remove_licenses_from_directory(directory_path: str, num_licenses: int) -> No
         configuration file.
 
     """
+    num_licenses = len(get_api_keys())
     for filename in os.listdir(directory_path):
         if filename.endswith(".cfg"):
             config_file_path = os.path.join(directory_path, filename)

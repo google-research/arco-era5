@@ -746,7 +746,6 @@ This feature is works in 4 parts.
  1. Acquiring raw data from CDS, facilitated by [`weather-dl`](https://weather-tools.readthedocs.io/en/latest/weather_dl/README.html) tool.
  2. Splitting raw data using [`weather-sp`](https://weather-tools.readthedocs.io/en/latest/weather_sp/README.html).
  3. Ingest this splitted data into a zarr file.
- 4. [**WIP**] Ingest [`AR`](gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3) data into BigQuery with the assistance of the [`weather-mv`](https://weather-tools.readthedocs.io/en/latest/weather_mv/README.html).
 
 #### How to Run.
 1. Set up a Cloud project with sufficient permissions to use cloud storage (such as [GCS](https://cloud.google.com/storage)) and a Beam runner (such as [Dataflow](https://cloud.google.com/dataflow)).
@@ -756,26 +755,18 @@ This feature is works in 4 parts.
 3. Add the all `Copernicus` licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
     > NOTE: for every API_KEY there must be unique secret-key.
 
-4. Update all of these variable in [docker-file](data_automate/Dockerfile).
+4. Update all of these variable in [docker-file](deployment/Dockerfile).
     * `PROJECT` 
     * `REGION`
     * `BUCKET`
     * `MANIFEST_LOCATION`
     * `API_KEY_*`
+        * In case of multiple API keys, API_KEY must follow this format: `API_KEY_*`. here * can be numeric value i.e. 1, 2. 
+        * API_KEY_* value is the resource name of [secret-manager key](https://cloud.google.com/secret-manager) and it's value looks like this :: ```projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1```  
     * `WEATHER_TOOLS_SDK_CONTAINER_IMAGE`
+        * Is made using this [dockerfile](https://github.com/google/weather-tools/blob/setuptools/Dockerfile) and is stored in a docker registry.
     * `ARCO_ERA5_SDK_CONTAINER_IMAGE`
-    * `BQ_TABLES_LIST`
-    * `REGION_LIST` 
-    
-     > * In case of multiple API keys, API_KEY must follow this format: `API_KEY_*`. here * can be numeric value i.e. 1, 2. 
-    > * API_KEY_* value is the resource name of [secret-manager key](https://cloud.google.com/secret-manager) and it's value looks like this :: ```projects/PROJECT_NAME/secrets/SECRET_KEY_NAME/versions/1```  
-    > * `BQ_TABLES_LIST` is list of the BigQuery table in which data is ingested and it's value is like this :: 
-    ```'["PROJECT.DATASET.TABLE1", "PROJECT.DATASET.TABLE2", ..., "PROJECT.DATASET.TABLE6"]'```.  
-    > * `REGION_LIST` is list of the GCP_region in which the job of ingestion will run :: 
-    ```'["us-east1", "us-west4",..., "us-west2"]'```.  
-    > * Size of `BQ_TABLES_LIST` and `REGION_LIST` must be **6** as total 6 zarr file processed in the current pipeline and also, data ingestion in Bigquery are corresponding to `ZARR_FILES_LIST` of [raw-to-zarr-to-bq.py](/arco-era5/src/raw-to-zarr-to-bq.py) so add table name in `BQ_TABLES_LIST` accordingly.
-    > * `WEATHER_TOOLS_SDK_CONTAINER_IMAGE` is made using this [dockerfile](https://github.com/google/weather-tools/blob/setuptools/Dockerfile) and is stored in a docker registry.
-    > * `ARCO_ERA5_SDK_CONTAINER_IMAGE` is made using this [dockerfile](https://github.com/google-research/arco-era5/blob/main/Dockerfile) and is stored in a registry.
+        * Is made using this [dockerfile](https://github.com/google-research/arco-era5/blob/main/Dockerfile) and is stored in a registry.
 
 
 5. Create docker image.
@@ -787,37 +778,17 @@ export REPO=<repo> eg:arco-era5-raw-to-zarr-to-bq
 gcloud builds submit . --tag "gcr.io/$PROJECT_ID/$REPO:latest" 
 ```
 
-7. Create a VM using above created docker-image
+7. Run script to create cloud run jobs. [create_job](deployment/create_job.py)
 ```
-export ZONE=<zone> eg: us-central1-a
-export SERVICE_ACCOUNT=<service account> # Let's keep this as Compute Engine Default Service Account
-export IMAGE_PATH=<container-image-path> # The above created image-path
-
-gcloud compute instances create-with-container arco-era5-raw-to-zarr-to-bq \ --project=$PROJECT_ID \
---zone=$ZONE \
---machine-type=n2-standard-4 \
---network-interface=network-tier=PREMIUM,subnet=default \
---maintenance-policy=MIGRATE \
---provisioning-model=STANDARD \
---service-account=$SERVICE_ACCOUNT \
---scopes=https://www.googleapis.com/auth/cloud-platform \
---image=projects/cos-cloud/global/images/cos-stable-109-17800-0-45 \
---boot-disk-size=200GB \
---boot-disk-type=pd-balanced \
---boot-disk-device-name=arco-era5-raw-to-zarr-to-bq \
---container-image=$IMAGE_PATH \
---container-restart-policy=on-failure \
---container-tty \
---no-shielded-secure-boot \
---shielded-vtpm \
---shielded-integrity-monitoring \
---labels=goog-ec-src=vm_add-gcloud,container-vm=cos-stable-109-17800-0-45 \
---metadata-from-file=startup-script=start-up.sh
+python deployment/create_job.py
 ```
 
-8. Once VM is created, the script will execute on `7th day of every month` as this is default set in the [cron-file](data_automate/cron-file).Also you can see the logs after connecting to VM through SSH.
-> Log will be shown at this(`/var/log/cron.log`) file.
-> Better if we SSH after 5-10 minutes of VM creation. 
+8. There will be 5 different cloud run jobs.
+    - `arco-era5-zarr-ingestion` - For zarr data ingestion.
+    - `arco-era5t-daily-executor` - Triggers daily to process era5t-daily data.
+    - `arco-era5t-monthly-executor` - Triggers monthly to process era5t-monthly data.
+    - `arco-era5-sanity` - Sanity job to validate the data era5 vs era5t and replace in case of difference.
+    - `arco-era5-executor` - Triggers every month to run a sanity job for every zarr available.
 ### Making the dataset "High Resolution" & beyond...
 
 This phase of the project is under active development! If you would like to lend a hand in any way, please check out our
