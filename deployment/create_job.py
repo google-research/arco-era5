@@ -40,7 +40,7 @@ def create_job(job_id: str, template: run_v2.ExecutionTemplate):
     print(response)
 
 
-def graphnn_job_creator(
+def era5_job_creator(
     job_id: str,
     timeout_sec: int,
     container_args: list = None,
@@ -78,31 +78,31 @@ def graphnn_job_creator(
 
 
 if __name__ == "__main__":
-    graphnn_job_creator(
+    era5_job_creator(
         job_id=constants.SANITY_JOB_ID,
         timeout_sec=constants.TIMEOUT_SECONDS,
         container_memory_limit=constants.CONTAINER_MEMORY_LIMIT,
     )
-    graphnn_job_creator(
+    era5_job_creator(
         job_id=constants.INGESTION_JOB_ID,
         timeout_sec=constants.TIMEOUT_SECONDS,
         container_memory_limit=constants.CONTAINER_MEMORY_LIMIT,
     )
-    graphnn_job_creator(
+    era5_job_creator(
         job_id=constants.DAILY_EXECUTOR_JOB_ID,
         timeout_sec=constants.TIMEOUT_SECONDS,
         container_args=constants.DAILY_EXECUTOR_JOB_CONTAINER_ARGS,
         contaner_env=constants.JOB_CONTAINER_ENV_VARIABLES + constants.ERA5T_API_KEYS,
         container_memory_limit=constants.CONTAINER_MEMORY_LIMIT,
     )
-    graphnn_job_creator(
+    era5_job_creator(
         job_id=constants.MONTHLY_EXECUTOR_JOB_ID,
         timeout_sec=constants.TIMEOUT_SECONDS,
         container_args=constants.MONTHLY_EXECUTOR_JOB_CONTAINER_ARGS,
         contaner_env=constants.JOB_CONTAINER_ENV_VARIABLES + constants.ERA5T_API_KEYS,
         container_memory_limit=constants.CONTAINER_MEMORY_LIMIT,
     )
-    graphnn_job_creator(
+    era5_job_creator(
         job_id=constants.EXECUTOR_JOB_ID,
         timeout_sec=constants.TIMEOUT_SECONDS,
         container_args=constants.EXECUTOR_JOB_CONTAINER_ARGS,

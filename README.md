@@ -755,7 +755,7 @@ This feature is works in 4 parts.
 3. Add the all `Copernicus` licenses into the [secret-manager](https://cloud.google.com/secret-manager) with value likes this: {"api_url": "URL", "api_key": "KEY"}
     > NOTE: for every API_KEY there must be unique secret-key.
 
-4. Update all of these variable in [docker-file](deployment/Dockerfile).
+4. Update all of these variable in [docker-file](deployment/constants.py).
     * `PROJECT` 
     * `REGION`
     * `BUCKET`
@@ -778,17 +778,21 @@ export REPO=<repo> eg:arco-era5-raw-to-zarr-to-bq
 gcloud builds submit . --tag "gcr.io/$PROJECT_ID/$REPO:latest" 
 ```
 
-7. Run script to create cloud run jobs. [create_job](deployment/create_job.py)
+6. Run script to create cloud run jobs. [create_job](deployment/create_job.py)
 ```
 python deployment/create_job.py
 ```
 
-8. There will be 5 different cloud run jobs.
+7. There will be 5 different cloud run jobs.
     - `arco-era5-zarr-ingestion` - For zarr data ingestion.
     - `arco-era5t-daily-executor` - Triggers daily to process era5t-daily data.
     - `arco-era5t-monthly-executor` - Triggers monthly to process era5t-monthly data.
     - `arco-era5-sanity` - Sanity job to validate the data era5 vs era5t and replace in case of difference.
     - `arco-era5-executor` - Triggers every month to run a sanity job for every zarr available.
+8. Set up cloud schedulers to trigger above jobs on specified frequencies.
+    - `arco-era5t-daily-executor` - Schedule a daily trigger for `era5t-daily` data.
+    - `arco-era5t-monthly-executor` - Schedule a monthly trigger for `era5t-monthly` data.
+    - `arco-era5-executor` - Schedule a monthly trigger to do era5 vs era5t sanity for `current_month - 3` month.
 ### Making the dataset "High Resolution" & beyond...
 
 This phase of the project is under active development! If you would like to lend a hand in any way, please check out our
