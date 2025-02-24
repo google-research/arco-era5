@@ -144,7 +144,8 @@ def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[st
         t.List: List of file urls to process.
     """
     input_paths = []
-    for time, chunk in product(date_range(start, end, freq="MS" if is_single_level else "D"), chunks):
+    for time, chunk in product(date_range(start, end,
+                                          freq="MS" if is_single_level else "D"), chunks):
         if is_single_level:
             url = f"{root_path}/{SINGLE_LEVEL_SUBDIR_TEMPLATE.format(year=time.year, month=time.month, day=time.day, chunk=chunk)}"
         else:
@@ -159,6 +160,37 @@ def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[st
     return input_paths
 
 
+def generate_offset(url: str, is_single_level: bool, init_date: str,
+                    timestamps_per_file: int) -> t.Tuple[slice, str]:
+    """
+    Generate the time offset and chunk identifier from a GRIB file URL.
+
+    Args:
+        url (str): url of GRIB file.
+        is_single_level (bool): Whether the GRIB file contains single-level's data.
+        init_date (str): The initialization date in 'YYYY-MM-DD' format.
+        timestamps_per_file (int): The number of timestamps present in each file.
+
+    Returns:
+        Tuple[slice, str]: A tuple containing:
+            - A `slice` object representing the time offset range.
+            - The chunk identifier extracted from the file name.
+    """
+    file_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+    int_date, chunk = file_name.split('_hres_')
+    if "_" in chunk:
+        chunk = chunk.replace(".grb2_", "_")
+    if is_single_level:
+        int_date += "01"
+    start_date = convert_to_date(int_date, '%Y%m%d')
+    days_diff = start_date - convert_to_date(init_date)
+    start = days_diff.days * timestamps_per_file
+    end = start + timestamps_per_file * (
+        calendar.monthrange(start_date.year,
+                            start_date.month)[1] if is_single_level else 1)
+    return slice(start, end), chunk
+
+
 @dataclass
 class GenerateOffset(beam.PTransform):
     """A Beam PTransform for generating the offset along with time dimension."""
@@ -168,27 +200,11 @@ class GenerateOffset(beam.PTransform):
     is_single_level: bool = False
 
     def apply(self, url: str) -> t.Tuple[str, slice, t.List[str]]:
-        """A method for generating the offset along with time dimension.
-
-        Args:
-            url (str): The cloud storage path to the grib file.
-
-        Returns:
-            t.Tuple: url with included variables and time offset.
-        """
-        file_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-        int_date, chunk = file_name.split('_hres_')
-        if "_" in chunk:
-            chunk = chunk.replace(".grb2_", "_")
-        if self.is_single_level:
-            int_date += "01"
-        start_date = convert_to_date(int_date, '%Y%m%d')
-        days_diff = start_date - convert_to_date(self.init_date)
-        start = days_diff.days * self.timestamps_per_file
-        end = start + self.timestamps_per_file * (
-            calendar.monthrange(start_date.year,
-                                start_date.month)[1] if self.is_single_level else 1)
-        return url, slice(start, end), VARIABLE_DICT[chunk]
+        offset_slice, chunk = generate_offset(url,
+                                              self.is_single_level,
+                                              self.init_date,
+                                              self.timestamps_per_file)
+        return url, offset_slice, VARIABLE_DICT[chunk]
 
     def expand(self, pcoll: beam.PCollection) -> beam.PCollection:
         return pcoll | beam.Map(self.apply)

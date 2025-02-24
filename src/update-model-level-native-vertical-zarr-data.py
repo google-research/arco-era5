@@ -18,6 +18,7 @@ import logging
 import typing as t
 
 from arco_era5 import (
+    INIT_TIME,
     hourly_dates,
     LoadDataForDayDoFn,
     UpdateModelLevelNativeVerticalDataSlice
@@ -35,10 +36,11 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='Start date, iso format string.')
     parser.add_argument('-e', "--end_date", required=True,
                         help='End date, iso format string.')
-    parser.add_argument("--init_date", type=str, default='1900-01-01',
+    parser.add_argument("--init_date", type=str, default=INIT_TIME,
                         help="Date to initialize the zarr store.")
 
     return parser.parse_known_args()
+
 
 known_args, pipeline_args = parse_arguments('')
 dates = hourly_dates(known_args.start_date, known_args.end_date)
@@ -48,5 +50,6 @@ with beam.Pipeline(argv=pipeline_args) as p:
         p
         | "CreateDayIterator" >> beam.Create(dates)
         | "LoadDataForDay" >> beam.ParDo(LoadDataForDayDoFn(start_date=known_args.init_date))
-        | "UpdateDataSlice" >> UpdateModelLevelNativeVerticalDataSlice(target=known_args.output_path, init_date=known_args.init_date)
+        | "UpdateDataSlice" >> UpdateModelLevelNativeVerticalDataSlice(
+            target=known_args.output_path, init_date=known_args.init_date)
     )

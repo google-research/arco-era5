@@ -11,25 +11,45 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import datetime
 import json
 import logging
 import os
 import re
+import zarr
+
+import xarray as xr
 
 from concurrent.futures import ThreadPoolExecutor
 from arco_era5 import (
+    GCP_DIRECTORY,
+    HOURS_PER_DAY,
+    INIT_DATE,
+    MODEL_LEVEL_WIND_VARIABLE,
+    MODEL_LEVEL_MOISTURE_VARIABLE,
+    MULTILEVEL_VARIABLES,
+    SINGLE_LEVEL_FORECAST_VARIABLE,
+    SINGLE_LEVEL_REANALYSIS_VARIABLE,
+    SINGLE_LEVEL_SURFACE_VARIABLE,
+    SINGLE_LEVEL_VARIABLES,
+    add_licenses_in_config_files,
     check_data_availability,
+    data_splitting_dataflow_job,
     date_range,
-    ingest_data_in_zarr_dataflow_job,
+    generate_input_paths,
+    generate_input_paths_of_ar_data,
+    generate_offset,
     get_previous_month_dates,
     get_secret,
+    ingest_data_in_zarr_dataflow_job,
+    offset_along_time_axis,
+    opener,
     parse_arguments_raw_to_zarr_to_bq,
-    remove_licenses_from_directory,
+    raw_data_download_dataflow_job,
     replace_non_alphanumeric_with_hyphen,
-    update_zarr_metadata,
     subprocess_run,
-    update_config_file,
+    update_date_in_config_file,
+    update_target_path_in_config_file,
+    update_zarr_metadata,
     )
 
 # Logger Configuration
@@ -37,71 +57,35 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DIRECTORY = "/arco-era5/raw"
-FIELD_NAME = "date"
 PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
 MANIFEST_LOCATION = os.environ.get("MANIFEST_LOCATION")
 PYTHON_PATH = os.environ.get("PYTHON_PATH")
-WEATHER_TOOLS_SDK_CONTAINER_IMAGE  = os.environ.get("WEATHER_TOOLS_SDK_CONTAINER_IMAGE")
+WEATHER_TOOLS_SDK_CONTAINER_IMAGE = os.environ.get("WEATHER_TOOLS_SDK_CONTAINER_IMAGE")
 ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 API_KEY_PATTERN = re.compile(r"^API_KEY_\d+$")
 API_KEY_LIST = []
 
-SPLITTING_DATASETS = ['soil', 'pcp']
-ZARR_FILES_LIST = [
-    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
-    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2',
-    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2',
-    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2',
-    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2',
-    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2'
-]
 BQ_TABLES_LIST = json.loads(os.environ.get("BQ_TABLES_LIST"))
 REGION_LIST = json.loads(os.environ.get("REGION_LIST"))
+TEMP_TARGET_PATH = "gs://gcp-public-data-arco-era5/raw-era5"
+
+zarr_to_netcdf_file_mapping = {
+    'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3': MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES,
+    'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2': MODEL_LEVEL_MOISTURE_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2': MODEL_LEVEL_WIND_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2': SINGLE_LEVEL_FORECAST_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2': SINGLE_LEVEL_REANALYSIS_VARIABLE,
+    'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2': SINGLE_LEVEL_SURFACE_VARIABLE
+}
 
 dates_data = get_previous_month_dates()
-
-
-def raw_data_download_dataflow_job():
-    """Launches a Dataflow job to process weather data."""
-    current_day = datetime.date.today()
-    job_name = f"raw-data-download-arco-era5-{current_day.month}-{current_day.year}"
-
-    command = (
-        f"{PYTHON_PATH} /weather/weather_dl/weather-dl /arco-era5/raw/*.cfg "
-        f"--runner DataflowRunner --project {PROJECT} --region {REGION} --temp_location "
-        f'"gs://{BUCKET}/tmp/" --disk_size_gb 260 --job_name {job_name} '
-        f"--sdk_container_image {WEATHER_TOOLS_SDK_CONTAINER_IMAGE} --experiment use_runner_v2 "
-        f"--manifest-location {MANIFEST_LOCATION} "
-    )
-    subprocess_run(command)
-
-
-def data_splitting_dataflow_job(date: str):
-    """Launches a Dataflow job to splitting soil & pcp weather data."""
-    year = date[:4]
-    month = year + date[5:7]
-    typeOfLevel = '{' + 'typeOfLevel' + '}'
-    shortName = '{' + 'shortName' + '}'
-    zero = '{' + '0' + '}'
-    first = '{' + '1' + '}'
-    commands = []
-    for DATASET in SPLITTING_DATASETS:
-        command = (
-            f'{PYTHON_PATH} /weather/weather_sp/weather-sp --input-pattern '
-            f' "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2" '
-            f'--output-template "gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/{first}/{zero}.grb2_{typeOfLevel}_{shortName}.grib" '
-            f'--runner DataflowRunner --project {PROJECT} --region {REGION} '
-            f'--temp_location gs://{BUCKET}/tmp --disk_size_gb 3600 '
-            f'--job_name split-{DATASET}-data-{month} '
-            f'--sdk_container_image {WEATHER_TOOLS_SDK_CONTAINER_IMAGE} '
-        )
-        commands.append(command)
-
-    with ThreadPoolExecutor(max_workers=4) as tp:
-        for command in commands:
-            tp.submit(subprocess_run, command)
+data_date_range = date_range(
+    dates_data["first_day"], dates_data["last_day"]
+)
+start_date = data_date_range[0].strftime("%Y/%m/%d")
+end_date = data_date_range[-1].strftime("%Y/%m/%d")
 
 
 def ingest_data_in_bigquery_dataflow_job(zarr_file: str, table_name: str, region: str,
@@ -139,7 +123,8 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
     try:
         logger.info(f"Data ingesting for {z_file} is started.")
         ingest_data_in_zarr_dataflow_job(z_file, region, start_date, end_date, init_date,
-                                         PROJECT, BUCKET, ARCO_ERA5_SDK_CONTAINER_IMAGE, PYTHON_PATH)
+                                         PROJECT, BUCKET, ARCO_ERA5_SDK_CONTAINER_IMAGE,
+                                         PYTHON_PATH)
         logger.info(f"Data ingesting for {z_file} is completed.")
         logger.info(f"update metadata for zarr file: {z_file} started.")
         update_zarr_metadata(z_file, end_date)
@@ -147,7 +132,7 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
         start = f' "start_date": "{start_date}" '
         end = f'"end_date": "{end_date}" '
         zarr_kwargs = "'{" + f'{start},{end}' + "}'"
-        # TODO([#414](https://github.com/google/weather-tools/issues/414)): Faster ingestion into BQ by converting 
+        # TODO([#414](https://github.com/google/weather-tools/issues/414)): Faster ingestion into BQ by converting
         # the chunk into pd.Dataframe
         # logger.info(f"Data ingesting into BQ table: {table} started.")
         # ingest_data_in_bigquery_dataflow_job(z_file, table, region, zarr_kwargs)
@@ -157,35 +142,145 @@ def perform_data_operations(z_file: str, table: str, region: str, start_date: st
             f"An error occurred in process_zarr_and_table for {z_file}: {str(e)}")
 
 
+def open_dataset_from_url(url: str, engine: str) -> xr.Dataset:
+    """
+    Opens a dataset from a given URL using the specified engine(i.e. Netcdf4, grib).
+
+    Args:
+        url (str): The URL of the dataset to open.
+        engine (str): The engine to use for reading the dataset.
+
+    Returns:
+        xr.Dataset: The opened xarray dataset.
+    """
+    with opener(url) as file:
+        return xr.open_dataset(file, engine=engine)
+
+
+def compare_datasets(url1: str, url2: str, engine: str) -> bool:
+    """
+    Compares two xarray datasets from given URLs to check if they are equal.
+
+    Args:
+        url1 (str): The URL of the first dataset.
+        url2 (str): The URL of the second dataset.
+        engine (str): The engine to use for reading the datasets.
+
+    Returns:
+        bool: True if the datasets are equal, False otherwise.
+    """
+    dataset1 = open_dataset_from_url(url1, engine)
+    dataset2 = open_dataset_from_url(url2, engine)
+
+    return dataset1.equals(dataset2)
+
+
+def calculate_time_offset_for_ar_data(raw_file: str) -> slice:
+    """
+    Calculates the time offset for AR data.
+
+    Args:
+        raw_file (str): Path to the raw data file.
+
+    Returns:
+        slice: The time offset region as a slice object.
+    """
+    year, month, day = raw_file.split('/')[5:8]
+    offset = offset_along_time_axis(INIT_DATE, year, month, day)
+    return slice(offset, offset + HOURS_PER_DAY)
+
+
+def synchronize_era5t_with_era5_data(z_file: str, new_raw_file: str, engine: str) -> None:
+    """
+    Updates ERA5T data using corresponding ERA5 data.
+
+    Args:
+        z_file (str): Path to the Zarr file containing ERA5T data.
+        new_raw_file (str): Path to the raw ERA5 data file.
+        engine (str): The engine used for reading raw  the datasets.
+
+    Returns:
+        None
+    """
+    zf = zarr.open(z_file)
+    ds = open_dataset_from_url(new_raw_file, engine)
+    logger.info(f"Data update process starts for {z_file}.")
+
+    # Determine the appropriate time region
+    if "model-level" in z_file or "single-level" in z_file:
+        single_level = "single-level" in z_file
+        region, _ = generate_offset(new_raw_file, single_level, INIT_DATE, HOURS_PER_DAY)
+    else:
+        region = calculate_time_offset_for_ar_data(new_raw_file)
+
+    # Update variables
+    for variable_name in ds.data_vars:
+        zv = zf[variable_name]
+        zv[region] = ds[variable_name].values
+
+    logger.info(f"Data update process completed for {z_file}.")
+
+
+def update_era5t_data(z_file: str) -> None:
+    """Synchronizes ERA5T data with ERA5 data."""
+
+    variables = zarr_to_netcdf_file_mapping[z_file]
+    era5t_raw_files = []
+    if "model-level" in z_file:
+        era5t_raw_files = generate_input_paths(start_date, end_date, GCP_DIRECTORY, variables)
+    elif "single-level" in z_file:
+        era5t_raw_files = generate_input_paths(start_date, end_date, GCP_DIRECTORY, variables,
+                                               True)
+    elif "/ar/" in z_file:
+        for date in data_date_range:
+            era5t_raw_files.extend(generate_input_paths_of_ar_data(date, variables))
+
+    era5_raw_files = [
+        url.replace("gs://gcp-public-data-arco-era5/raw", TEMP_TARGET_PATH)
+        for url in era5t_raw_files
+    ]
+
+    for old_file, new_file in zip(era5t_raw_files, era5_raw_files):
+        logger.info(f"Comparing data between {old_file} and {new_file}.")
+        engine = "netcdf4" if "/ar/" in z_file else "cfgrib"
+        if not compare_datasets(old_file, new_file, engine):
+            logger.info(f"Data mismatch detected for {new_file}. Updating data.")
+            synchronize_era5t_with_era5_data(z_file, new_file, engine)
+        logger.info(f"Data comparison completed for {old_file}.")
+
+
 if __name__ == "__main__":
     try:
         parsed_args, unknown_args = parse_arguments_raw_to_zarr_to_bq("Parse arguments.")
 
         logger.info(f"Automatic update for ARCO-ERA5 started for {dates_data['sl_month']}.")
-        data_date_range = date_range(
-            dates_data["first_day_third_prev"], dates_data["last_day_third_prev"]
-        )
-
         for env_var in os.environ:
             if API_KEY_PATTERN.match(env_var):
                 api_key_value = os.environ.get(env_var)
                 API_KEY_LIST.append(api_key_value)
 
-        additional_content = ""
+        licenses = ""
         for count, secret_key in enumerate(API_KEY_LIST):
             secret_key_value = get_secret(secret_key)
-            additional_content += f'parameters.api{count}\n\
+            licenses += f'parameters.api{count}\n\
                 api_url={secret_key_value["api_url"]}\napi_key={secret_key_value["api_key"]}\n\n'
+
         logger.info("Config file updation started.")
-        update_config_file(DIRECTORY, FIELD_NAME, additional_content)
+        add_licenses_in_config_files(DIRECTORY, licenses)
+        update_date_in_config_file(DIRECTORY, dates_data)
+        update_target_path_in_config_file(DIRECTORY, TEMP_TARGET_PATH)
         logger.info("Config file updation completed.")
+
         logger.info("Raw data downloading started.")
-        raw_data_download_dataflow_job()
+        raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                       WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                       MANIFEST_LOCATION, DIRECTORY)
         logger.info("Raw data downloaded successfully.")
 
         logger.info("Raw data Splitting started.")
-        data_splitting_dataflow_job(
-            dates_data['first_day_third_prev'].strftime("%Y/%m"))
+        data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                    WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                    dates_data['first_day'].strftime("%Y/%m"))
         logger.info("Raw data Splitting successfully.")
 
         logger.info("Data availability check started.")
@@ -194,19 +289,18 @@ if __name__ == "__main__":
             data_is_missing = check_data_availability(data_date_range)
             if data_is_missing:
                 logger.warning("Data is missing.")
-                raw_data_download_dataflow_job()
-                data_splitting_dataflow_job(
-                    dates_data['first_day_third_prev'].strftime("%Y/%m"))
+                raw_data_download_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                               WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                               MANIFEST_LOCATION, DIRECTORY)
+                data_splitting_dataflow_job(PYTHON_PATH, PROJECT, REGION, BUCKET,
+                                            WEATHER_TOOLS_SDK_CONTAINER_IMAGE,
+                                            dates_data['first_day'].strftime("%Y/%m"))
         logger.info("Data availability check completed successfully.")
 
-        remove_licenses_from_directory(DIRECTORY, len(API_KEY_LIST))
-        logger.info("All licenses removed from the config file.")
+        # update raw ERA5T data with the ERA5. ## Pending
         with ThreadPoolExecutor(max_workers=8) as tp:
-            for z_file, table, region in zip(ZARR_FILES_LIST, BQ_TABLES_LIST,
-                                             REGION_LIST):
-                tp.submit(perform_data_operations, z_file, table, region,
-                          dates_data["first_day_third_prev"],
-                          dates_data["last_day_third_prev"], parsed_args.init_date)
+            for z_file in list(zarr_to_netcdf_file_mapping.keys()):
+                tp.submit(update_era5t_data, z_file)
 
         logger.info(f"Automatic update for ARCO-ERA5 completed for {dates_data['sl_month']}.")
     except Exception as e:
