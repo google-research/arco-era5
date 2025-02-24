@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ARG py_version=3.9
+ARG py_version=3.8
 FROM apache/beam_python${py_version}_sdk:2.40.0 as beam_sdk
 FROM continuumio/miniconda3:latest
 
@@ -30,7 +30,6 @@ ARG CONDA_ENV_NAME=era5
 RUN echo "source activate ${CONDA_ENV_NAME}" >> ~/.bashrc
 ENV PATH /opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
 
-RUN conda install -c conda-forge google-cloud-sdk==410.0.0 -y
 # Install gcloud alpha
 RUN apt-get update -y
 RUN gcloud components install alpha --quiet
