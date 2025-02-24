@@ -21,7 +21,7 @@ import numpy as np
 import typing as t
 
 from gcsfs import GCSFileSystem
-from .utils import convert_to_date
+from .utils import convert_to_date, ExecTypes
 
 logger = logging.getLogger(__name__)
 
@@ -149,12 +149,18 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
         logger.info(f"Data is already resized for {target_store}.")
 
 
-def update_zarr_metadata(url: str, time_end: datetime.date, metadata_key: str = '.zmetadata') -> None:
+def update_zarr_metadata(url: str, time_end: datetime.date, mode: str, metadata_key: str = '.zmetadata') -> None:
     try:
-        attrs = {"valid_time_start": "1940-01-01",
-                 "valid_time_stop": str(time_end),
-                 "last_updated": str(datetime.datetime.utcnow())
-                 }
+        attrs = {
+            "valid_time_start": "1940-01-01",
+            "last_updated": str(datetime.datetime.now(datetime.timezone.utc))
+        }
+
+        if mode == ExecTypes.ERA5.value:
+            attrs['valid_time_stop'] = str(time_end)
+        else:
+            attrs['valid_time_stop_era5t'] = str(time_end)
+        
         root_group = zarr.open(url)
 
         # update zarr_store/.zattrs file.

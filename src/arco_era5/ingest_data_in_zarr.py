@@ -14,9 +14,17 @@
 import logging
 import os
 
-from .utils import replace_non_alphanumeric_with_hyphen, subprocess_run
+from .resize_zarr import update_zarr_metadata
+from .utils import ExecTypes, replace_non_alphanumeric_with_hyphen, run_cloud_job
 
 logger = logging.getLogger(__name__)
+
+PROJECT = os.environ.get("PROJECT")
+REGION = os.environ.get("REGION")
+BUCKET = os.environ.get("BUCKET")
+INGESTION_JOB_ID = os.environ.get("INGESTION_JOB_ID")
+ROOT_PATH = os.environ.get("ROOT_PATH")
+ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 
 AR_FILE_PATH = '/arco-era5/src/update-ar-data.py'
 CO_FILE_PATH = '/arco-era5/src/update-co-data.py'
@@ -46,10 +54,40 @@ CO_FILES_MAPPING = {
     'single-level-surface': ['lnsp', 'zs']
 }
 
+def generate_override_args(
+        file_path: str,
+        target_path: str,
+        start_date: str,
+        end_date: str,
+        root_path: str,
+        init_date: str,
+        bucket: str,
+        project: str,
+        region: str,
+        job_name: str
+) -> list:
+    args = [
+        file_path,
+        "--output_path", target_path,
+        "-s", start_date,
+        "-e", end_date,
+        "--root_path", root_path,
+        "--init_date", init_date,
+        "--temp_location", f"gs://{bucket}/temp",
+        "--runner", "DataflowRunner",
+        "--project", project,
+        "--region", region,
+        "--experiments", "use_runner_v2",
+        "--disk_size_gb", "250",
+        "--setup_file", "/arco-era5/setup.py",
+        "--job_name", job_name,
+        "--number_of_worker_harness_threads", "1"
+    ]
+    return args
 
 def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: str,
-                                     end_date: str, init_date: str, project: str,
-                                     bucket: str, sdk_container_image: str,  python_path: str) -> None:
+                                     end_date: str, root_path: str, init_date: str, project: str,
+                                     bucket: str, ingestion_job_id: str, mode: str) -> None:
     """Ingests data into a Zarr store and runs a Dataflow job.
 
     Args:
@@ -64,35 +102,47 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
     """
     job_name = target_path.split('/')[-1]
     job_name = os.path.splitext(job_name)[0]
+    process_date = start_date[:7]
+    if mode == ExecTypes.ERA5T_DAILY.value:
+        process_date = start_date
     job_name = (
-        f"zarr-data-ingestion-{replace_non_alphanumeric_with_hyphen(job_name)}-{start_date}-to-{end_date}"
+        f"zarr-data-ingestion-{replace_non_alphanumeric_with_hyphen(job_name)}-{process_date}"
     )
+    override_args = generate_override_args(CO_FILE_PATH, target_path, start_date, end_date, root_path, init_date, bucket, project, region, job_name)
     if '/ar/' in target_path:
         logger.info(f"Data ingestion for {target_path} of AR data.")
-        command = (
-            f"{python_path} {AR_FILE_PATH} --output_path {target_path} "
-            f"-s {start_date} -e {end_date} --pressure_levels_group full_37 "
-            f"--temp_location gs://{bucket}/temp --runner DataflowRunner "
-            f"--project {project} --region {region} --experiments use_runner_v2 "
-            f"--worker_machine_type n2-highmem-32 --disk_size_gb 250 "
-            f"--setup_file /arco-era5/setup.py "
-            f"--job_name {job_name} --number_of_worker_harness_threads 1 "
-            f"--init_date {init_date}")
+        override_args[0] = AR_FILE_PATH
+        override_args.extend([
+            "--pressure_levels_group", "full_37",
+            "--machine_type", "n2-highmem-32"
+        ])
     else:
         chunks = CO_FILES_MAPPING[target_path.split('/')[-1].split('.')[0]]
-        chunks = " ".join(chunks)
         time_per_day = 2 if 'single-level-forecast' in target_path else 24
+        override_args.extend([
+            "--time_per_day", str(time_per_day),
+            "--machine_type", "n2-highmem-8",
+            "--sdk_container_image", ARCO_ERA5_SDK_CONTAINER_IMAGE,
+            "--c"
+        ])
+        override_args.extend(chunks)
         logger.info(f"Data ingestion for {target_path} of CO data.")
-        command = (
-            f"{python_path} {CO_FILE_PATH} --output_path {target_path} "
-            f"-s {start_date} -e {end_date} -c {chunks} "
-            f"--time_per_day {time_per_day} "
-            f"--temp_location gs://{bucket}/temp --runner DataflowRunner "
-            f"--project {project} --region {region} --experiments use_runner_v2 "
-            f"--worker_machine_type n2-highmem-8 --disk_size_gb 250 "
-            f"--setup_file /arco-era5/setup.py "
-            f"--job_name {job_name} --number_of_worker_harness_threads 1 "
-            f"--sdk_container_image {sdk_container_image} "
-            f"--init_date {init_date}")
+    
+    run_cloud_job(project, region, ingestion_job_id, override_args)
 
-    subprocess_run(command)
+
+def perform_data_operations(z_file: str, start_date: str,
+                            end_date: str, init_date: str, mode: str):
+    # Function to process a single pair of z_file and table
+    try:
+        logger.info(f"Data ingesting for {z_file} is started.")
+        ingest_data_in_zarr_dataflow_job(z_file, REGION, start_date, end_date, ROOT_PATH, init_date,
+                                         PROJECT, BUCKET, INGESTION_JOB_ID, mode)
+        logger.info(f"Data ingesting for {z_file} is completed.")
+        logger.info(f"update metadata for zarr file: {z_file} started.")
+
+        update_zarr_metadata(z_file, end_date, mode)
+        logger.info(f"update metadata for zarr file: {z_file} completed.")
+    except Exception as e:
+        logger.error(
+            f"An error occurred in process_zarr for {z_file}: {str(e)}")

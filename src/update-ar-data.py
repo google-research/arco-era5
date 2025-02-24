@@ -32,6 +32,8 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
 
     parser.add_argument("--output_path", type=str, required=True,
                         help="Path to the destination Zarr archive.")
+    parser.add_argument('--root_path', type=str, default=GCP_DIRECTORY,
+                        help='Root path to raw files.')
     parser.add_argument('-s', "--start_date", required=True,
                         help='Start date, iso format string.')
     parser.add_argument('-e', "--end_date", required=True,
@@ -51,7 +53,7 @@ with beam.Pipeline(argv=pipeline_args) as p:
         p
         | "CreateDayIterator" >> beam.Create(daily_date_iterator(known_args.start_date, known_args.end_date))
         | "LoadDataForDay" >> beam.ParDo(LoadTemporalDataForDateDoFn(
-            data_path=GCP_DIRECTORY, start_date=known_args.init_date,
+            data_path=known_args.root_path, start_date=known_args.init_date,
             pressure_levels_group=known_args.pressure_levels_group))
         | "UpdateSlice" >> ARUpdateSlice(target=known_args.output_path, init_date=known_args.init_date)
     )

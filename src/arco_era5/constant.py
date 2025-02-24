@@ -30,3 +30,12 @@ variables_full_names = {
 zarr_files = {'ml_wind': 'gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/',
               'ml_moisture': 'gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/',
               'sl_surface': 'gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/'}
+
+ARCO_ERA5_ZARR_FILES = {
+    "ar": "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3",
+    "ml_moisture": "gs://gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2",
+    "ml_wind": "gs://gcp-public-data-arco-era5/co/model-level-wind.zarr-v2",
+    "sl_forecast": "gs://gcp-public-data-arco-era5/co/single-level-forecast.zarr-v2",
+    "sl_reanalysis": "gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
+    "sl_surface": "gs://gcp-public-data-arco-era5/co/single-level-surface.zarr-v2"
+}
