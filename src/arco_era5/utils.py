@@ -128,7 +128,7 @@ def parse_arguments_raw_to_zarr_to_bq(desc: str) -> t.Tuple[argparse.Namespace,
 
 
 def copy(src: str, dst: str) -> None:
-    """A method for generating the offset along with time dimension.
+    """A method to copy remote file to local path.
 
     Args:
         src (str): The cloud storage path to the grib file.
@@ -157,6 +157,18 @@ def opener(fname: str) -> t.Any:
         logger.info(f"Copying '{fname}' to local file '{tmp_name}'")
         copy(fname, tmp_name)
         yield tmp_name
+
+
+def remove_file(url: str):
+    """Remove file from remote location."""
+    cmd = 'gsutil rm -rf'
+    try:
+        subprocess.run(cmd.split() + [url], check=True, capture_output=True,
+                       text=True, input="n/n")
+        return
+    except subprocess.CalledProcessError as e:
+        msg = f"Failed to remove file {url!r} Error {e}"
+        logger.error(msg)
 
 
 def run_cloud_job(project: str, region: str, job: str, override_args: t.List[str]):

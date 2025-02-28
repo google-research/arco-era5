@@ -26,7 +26,7 @@ from .data_availability import generate_input_paths_ar
 from .ingest_data_in_zarr import CO_FILES_MAPPING, replace_non_alphanumeric_with_hyphen
 from .update_co import generate_offsets_from_url, generate_input_paths
 from .source_data import HOURS_PER_DAY, offset_along_time_axis, GCP_DIRECTORY
-from .utils import copy, date_range, opener, run_cloud_job
+from .utils import copy, date_range, opener, remove_file, run_cloud_job
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -45,6 +45,7 @@ HARNESS_THREADS = {
 
 
 def generate_raw_paths(start_date: str, end_date: str, target_path: str, is_single_level: bool, is_analysis_ready: bool, root_path: str = GCP_DIRECTORY):
+    """Generate raw input paths."""
     if is_analysis_ready:
         data_date_range = date_range(start_date, end_date)
         paths = generate_input_paths_ar(data_date_range, root_path)
@@ -54,6 +55,7 @@ def generate_raw_paths(start_date: str, end_date: str, target_path: str, is_sing
     return paths
 
 def parse_ar_url(url: str, init_date: str, da: np.ndarray):
+    """Parse raw file url for analysis ready data."""
     year, month, day, variable, file_name = url.rsplit("/", 5)[1:]
     time_offset_start = offset_along_time_axis(init_date, int(year), int(month), int(day))
     time_offset_end = time_offset_start + HOURS_PER_DAY
@@ -65,11 +67,13 @@ def parse_ar_url(url: str, init_date: str, da: np.ndarray):
         return (slice(time_offset_start, time_offset_end), slice(level, level + 1)), variable, da
 
 def open_dataset(path: str):
+    """Open xarray dataset."""
     ds = xr.open_dataset(path, engine="scipy" if ".nc" in path else "cfgrib").load()
     return ds
 
 @dataclass
 class OpenLocal(beam.DoFn):
+    """class to open raw files and compare the data."""
     
     target_path: str
     init_date: str
@@ -91,6 +95,7 @@ class OpenLocal(beam.DoFn):
             if ds1[vname].equals(ds2[vname]):
                 beam.metrics.Metrics.counter('Success', 'Equal').inc()
                 logger.info(f"For {path1} variable {vname} is equal.")
+                remove_file(path2)
             else:
                 beam.metrics.Metrics.counter('Success', 'Different').inc()
                 logger.info(f"For {path1} variable {vname} is not equal.")
@@ -103,11 +108,14 @@ class OpenLocal(beam.DoFn):
                     yield self.target_path, vname, region, ds2[vname].values, path1, path2
       
 def update_zarr(target_path: str, vname: str, region: t.Union[t.Tuple[slice], t.Tuple[slice, slice]], da: np.ndarray, path1: str, path2: str):
+    """Function to update zarr data if difference found."""
     zf = zarr.open(target_path)
     zv = zf[vname]
-    logger.info(f"Zarr Data Check for {vname} is {np.array_equal(zv[:], da, equal_nan=True)}")
     zv[region] = da
+    logger.info(f"Replacing {path1} with {path2}")
     copy(path2, path1)
+    logger.info(f"Removing temporary file {path2}.")
+    remove_file(path2)
 
 def generate_override_args(
         file_path: str,
@@ -119,6 +127,7 @@ def generate_override_args(
         region: str,
         job_name: str
 ) -> list:
+    """Generate override args for cloud run job."""
     args = [
         file_path,
         "--target_path", target_path,
