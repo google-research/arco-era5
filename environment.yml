@@ -15,8 +15,9 @@ name: era5
 channels:
   - conda-forge
 dependencies:
-  - python=3.9.17
+  - python=3.8.19
   - metview-batch==5.17.0
   - pip:
     - cython==0.29.34
+    - setuptools==70.3.0
     - metview

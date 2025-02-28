@@ -395,7 +395,8 @@ def _read_nc_dataset(gpath_file):
         # Should having only leading nans.
         b = dataarray.sel(expver=5).isnull().any(dim=all_dims_except_time_and_expver)
         disjoint_nans = bool((a ^ b).all().variable.values)
-        assert disjoint_nans, "The nans are not disjoint in expver=1 vs 5"
+        if not disjoint_nans:
+            logging.warning("The nans are not disjoint in expver=1 vs 5")
         dataarray = dataarray.sel(expver=1).combine_first(dataarray.sel(expver=5))
     return dataarray
 

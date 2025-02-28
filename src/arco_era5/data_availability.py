@@ -14,6 +14,7 @@
 import datetime
 import gcsfs
 import logging
+import os
 
 import typing as t
 
@@ -22,16 +23,13 @@ from .source_data import (
     SINGLE_LEVEL_VARIABLES,
     MULTILEVEL_VARIABLES,
     PRESSURE_LEVELS_GROUPS,
+    SINGLE_LEVEL_SUBDIR_TEMPLATE,
+    MULTILEVEL_SUBDIR_TEMPLATE
 )
 from .update_co import generate_input_paths
+from .utils import ExecTypes
 
 logger = logging.getLogger(__name__)
-
-# File Templates
-PRESSURELEVEL_DIR_TEMPLATE = (
-    "gs://gcp-public-data-arco-era5/raw/date-variable-pressure_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/{pressure}.nc")
-AR_SINGLELEVEL_DIR_TEMPLATE = (
-    "gs://gcp-public-data-arco-era5/raw/date-variable-single_level/{year:04d}/{month:02d}/{day:02d}/{chunk}/surface.nc")
 
 # Data Chunks
 MODEL_LEVEL_CHUNKS = ["dve", "tw", "o3q", "qrqs"]
@@ -52,7 +50,22 @@ SINGLE_LEVEL_CHUNKS = [
 PRESSURE_LEVEL = PRESSURE_LEVELS_GROUPS["full_37"]
 
 
-def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
+def generate_input_paths_ar(data_date_range: t.List[datetime.datetime], root_path: str = GCP_DIRECTORY):
+    paths  = []
+    for date in data_date_range:
+        for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:
+            if chunk in MULTILEVEL_VARIABLES:
+                for pressure in PRESSURE_LEVEL:
+                    relative_path = MULTILEVEL_SUBDIR_TEMPLATE.format(year=date.year, month=date.month, day=date.day, variable=chunk, pressure_level=pressure)
+                    paths.append(os.path.join(root_path, relative_path))
+            else:
+                chunk = 'geopotential' if chunk == 'geopotential_at_surface' else chunk
+                relative_path = SINGLE_LEVEL_SUBDIR_TEMPLATE.format(year=date.year, month=date.month, day=date.day, variable=chunk)
+                paths.append(os.path.join(root_path, relative_path))
+    return paths
+
+
+def check_data_availability(data_date_range: t.List[datetime.datetime], mode: str, root_path: str) -> bool:
     """Checks the availability of data for a given date range.
 
     Args:
@@ -65,24 +78,12 @@ def check_data_availability(data_date_range: t.List[datetime.datetime]) -> bool:
     fs = gcsfs.GCSFileSystem()
     start_date = data_date_range[0].strftime("%Y/%m/%d")
     end_date = data_date_range[-1].strftime("%Y/%m/%d")
-    all_uri = generate_input_paths(start_date, end_date, GCP_DIRECTORY, MODEL_LEVEL_CHUNKS)
-    all_uri.extend(generate_input_paths(start_date, end_date, GCP_DIRECTORY, SINGLE_LEVEL_CHUNKS, True))
-
-    for date in data_date_range:
-        for chunk in MULTILEVEL_VARIABLES + SINGLE_LEVEL_VARIABLES:
-            if chunk in MULTILEVEL_VARIABLES:
-                for pressure in PRESSURE_LEVEL:
-                    all_uri.append(
-                        PRESSURELEVEL_DIR_TEMPLATE.format(year=date.year,
-                                                          month=date.month,
-                                                          day=date.day, chunk=chunk,
-                                                          pressure=pressure))
-            else:
-                if chunk == 'geopotential_at_surface':
-                    chunk = 'geopotential'
-                all_uri.append(
-                    AR_SINGLELEVEL_DIR_TEMPLATE.format(
-                        year=date.year, month=date.month, day=date.day, chunk=chunk))
+    all_uri = []
+    if mode == ExecTypes.ERA5T_DAILY.value or mode == ExecTypes.ERA5.value:
+        all_uri.extend(generate_input_paths(start_date, end_date, root_path, MODEL_LEVEL_CHUNKS))
+        all_uri.extend(generate_input_paths_ar(data_date_range, root_path))
+    if mode == ExecTypes.ERA5.value or mode == ExecTypes.ERA5T_MONTHLY.value:
+        all_uri.extend(generate_input_paths(start_date, end_date, root_path, SINGLE_LEVEL_CHUNKS, True))
 
     data_is_missing = False
     for path in all_uri:

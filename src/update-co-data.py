@@ -45,6 +45,8 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
 
     parser.add_argument('--output_path', type=str, required=True,
                         help='Path to output Zarr in Cloud bucket.')
+    parser.add_argument('--root_path', type=str, default=GCP_DIRECTORY,
+                        help='Root path to raw files.')
     parser.add_argument('-s', '--start_date', required=True,
                         help='Start date, iso format string.')
     parser.add_argument('-e', '--end_date', required=True,
@@ -69,7 +71,7 @@ if __name__ == '__main__':
         if known_args.chunks == model_level_default_chunks:
             known_args.chunks = single_level_default_chunks
 
-    files = generate_input_paths(known_args.start_date, known_args.end_date, GCP_DIRECTORY,
+    files = generate_input_paths(known_args.start_date, known_args.end_date, known_args.root_path,
                                  known_args.chunks, is_single_level=is_single_level)
 
     with beam.Pipeline(argv=unknown_args) as p:
