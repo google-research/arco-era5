@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from .data_availability import generate_input_paths_ar
 from .ingest_data_in_zarr import CO_FILES_MAPPING, replace_non_alphanumeric_with_hyphen
 from .update_co import generate_offsets_from_url, generate_input_paths
-from .source_data import HOURS_PER_DAY, offset_along_time_axis, GCP_DIRECTORY
+from .source_data import HOURS_PER_DAY, offset_along_time_axis, GCP_DIRECTORY, PRESSURE_LEVELS_GROUPS
 from .utils import copy, date_range, opener, remove_file, run_cloud_job
 
 logger = logging.getLogger()
@@ -64,7 +64,8 @@ def parse_ar_url(url: str, init_date: str, da: np.ndarray):
     else:
         level = int(file_name.split(".")[0])
         da = np.expand_dims(da, axis=1)
-        return (slice(time_offset_start, time_offset_end), slice(level, level + 1)), variable, da
+        level_index = list(PRESSURE_LEVELS_GROUPS["full_37"]).index(level)
+        return (slice(time_offset_start, time_offset_end), slice(level_index, level_index + 1)), variable, da
 
 def open_dataset(path: str):
     """Open xarray dataset."""
@@ -92,18 +93,25 @@ class OpenLocal(beam.DoFn):
             ds2 = open_dataset(file2)
 
         for vname in ds1.data_vars:
-            if ds1[vname].equals(ds2[vname]):
+            if self.is_analysis_ready:
+                dataarray1 = next(iter(ds1.values()))
+                dataarray2 = next(iter(ds2.values()))
+                check_condition = np.array_equal(dataarray1.values, dataarray2.values, equal_nan=True)
+            else:
+                check_condition = ds1[vname].equals(ds2[vname])
+            if check_condition:
                 beam.metrics.Metrics.counter('Success', 'Equal').inc()
                 logger.info(f"For {path1} variable {vname} is equal.")
+                logger.info(f"Removing temporary file {path2}.")
                 remove_file(path2)
             else:
                 beam.metrics.Metrics.counter('Success', 'Different').inc()
                 logger.info(f"For {path1} variable {vname} is not equal.")
                 if self.is_analysis_ready:
-                    region, variable, da = parse_ar_url(file1, self.init_date, ds2[vname].values)
+                    region, variable, da = parse_ar_url(path1, self.init_date, dataarray2.values)
                     yield self.target_path, variable, region, da, path1, path2
                 else:
-                    start, end, _ = generate_offsets_from_url(file1, self.init_date, self.timestamps_per_file, self.is_single_level)
+                    start, end, _ = generate_offsets_from_url(path1, self.init_date, self.timestamps_per_file, self.is_single_level)
                     region = (slice(start, end))
                     yield self.target_path, vname, region, ds2[vname].values, path1, path2
       
