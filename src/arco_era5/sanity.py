@@ -21,6 +21,7 @@ import typing as t
 import xarray as xr
 
 from dataclasses import dataclass
+from gcsfs import GCSFileSystem
 
 from .data_availability import generate_input_paths_ar
 from .ingest_data_in_zarr import CO_FILES_MAPPING, replace_non_alphanumeric_with_hyphen
@@ -42,6 +43,8 @@ HARNESS_THREADS = {
     'model-level-moisture': 1,
     'model-level-wind': 4
 }
+
+fs = GCSFileSystem()
 
 
 def generate_raw_paths(start_date: str, end_date: str, target_path: str, is_single_level: bool, is_analysis_ready: bool, root_path: str = GCP_DIRECTORY):
@@ -86,34 +89,37 @@ class OpenLocal(beam.DoFn):
 
         path1, path2 = paths
 
-        with opener(path1) as file1:
-            ds1 = open_dataset(file1)
+        temp_file_check = fs.exists(path2)
 
-        with opener(path2) as file2:
-            ds2 = open_dataset(file2)
+        if temp_file_check:
+            with opener(path1) as file1:
+                ds1 = open_dataset(file1)
 
-        for vname in ds1.data_vars:
-            if self.is_analysis_ready:
-                dataarray1 = next(iter(ds1.values()))
-                dataarray2 = next(iter(ds2.values()))
-                check_condition = np.array_equal(dataarray1.values, dataarray2.values, equal_nan=True)
-            else:
-                check_condition = ds1[vname].equals(ds2[vname])
-            if check_condition:
-                beam.metrics.Metrics.counter('Success', 'Equal').inc()
-                logger.info(f"For {path1} variable {vname} is equal.")
-                logger.info(f"Removing temporary file {path2}.")
-                remove_file(path2)
-            else:
-                beam.metrics.Metrics.counter('Success', 'Different').inc()
-                logger.info(f"For {path1} variable {vname} is not equal.")
+            with opener(path2) as file2:
+                ds2 = open_dataset(file2)
+
+            for vname in ds1.data_vars:
                 if self.is_analysis_ready:
-                    region, variable, da = parse_ar_url(path1, self.init_date, dataarray2.values)
-                    yield self.target_path, variable, region, da, path1, path2
+                    dataarray1 = next(iter(ds1.values()))
+                    dataarray2 = next(iter(ds2.values()))
+                    check_condition = np.array_equal(dataarray1.values, dataarray2.values, equal_nan=True)
                 else:
-                    start, end, _ = generate_offsets_from_url(path1, self.init_date, self.timestamps_per_file, self.is_single_level)
-                    region = (slice(start, end))
-                    yield self.target_path, vname, region, ds2[vname].values, path1, path2
+                    check_condition = ds1[vname].equals(ds2[vname])
+                if check_condition:
+                    beam.metrics.Metrics.counter('Success', 'Equal').inc()
+                    logger.info(f"For {path1} variable {vname} is equal.")
+                    logger.info(f"Removing temporary file {path2}.")
+                    remove_file(path2)
+                else:
+                    beam.metrics.Metrics.counter('Success', 'Different').inc()
+                    logger.info(f"For {path1} variable {vname} is not equal.")
+                    if self.is_analysis_ready:
+                        region, variable, da = parse_ar_url(path1, self.init_date, dataarray2.values)
+                        yield self.target_path, variable, region, da, path1, path2
+                    else:
+                        start, end, _ = generate_offsets_from_url(path1, self.init_date, self.timestamps_per_file, self.is_single_level)
+                        region = (slice(start, end))
+                        yield self.target_path, vname, region, ds2[vname].values, path1, path2
       
 def update_zarr(target_path: str, vname: str, region: t.Union[t.Tuple[slice], t.Tuple[slice, slice]], da: np.ndarray, path1: str, path2: str):
     """Function to update zarr data if difference found."""
