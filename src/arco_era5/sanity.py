@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from gcsfs import GCSFileSystem
 
 from .data_availability import generate_input_paths_ar
+from .download import SPLITTING_DATASETS
 from .ingest_data_in_zarr import CO_FILES_MAPPING, replace_non_alphanumeric_with_hyphen
 from .update_co import generate_offsets_from_url, generate_input_paths
 from .source_data import HOURS_PER_DAY, offset_along_time_axis, GCP_DIRECTORY, PRESSURE_LEVELS_GROUPS
@@ -130,6 +131,18 @@ def update_zarr(target_path: str, vname: str, region: t.Union[t.Tuple[slice], t.
     copy(path2, path1)
     logger.info(f"Removing temporary file {path2}.")
     remove_file(path2)
+
+
+def update_splittable_files(date: str, temp_path: str):
+    """To replace and delete splittable files from temp path."""
+    year = date[:4]
+    month = year + date[5:7]
+    for DATASET in SPLITTING_DATASETS:
+        root_file = f"{GCP_DIRECTORY}/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2"
+        temp_file = f"{temp_path}/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2"
+        copy(temp_file, root_file)
+        remove_file(temp_file)
+
 
 def generate_override_args(
         file_path: str,

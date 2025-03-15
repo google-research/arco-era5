@@ -16,7 +16,15 @@ import argparse
 import apache_beam as beam
 import typing as t
 
-from arco_era5 import ExecTypes, generate_raw_paths, get_previous_month_dates, OpenLocal, update_zarr, update_zarr_metadata
+from arco_era5 import (
+    ExecTypes,
+    generate_raw_paths,
+    get_previous_month_dates,
+    OpenLocal,
+    update_splittable_files,
+    update_zarr,
+    update_zarr_metadata
+)
 
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace,
                                                             t.List[str]]:
@@ -68,3 +76,5 @@ if __name__ == "__main__":
         )
     
     update_zarr_metadata(parsed_args.target_path, dates['last_day'], mode=ExecTypes.ERA5.value)
+
+    update_splittable_files(dates['first_day'].strftime("%Y/%m"), parsed_args.temp_path)
