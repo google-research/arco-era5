@@ -34,7 +34,7 @@ ENV PATH /opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
 RUN pip install -e .
 
 # (TODO): Replace branch with main before merge.
-ARG arco_era5_git_rev=era5t-support
+ARG arco_era5_git_rev=main
 RUN git clone https://github.com/google-research/arco-era5.git /arco-era5
 WORKDIR /arco-era5
 RUN git checkout "${arco_era5_git_rev}"
