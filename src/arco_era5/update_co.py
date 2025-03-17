@@ -28,7 +28,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from itertools import product
 
-from .utils import date_range
+from .utils import date_range, opener
 
 logger = logging.getLogger(__name__)
 
@@ -97,38 +97,6 @@ def convert_to_date(date_str: str, format: str = '%Y-%m-%d') -> datetime.datetim
     return datetime.datetime.strptime(date_str, format)
 
 
-def copy(src: str, dst: str) -> None:
-    """A method for generating the offset along with time dimension.
-
-    Args:
-        src (str): The cloud storage path to the grib file.
-        dst (str): A temp location to copy the file.
-    """
-    cmd = 'gcloud alpha storage cp'
-    try:
-        subprocess.run(cmd.split() + [src, dst], check=True, capture_output=True,
-                       text=True, input="n/n")
-        return
-    except subprocess.CalledProcessError as e:
-        msg = f"Failed to copy file {src!r} to {dst!r} Error {e}"
-        logger.error(msg)
-
-
-@contextmanager
-def opener(fname: str) -> t.Any:
-    """A method to copy remote file into temp.
-
-    Args:
-        url (str): The cloud storage path to the grib file.
-    """
-    _, suffix = os.path.splitext(fname)
-    with tempfile.NamedTemporaryFile(suffix=suffix) as ntf:
-        tmp_name = ntf.name
-        logger.info(f"Copying '{fname}' to local file '{tmp_name}'")
-        copy(fname, tmp_name)
-        yield tmp_name
-
-
 def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[str],
                          is_single_level: bool = False) -> t.List[str]:
     """A method for generating the url using the combination of chunks and time range.
@@ -159,6 +127,22 @@ def generate_input_paths(start: str, end: str, root_path: str, chunks: t.List[st
     return input_paths
 
 
+def generate_offsets_from_url(url: str, init_date: str, timestamps_per_file: int, is_single_level: bool):
+    file_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
+    int_date, chunk = file_name.split('_hres_')
+    if "_" in chunk:
+        chunk = chunk.replace(".grb2_", "_")
+    if is_single_level:
+        int_date += "01"
+    start_date = convert_to_date(int_date, '%Y%m%d')
+    days_diff = start_date - convert_to_date(init_date)
+    start = days_diff.days * timestamps_per_file
+    end = start + timestamps_per_file * (
+        calendar.monthrange(start_date.year,
+                            start_date.month)[1] if is_single_level else 1)
+    return start, end, chunk
+
+
 @dataclass
 class GenerateOffset(beam.PTransform):
     """A Beam PTransform for generating the offset along with time dimension."""
@@ -176,18 +160,9 @@ class GenerateOffset(beam.PTransform):
         Returns:
             t.Tuple: url with included variables and time offset.
         """
-        file_name = url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-        int_date, chunk = file_name.split('_hres_')
-        if "_" in chunk:
-            chunk = chunk.replace(".grb2_", "_")
-        if self.is_single_level:
-            int_date += "01"
-        start_date = convert_to_date(int_date, '%Y%m%d')
-        days_diff = start_date - convert_to_date(self.init_date)
-        start = days_diff.days * self.timestamps_per_file
-        end = start + self.timestamps_per_file * (
-            calendar.monthrange(start_date.year,
-                                start_date.month)[1] if self.is_single_level else 1)
+        start, end, chunk = generate_offsets_from_url(
+            url, self.init_date, self.timestamps_per_file, self.is_single_level
+        )
         return url, slice(start, end), VARIABLE_DICT[chunk]
 
     def expand(self, pcoll: beam.PCollection) -> beam.PCollection:
