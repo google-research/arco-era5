@@ -71,6 +71,13 @@ def parse_ar_url(url: str, init_date: str, da: np.ndarray):
         level_index = list(PRESSURE_LEVELS_GROUPS["full_37"]).index(level)
         return (slice(time_offset_start, time_offset_end), slice(level_index, level_index + 1)), variable, da
 
+def replace_and_remove_file(path1: str, path2: str):
+    """Replace root with latest era5 file and remove temp file"""
+    logger.info(f"Replacing {path1} with {path2}")
+    copy(path2, path1)
+    logger.info(f"Removing temporary file {path2}.")
+    remove_file(path2)
+
 def open_dataset(path: str):
     """Open xarray dataset."""
     ds = xr.open_dataset(path, engine="scipy" if ".nc" in path else "cfgrib").load()
@@ -103,14 +110,17 @@ class OpenLocal(beam.DoFn):
                 if self.is_analysis_ready:
                     dataarray1 = next(iter(ds1.values()))
                     dataarray2 = next(iter(ds2.values()))
+                    if "expver" in dataarray1.dims:
+                        dataarray1 = dataarray1.sel(expver=1).combine_first(dataarray1.sel(expver=5))
+                    if "expver" in dataarray2.dims:
+                        dataarray2 = dataarray2.sel(expver=1).combine_first(dataarray2.sel(expver=5))
                     check_condition = np.array_equal(dataarray1.values, dataarray2.values, equal_nan=True)
                 else:
                     check_condition = ds1[vname].equals(ds2[vname])
                 if check_condition:
                     beam.metrics.Metrics.counter('Success', 'Equal').inc()
                     logger.info(f"For {path1} variable {vname} is equal.")
-                    logger.info(f"Removing temporary file {path2}.")
-                    remove_file(path2)
+                    replace_and_remove_file(path1, path2)
                 else:
                     beam.metrics.Metrics.counter('Success', 'Different').inc()
                     logger.info(f"For {path1} variable {vname} is not equal.")
@@ -127,21 +137,23 @@ def update_zarr(target_path: str, vname: str, region: t.Union[t.Tuple[slice], t.
     zf = zarr.open(target_path)
     zv = zf[vname]
     zv[region] = da
-    logger.info(f"Replacing {path1} with {path2}")
-    copy(path2, path1)
-    logger.info(f"Removing temporary file {path2}.")
-    remove_file(path2)
+    replace_and_remove_file(path1, path2)
 
 
-def update_splittable_files(date: str, temp_path: str):
+def update_splittable_files(date: str, temp_path: str, target_path: str):
     """To replace and delete splittable files from temp path."""
+    if "single-level-reanalysis" in target_path:
+        dataset = SPLITTING_DATASETS[0]
+    elif "single-level-forecast" in target_path:
+        dataset = SPLITTING_DATASETS[1]
+    else:
+        return
     year = date[:4]
     month = year + date[5:7]
-    for DATASET in SPLITTING_DATASETS:
-        root_file = f"{GCP_DIRECTORY}/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2"
-        temp_file = f"{temp_path}/ERA5GRIB/HRES/Month/{year}/{month}_hres_{DATASET}.grb2"
-        copy(temp_file, root_file)
-        remove_file(temp_file)
+    root_file = f"{GCP_DIRECTORY}/ERA5GRIB/HRES/Month/{year}/{month}_hres_{dataset}.grb2"
+    temp_file = f"{temp_path}/ERA5GRIB/HRES/Month/{year}/{month}_hres_{dataset}.grb2"
+    copy(temp_file, root_file)
+    remove_file(temp_file)
 
 
 def generate_override_args(

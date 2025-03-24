@@ -77,4 +77,4 @@ if __name__ == "__main__":
     
     update_zarr_metadata(parsed_args.target_path, dates['last_day'], mode=ExecTypes.ERA5.value)
 
-    update_splittable_files(dates['first_day'].strftime("%Y/%m"), parsed_args.temp_path)
+    update_splittable_files(dates['first_day'].strftime("%Y/%m"), parsed_args.temp_path, target_path=parsed_args.target_path)
