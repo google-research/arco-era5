@@ -58,25 +58,42 @@ def generate_raw_paths(start_date: str, end_date: str, target_path: str, is_sing
         paths = generate_input_paths(start_date, end_date, root_path, chunks, is_single_level)
     return paths
 
-def parse_ar_url(url: str, init_date: str, da: np.ndarray):
+def parse_ar_url(url: str, init_date: str):
     """Parse raw file url for analysis ready data."""
     year, month, day, variable, file_name = url.rsplit("/", 5)[1:]
     time_offset_start = offset_along_time_axis(init_date, int(year), int(month), int(day))
     time_offset_end = time_offset_start + HOURS_PER_DAY
     if file_name == "surface.nc":
-        return (slice(time_offset_start, time_offset_end)), variable, da
+        return (slice(time_offset_start, time_offset_end)), variable
     else:
         level = int(file_name.split(".")[0])
-        da = np.expand_dims(da, axis=1)
         level_index = list(PRESSURE_LEVELS_GROUPS["full_37"]).index(level)
-        return (slice(time_offset_start, time_offset_end), slice(level_index, level_index + 1)), variable, da
+        return (slice(time_offset_start, time_offset_end), slice(level_index, level_index + 1)), variable
 
-def replace_and_remove_file(path1: str, path2: str):
+def add_sanity_files(path: str, data_changed: bool):
+    dir_path, file_name = path.rsplit("/", 1)
+
+    success_file = f"{dir_path}/{file_name.rsplit('.', 1)[0]}_ratified"
+    fs = GCSFileSystem()
+    fs.write_text(success_file, '')
+    if data_changed:
+        data_change_file = f"{dir_path}/{file_name.rsplit('.', 1)[0]}_data_changed"
+        fs.write_text(data_changed, '')
+
+def replace_and_remove_file(path1: str, path2: str, data_changed: bool):
     """Replace root with latest era5 file and remove temp file"""
-    logger.info(f"Replacing {path1} with {path2}")
+    logger.info(f"Replacing {path1} with {path2}.")
     copy(path2, path1)
+    logger.info(f"Creating sentinel files.")
+    add_sanity_files(path1, data_changed)
     logger.info(f"Removing temporary file {path2}.")
     remove_file(path2)
+
+def combine_expver(ds: xr.Dataset):
+    """Combine the dataset along expver dim."""
+    if "expver" in ds.dims:
+        ds = ds.sel(expver=1).combine_first(ds.sel(expver=5))
+    return ds
 
 def open_dataset(path: str):
     """Open xarray dataset."""
@@ -86,12 +103,6 @@ def open_dataset(path: str):
 @dataclass
 class OpenLocal(beam.DoFn):
     """class to open raw files and compare the data."""
-    
-    target_path: str
-    init_date: str
-    timestamps_per_file: int
-    is_single_level: bool
-    is_analysis_ready: bool
 
     def process(self, paths: t.Tuple[str, str]):
 
@@ -101,43 +112,52 @@ class OpenLocal(beam.DoFn):
 
         if temp_file_check:
             with opener(path1) as file1:
-                ds1 = open_dataset(file1)
+                ds1 = combine_expver(open_dataset(file1))
 
             with opener(path2) as file2:
-                ds2 = open_dataset(file2)
+                ds2 = combine_expver(open_dataset(file2))
 
-            for vname in ds1.data_vars:
-                if self.is_analysis_ready:
-                    dataarray1 = next(iter(ds1.values()))
-                    dataarray2 = next(iter(ds2.values()))
-                    if "expver" in dataarray1.dims:
-                        dataarray1 = dataarray1.sel(expver=1).combine_first(dataarray1.sel(expver=5))
-                    if "expver" in dataarray2.dims:
-                        dataarray2 = dataarray2.sel(expver=1).combine_first(dataarray2.sel(expver=5))
-                    check_condition = np.array_equal(dataarray1.values, dataarray2.values, equal_nan=True)
-                else:
-                    check_condition = ds1[vname].equals(ds2[vname])
-                if check_condition:
-                    beam.metrics.Metrics.counter('Success', 'Equal').inc()
-                    logger.info(f"For {path1} variable {vname} is equal.")
-                    replace_and_remove_file(path1, path2)
-                else:
-                    beam.metrics.Metrics.counter('Success', 'Different').inc()
-                    logger.info(f"For {path1} variable {vname} is not equal.")
-                    if self.is_analysis_ready:
-                        region, variable, da = parse_ar_url(path1, self.init_date, dataarray2.values)
-                        yield self.target_path, variable, region, da, path1, path2
-                    else:
-                        start, end, _ = generate_offsets_from_url(path1, self.init_date, self.timestamps_per_file, self.is_single_level)
-                        region = (slice(start, end))
-                        yield self.target_path, vname, region, ds2[vname].values, path1, path2
-      
-def update_zarr(target_path: str, vname: str, region: t.Union[t.Tuple[slice], t.Tuple[slice, slice]], da: np.ndarray, path1: str, path2: str):
-    """Function to update zarr data if difference found."""
-    zf = zarr.open(target_path)
-    zv = zf[vname]
-    zv[region] = da
-    replace_and_remove_file(path1, path2)
+            check_condition = ds1.equals(ds2)
+            if check_condition:
+                beam.metrics.Metrics.counter('Success', 'Equal').inc()
+                logger.info(f"For {path1} variables are equal.")
+                replace_and_remove_file(path1, path2, False)
+            else:
+                beam.metrics.Metrics.counter('Success', 'Different').inc()
+                logger.info(f"For {path1} variables are not equal.")
+                yield path1, path2
+
+
+class UpdateZarr(beam.DoFn):
+
+    target_path: str
+    init_date: str
+    timestamps_per_file: int
+    is_single_level: bool
+    is_analysis_ready: bool
+
+    def process(self, paths: t.Tuple[str, str]):
+        path1, path2 = paths
+        """Function to update zarr data if difference found."""
+        zf = zarr.open(self.target_path)
+        with opener(path2) as file:
+            ds = open_dataset(file)
+            variables = list(ds.data_vars)
+            if self.is_analysis_ready:
+                ds = combine_expver(ds)
+                region, variable = parse_ar_url(path1, self.init_date)
+                variables = [variable]
+            else:
+                start, end, _ = generate_offsets_from_url(path1, self.init_date, self.timestamps_per_file, self.is_single_level)
+                region = (slice(start, end))
+            var_iter = iter(ds.values())
+            for vname in variables:
+                zv = zf[vname]
+                da = next(var_iter)
+                if len(region) == 2:
+                    da = np.expand_dims(da, axis=1)
+                zv[region] = da
+        replace_and_remove_file(path1, path2, True)
 
 
 def update_splittable_files(date: str, temp_path: str, target_path: str):

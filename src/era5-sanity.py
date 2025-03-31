@@ -22,7 +22,7 @@ from arco_era5 import (
     get_previous_month_dates,
     OpenLocal,
     update_splittable_files,
-    update_zarr,
+    UpdateZarr,
     update_zarr_metadata
 )
 
@@ -65,14 +65,14 @@ if __name__ == "__main__":
         _ = (
             p
             | "Create" >> beam.Create(input_paths)
-            | "OpenLocal" >> beam.ParDo(OpenLocal(
-                    target_path=parsed_args.target_path,
-                    init_date=parsed_args.init_date,
-                    timestamps_per_file=parsed_args.timestamps_per_day,
-                    is_analysis_ready=is_analysis_ready,
-                    is_single_level=is_single_level
-                ))
-            | "WriteToZarr" >> beam.MapTuple(update_zarr)
+            | "OpenLocal" >> beam.ParDo(OpenLocal())
+            | "WriteToZarr" >> beam.ParDo(UpdateZarr(
+                target_path=parsed_args.target_path,
+                init_date=parsed_args.init_date,
+                timestamps_per_file=parsed_args.timestamps_per_day,
+                is_analysis_ready=is_analysis_ready,
+                is_single_level=is_single_level
+            ))
         )
     
     update_zarr_metadata(parsed_args.target_path, dates['last_day'], mode=ExecTypes.ERA5.value)

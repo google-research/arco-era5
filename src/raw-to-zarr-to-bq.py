@@ -41,6 +41,7 @@ DIRECTORY = "/arco-era5/raw"
 FIELD_NAME = "date"
 TEMP_PATH_FOR_RAW_DATA = os.environ.get("TEMP_PATH_FOR_RAW_DATA")
 ROOT_PATH = os.environ.get("ROOT_PATH")
+SKIP_DOWNLOAD = os.environ.get("SKIP_DOWNLOAD")
 
 
 def get_zarr_files_to_process(mode: str) -> t.List[str]:
@@ -55,7 +56,7 @@ def get_zarr_files_to_process(mode: str) -> t.List[str]:
 
 def retry_downloads(root_path: str, mode: str):
     """Start download and splitting jobs."""
-    data_is_missing = True
+    data_is_missing = False if SKIP_DOWNLOAD else True
     while data_is_missing:
         logger.info("Raw data downloading started.")
         raw_data_download_dataflow_job(mode, dates_data['first_day'])
