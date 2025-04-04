@@ -34,7 +34,7 @@ from .source_data import (
     LoadTemporalDataForDateDoFn,
     _read_nc_dataset
     )
-from .sanity import generate_raw_paths, OpenLocal, run_sanity_job, update_splittable_files, update_zarr
+from .sanity import generate_raw_paths, OpenLocal, run_sanity_job, update_splittable_files, UpdateZarr
 from .update_ar import UpdateSlice as ARUpdateSlice
 from .update_co import GenerateOffset, UpdateSlice as COUpdateSlice, generate_input_paths
 from .update_config_files import (
