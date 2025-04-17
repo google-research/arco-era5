@@ -64,7 +64,7 @@ def parse_ar_url(url: str, init_date: str):
     time_offset_start = offset_along_time_axis(init_date, int(year), int(month), int(day))
     time_offset_end = time_offset_start + HOURS_PER_DAY
     if file_name == "surface.nc":
-        return (slice(time_offset_start, time_offset_end)), variable
+        return (slice(time_offset_start, time_offset_end),), variable
     else:
         level = int(file_name.split(".")[0])
         level_index = list(PRESSURE_LEVELS_GROUPS["full_37"]).index(level)
@@ -78,7 +78,7 @@ def add_sanity_files(path: str, data_changed: bool):
     fs.write_text(success_file, '')
     if data_changed:
         data_change_file = f"{dir_path}/{file_name.rsplit('.', 1)[0]}_data_changed"
-        fs.write_text(data_changed, '')
+        fs.write_text(data_change_file, '')
 
 def replace_and_remove_file(path1: str, path2: str, data_changed: bool):
     """Replace root with latest era5 file and remove temp file"""
@@ -100,7 +100,6 @@ def open_dataset(path: str):
     ds = xr.open_dataset(path, engine="scipy" if ".nc" in path else "cfgrib").load()
     return ds
 
-@dataclass
 class OpenLocal(beam.DoFn):
     """class to open raw files and compare the data."""
 
@@ -127,7 +126,7 @@ class OpenLocal(beam.DoFn):
                 logger.info(f"For {path1} variables are not equal.")
                 yield path1, path2
 
-
+@dataclass
 class UpdateZarr(beam.DoFn):
 
     target_path: str
@@ -153,7 +152,7 @@ class UpdateZarr(beam.DoFn):
             var_iter = iter(ds.values())
             for vname in variables:
                 zv = zf[vname]
-                da = next(var_iter)
+                da = next(var_iter).values
                 if len(region) == 2:
                     da = np.expand_dims(da, axis=1)
                 zv[region] = da
