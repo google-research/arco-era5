@@ -127,7 +127,7 @@ ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_
 |fraction_of_cloud_cover                                        |cc            |(0 - 1)              |https://codes.ecmwf.int/grib/param-db/248        |[era5_pl_hourly.cfg](raw/daily/era5_pl_hourly.cfg)|
 |free_convective_velocity_over_the_oceans                       |wstar         |m s**-1              |https://codes.ecmwf.int/grib/param-db/140208     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |friction_velocity                                              |zust          |m s**-1              |https://codes.ecmwf.int/grib/param-db/228003     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|geopotential_at_surface                                        |z             |m2 s-2               |https://codes.ecmwf.int/grib/param-db/129        |[era5_sfc.cfg](raw/monthly/era5_sfc.cfg)          |
+|geopotential_at_surface                                        |z             |m2 s-2               |https://codes.ecmwf.int/grib/param-db/129        |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |gravity_wave_dissipation                                       |gwd           |J m**-2              |https://codes.ecmwf.int/grib/param-db/197        |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |high_cloud_cover                                               |hcc           |(0 - 1)              |https://codes.ecmwf.int/grib/param-db/3075       |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |high_vegetation_cover                                          |cvh           |(0 - 1)              |https://codes.ecmwf.int/grib/param-db/28         |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
