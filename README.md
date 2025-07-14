@@ -54,8 +54,8 @@ to provide transparency in the provenance of all data.
 
  - The `gcp-public-data-arco-era5` bucket is stored in the `us-central1` (Iowa)
    Google Cloud region.
- - Files are updated from ECMWF on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay, which avoids including preliminary versions of ERA5.
- - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_stop`, and `last_updated`. These attributes specify the start date, stop date, and most recent time of update for the dataset's data, respectively. Please note that both start and end times are inclusive, and all times are given in UTC.
+ - The stable version of ERA5 is updated on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay. The preliminary version of ERA5, known as ERA5T is available with approximately 1 week delay (where 5-6 days delay are due to processing at ECWMF). 
+ - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_stop` (for ERA5), and `last_updated`. For ERA5T, use `valid_time_stop_era5t` instead. These attributes specify the start date, stop date, and most recent time of update for the dataset's data, respectively. Please note that both start and end times are inclusive, and all times are given in UTC.
 
 ## Analysis Ready Data
 
