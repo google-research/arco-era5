@@ -22,9 +22,15 @@
     ```
 """
 
+import contextlib
+import glob
+import os.path
+import shutil
+import tempfile
+
 import apache_beam as beam
 import logging
-from typing import Any, List, Tuple
+from typing import Any, Iterator, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -47,6 +53,32 @@ except (ModuleNotFoundError, ImportError, FileNotFoundError):
 
 TIME_RESOLUTION_HOURS = 1
 HOURS_PER_DAY = 24
+
+
+def _clear_metview():
+    """Clear the metview temporary directory.
+
+    By default, caches are cleared when the MetView _process_ ends.
+    This method is necessary to free space sooner than that, namely
+    after invoking MetView functions.
+    """
+    cache_dirs = glob.glob(f'{tempfile.gettempdir()}/mv.*')
+    for cache_dir in cache_dirs:
+        shutil.rmtree(cache_dir)
+        os.makedirs(cache_dir)
+
+
+@contextlib.contextmanager
+def _metview_op() -> Iterator[None]:
+    """Perform operation with MetView, including error handling and cleanup."""
+    try:
+        yield
+    except (ModuleNotFoundError, ImportError, FileNotFoundError) as e:
+        raise ImportError('Please install MetView with Anaconda:\n'
+                          '`conda install metview-batch -c conda-forge`') from e
+    finally:
+        _clear_metview()
+
 
 class LoadDataForDayDoFn(beam.DoFn):
     """A Beam DoFn for loading data for a specific date.
@@ -136,26 +168,30 @@ class LoadDataForDayDoFn(beam.DoFn):
         current_timestamp=f"{year}-{month}-{day}T{hour:02d}"
         logger.info(f"started operation for the date of {current_timestamp}")
         
-        ml_wind = xr.open_zarr(zarr_files['ml_wind'], chunks=None)
-        ml_moisture = xr.open_zarr(zarr_files['ml_moisture'], chunks=None)
-        sl_surface = xr.open_zarr(zarr_files['sl_surface'], chunks=None)
+        with _metview_op():
+            try:
+                ml_wind = xr.open_zarr(zarr_files['ml_wind'], chunks=None)
+                ml_moisture = xr.open_zarr(zarr_files['ml_moisture'], chunks=None)
+                sl_surface = xr.open_zarr(zarr_files['sl_surface'], chunks=None)
 
-        wind_slice = ml_wind.sel(time=current_timestamp).compute()
-        moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
-        surface_slice = sl_surface.sel(time=current_timestamp).compute()
+                wind_slice = ml_wind.sel(time=current_timestamp).compute()
+                moisture_slice = ml_moisture.sel(time=current_timestamp).compute()
+                surface_slice = sl_surface.sel(time=current_timestamp).compute()
 
-        wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
-        moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())
-        surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
+                wind_fieldset = mv.dataset_to_fieldset(self.attribute_fix(wind_slice).squeeze())
+                moisture_fieldset = mv.dataset_to_fieldset(self.attribute_fix(moisture_slice).squeeze())
+                surface_fieldset = mv.dataset_to_fieldset(self.attribute_fix(surface_slice).squeeze())
 
-        dataset = self.process_hourly_data([wind_fieldset, moisture_fieldset, surface_fieldset])
-        dataset = dataset.rename(variables_full_names)
-        dataset = align_coordinates(dataset)
-        offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
-        key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
-        logger.info(f"Finished loading data for {current_timestamp}")
-        yield key, dataset, current_timestamp
-        dataset.close()
+                dataset = self.process_hourly_data([wind_fieldset, moisture_fieldset, surface_fieldset])
+                dataset = dataset.rename(variables_full_names)
+                dataset = align_coordinates(dataset)
+                offsets = {"time": offset_along_time_axis(self.start_date, year, month, day, hour)}
+                key = xb.Key(offsets, vars=set(dataset.data_vars.keys()))
+                logger.info(f"Finished loading data for {current_timestamp}")
+                yield key, dataset, current_timestamp
+                dataset.close()
+            except Exception as e:
+                logger.info(f'Regrid failed for {current_timestamp!r}. Error: {str(e)}')
 
 
 def align_coordinates(dataset: xr.Dataset) -> xr.Dataset:
