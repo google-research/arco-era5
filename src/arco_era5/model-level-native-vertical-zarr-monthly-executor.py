@@ -1,0 +1,88 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+import datetime
+import logging
+import os
+
+from .update_config_files import get_month_range
+from .utils import run_cloud_job
+
+
+# Logger Configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+PROJECT = os.environ.get("PROJECT")
+REGION = os.environ.get("REGION")
+BUCKET = os.environ.get("BUCKET")
+INGESTION_JOB_ID = os.environ.get("INGESTION_JOB_ID")
+ARCO_ERA5_WITH_MODEL_LEVEL_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_WITH_MODEL_LEVEL_SDK_CONTAINER_IMAGE")
+
+MODEL_LEVEL_FILE_PATH = '/arco-era5/src/update-model-level-native-vertical-zarr-data.py'
+MODEL_LEVEL_ZARR_PATH = 'gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1'
+
+def generate_args(
+        file_path: str,
+        target_path: str,
+        start_date: str,
+        end_date: str,
+        bucket: str,
+        project: str,
+        region: str,
+        job_name: str
+) -> list:
+    args = [
+        file_path,
+        "--output_path", target_path,
+        "--start_date", start_date,
+        "--end_date", end_date,
+        "--temp_location", f"gs://{bucket}/temp",
+        "--runner", "DataflowRunner",
+        "--project", project,
+        "--region", region,
+        "--experiments", "use_runner_v2",
+        "--save_main_session",
+        "--worker_machine_type", "n2-standard-16",
+        "--disk_size_gb", "1000",
+        "--job_name", job_name,
+        "--number_of_worker_harness_threads", "1",
+        "--sdk_container_image", ARCO_ERA5_WITH_MODEL_LEVEL_SDK_CONTAINER_IMAGE,
+        "--max_num_workers", 100
+    ]
+    return args
+
+if __name__ == "__main__":
+
+    today = datetime.date.today()
+    third_prev_month = today - datetime.timedelta(days=2*366/12)
+    first_day, last_day = get_month_range(third_prev_month)
+
+    job_name = MODEL_LEVEL_ZARR_PATH.split('/')[-1]
+    job_name = os.path.splitext(job_name)[0]
+
+    job_name = (
+        f"zarr-data-ingestion-{job_name}-{first_day[:7]}"
+    )
+    override_args = generate_args(file_path=MODEL_LEVEL_FILE_PATH,
+                                  target_path=MODEL_LEVEL_ZARR_PATH,
+                                  start_date=first_day,
+                                  end_date=last_day,
+                                  bucket=BUCKET,
+                                  project=PROJECT,
+                                  region=REGION,
+                                  job_name=job_name)
+
+    run_cloud_job(PROJECT, REGION, INGESTION_JOB_ID, override_args)
+
