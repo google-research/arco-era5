@@ -16,9 +16,7 @@ import datetime
 import logging
 import os
 
-from .update_config_files import get_month_range
-from .utils import run_cloud_job
-
+from arco_era5 import get_month_range, run_cloud_job
 
 # Logger Configuration
 logging.basicConfig(level=logging.INFO)
@@ -59,7 +57,7 @@ def generate_args(
         "--job_name", job_name,
         "--number_of_worker_harness_threads", "1",
         "--sdk_container_image", ARCO_ERA5_WITH_MODEL_LEVEL_SDK_CONTAINER_IMAGE,
-        "--max_num_workers", 100
+        "--max_num_workers", "100"
     ]
     return args
 
@@ -68,6 +66,9 @@ if __name__ == "__main__":
     today = datetime.date.today()
     third_prev_month = today - datetime.timedelta(days=2*366/12)
     first_day, last_day = get_month_range(third_prev_month)
+
+    first_day = first_day.strftime("%Y-%m-%d")
+    last_day = last_day.strftime("%Y-%m-%d")
 
     job_name = MODEL_LEVEL_ZARR_PATH.split('/')[-1]
     job_name = os.path.splitext(job_name)[0]
