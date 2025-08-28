@@ -17,7 +17,7 @@ import logging
 import os
 from typing import List, Tuple
 
-from arco_era5 import get_month_range, run_cloud_job
+from arco_era5 import get_month_range, run_cloud_job, update_zarr_metadata
 
 # Logger Configuration
 logging.basicConfig(level=logging.INFO)
@@ -93,8 +93,14 @@ if __name__ == "__main__":
             region=REGION,
             job_name=job_name
         )
-
+        
+        logger.info(f"Data ingesting for {MODEL_LEVEL_FILE_PATH} is started.")
         run_cloud_job(PROJECT, REGION, INGESTION_JOB_ID, override_args)
+        logger.info(f"Data ingesting for {MODEL_LEVEL_FILE_PATH} is completed.")
+        
+        logger.info(f"update metadata for zarr file: {MODEL_LEVEL_FILE_PATH} started.")
+        update_zarr_metadata(MODEL_LEVEL_ZARR_PATH, last_day, 'era5')
+        logger.info(f"update metadata for zarr file: {MODEL_LEVEL_FILE_PATH} completed.")
 
     except Exception as e:
         logger.error("Error running the job: %s", e, exc_info=True)
