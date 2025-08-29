@@ -28,7 +28,7 @@ PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
 INGESTION_JOB_ID = os.environ.get("INGESTION_JOB_ID")
-ARCO_ERA5_WITH_MODEL_LEVEL_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_WITH_MODEL_LEVEL_SDK_CONTAINER_IMAGE")
+ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 
 MODEL_LEVEL_FILE_PATH = "/arco-era5/src/update-model-level-native-vertical-zarr-data.py"
 MODEL_LEVEL_ZARR_PATH = "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1"
@@ -59,7 +59,7 @@ def generate_args(
         "--disk_size_gb", "1000",
         "--job_name", job_name,
         "--number_of_worker_harness_threads", "1",
-        "--sdk_container_image", ARCO_ERA5_WITH_MODEL_LEVEL_SDK_CONTAINER_IMAGE,
+        "--sdk_container_image", ARCO_ERA5_SDK_CONTAINER_IMAGE,
         "--max_num_workers", "100"
     ]
 
