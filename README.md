@@ -52,9 +52,8 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
- - The `gcp-public-data-arco-era5` bucket is stored in the `us-central1` (Iowa)
-   Google Cloud region.
- - The stable version of ERA5 is updated on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay. The preliminary version of ERA5, known as ERA5T is available with approximately 1 week delay (where 5-6 days delay are due to processing at ECWMF).
+- The `gcp-public-data-arco-era5` bucket is stored in the `us-central1` (Iowa) Google Cloud region.
+- The stable version of ERA5 is updated on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay. The preliminary version of ERA5, known as ERA5T is available with approximately 1 week delay (where 5-6 days delay are due to processing at ECWMF).
 
 ## Get Started with Colab Notebooks
 
