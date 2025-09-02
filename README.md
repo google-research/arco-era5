@@ -2,6 +2,15 @@
 
 Recipes for reproducing Analysis-Ready & Cloud Optimized (ARCO) ERA5 datasets.
 
+## Get Started with Colab Notebooks
+
+Explore the ERA5 dataset interactively with these notebooks:
+
+| Notebook | Description | Open in Colab |
+|----------|-------------|---------------|
+| [Surface Reanalysis Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) | Learn how to work with surface-level ERA5 data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) |
+| [Model Levels Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) | Explore atmospheric model levels data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) |
+
 [Introduction](#introduction) • [Overview](#overview) • [Analysis Ready Data](#analysis-ready-data)
 • [Raw Cloud Optimized Data](#raw-cloud-optimized-data) • [Project roadmap](#project-roadmap) • [How to reproduce](#how-to-reproduce)
 • [FAQs](#faqs) • [How to cite this work](#how-to-cite-this-work) • [License](#license)
@@ -430,7 +439,12 @@ ar_model_level_and_surface_data = xarray.merge([
 These datasets contain the raw data used to produce the Analysis Ready data. Whenever possible, parameters are represented by their native grid resolution
 See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
 
-**Please view out our [walkthrough notebook](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) for a demo of these cloud-optimized datasets.**
+**Please view our walkthrough notebooks for demos of these cloud-optimized datasets:**
+
+| Notebook | Open in Colab |
+|----------|---------------|
+| [Surface Reanalysis Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) |
+| [Model Levels Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) |
 
 ### Model Level Wind
 

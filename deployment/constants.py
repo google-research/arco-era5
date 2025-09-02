@@ -25,7 +25,6 @@ SANITY_JOB_ID = "arco-era5-sanity"
 EXECUTOR_JOB_ID = "arco-era5-executor"
 DAILY_EXECUTOR_JOB_ID = "arco-era5t-daily-executor"
 MONTHLY_EXECUTOR_JOB_ID = "arco-era5t-monthly-executor"
-MODEL_LEVEL_ZARR_EXECUTOR_JOB_ID = "arco-era5-model-level-zarr-executor"
 
 EXECUTOR_JOB_CONTAINER_ARGS = [
     "src/raw-to-zarr-to-bq.py"
@@ -35,9 +34,6 @@ DAILY_EXECUTOR_JOB_CONTAINER_ARGS = [
 ]
 MONTHLY_EXECUTOR_JOB_CONTAINER_ARGS = [
     "src/raw-to-zarr-to-bq.py", "--mode", "monthly"
-]
-MODEL_LEVEL_ZARR_EXECUTOR_JOB_CONTAINER_ARGS = [
-    "src/model-level-native-vertical-zarr-monthly-executor.py"
 ]
 
 JOB_CONTAINER_ENV_VARIABLES = [
