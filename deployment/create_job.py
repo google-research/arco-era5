@@ -109,3 +109,10 @@ if __name__ == "__main__":
         contaner_env=constants.JOB_CONTAINER_ENV_VARIABLES + constants.ERA5_API_KEYS,
         container_memory_limit=constants.CONTAINER_MEMORY_LIMIT,
     )
+    era5_job_creator(
+        job_id=constants.MODEL_LEVEL_ZARR_EXECUTOR_JOB_ID,
+        timeout_sec=constants.TIMEOUT_SECONDS,
+        container_args=constants.MODEL_LEVEL_ZARR_EXECUTOR_JOB_CONTAINER_ARGS,
+        contaner_env=constants.JOB_CONTAINER_ENV_VARIABLES,
+        container_memory_limit=constants.CONTAINER_MEMORY_LIMIT,
+    )
