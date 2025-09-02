@@ -63,8 +63,7 @@ Explore the ERA5 dataset interactively with these notebooks:
 | Notebook | Description | Open in Colab |
 |----------|-------------|---------------|
 | [Surface Reanalysis Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) | Learn how to work with surface-level ERA5 data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) |
-| [Model Levels Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) | Explore atmospheric model levels data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) | 
- - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_stop` (for ERA5), and `last_updated`. For ERA5T, use `valid_time_stop_era5t` instead. These attributes specify the start date, stop date, and most recent time of update for the dataset's data, respectively. Please note that both start and end times are inclusive, and all times are given in UTC.
+| [Model Levels Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) | Explore atmospheric model levels data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) |
 
 ## Analysis Ready Data
 
