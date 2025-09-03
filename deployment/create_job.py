@@ -115,5 +115,4 @@ if __name__ == "__main__":
         container_args=constants.MODEL_LEVEL_ZARR_EXECUTOR_JOB_CONTAINER_ARGS,
         contaner_env=constants.JOB_CONTAINER_ENV_VARIABLES,
         container_memory_limit=constants.CONTAINER_MEMORY_LIMIT,
-
     )

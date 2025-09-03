@@ -2,7 +2,7 @@
 
 Recipes for reproducing Analysis-Ready & Cloud Optimized (ARCO) ERA5 datasets.
 
-[Introduction](#introduction) • [Overview](#overview) • [Analysis Ready Data](#analysis-ready-data)
+[Introduction](#introduction) • [Overview](#overview) • [Get Started with Colab Notebooks](#get-started-with-colab-notebooks) • [Analysis Ready Data](#analysis-ready-data)
 • [Raw Cloud Optimized Data](#raw-cloud-optimized-data) • [Project roadmap](#project-roadmap) • [How to reproduce](#how-to-reproduce)
 • [FAQs](#faqs) • [How to cite this work](#how-to-cite-this-work) • [License](#license)
 
@@ -52,10 +52,18 @@ to provide transparency in the provenance of all data.
 | `$BUCKET/co/`  | Cloud Optimized | A port of gaussian-gridded ERA5 data to Zarr.                                 |
 | `$BUCKET/raw/` | Raw Data        | All raw grib & NetCDF data.                                                   |  
 
- - The `gcp-public-data-arco-era5` bucket is stored in the `us-central1` (Iowa)
-   Google Cloud region.
- - The stable version of ERA5 is updated on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay. The preliminary version of ERA5, known as ERA5T is available with approximately 1 week delay (where 5-6 days delay are due to processing at ECWMF). 
- - The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_stop` (for ERA5), and `last_updated`. For ERA5T, use `valid_time_stop_era5t` instead. These attributes specify the start date, stop date, and most recent time of update for the dataset's data, respectively. Please note that both start and end times are inclusive, and all times are given in UTC.
+- The `gcp-public-data-arco-era5` bucket is stored in the `us-central1` (Iowa) Google Cloud region.
+- The stable version of ERA5 is updated on a **monthly cadence** (on roughly the 9th of each month) with a 3 month delay. The preliminary version of ERA5, known as ERA5T is available with approximately 1 week delay (where 5-6 days delay are due to processing at ECWMF).
+- The most recent data available can be found by examining the metadata associated with each Zarr store. The metadata encompasses three essential attributes: `valid_time_start`, `valid_time_stop` (for ERA5), and `last_updated`. For ERA5T, use `valid_time_stop_era5t` instead. These attributes specify the start date, stop date, and most recent time of update for the dataset's data, respectively. Please note that both start and end times are inclusive, and all times are given in UTC.
+
+## Get Started with Colab Notebooks
+
+Explore the ERA5 dataset interactively with these notebooks:
+
+| Notebook | Description | Open in Colab |
+|----------|-------------|---------------|
+| [Surface Reanalysis Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) | Learn how to work with surface-level ERA5 data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) |
+| [Model Levels Walkthrough](https://github.com/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) | Explore atmospheric model levels data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb) |
 
 ## Analysis Ready Data
 
@@ -430,11 +438,11 @@ ar_model_level_and_surface_data = xarray.merge([
 These datasets contain the raw data used to produce the Analysis Ready data. Whenever possible, parameters are represented by their native grid resolution
 See [this ECMWF documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference) for more.
 
-**Please view out our [walkthrough notebook](https://github.com/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb) for a demo of these cloud-optimized datasets.**
+**Please view our walkthrough notebook for demos of these cloud-optimized datasets:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/0-Surface-Reanalysis-Walkthrough.ipynb)
 
 ### Model Level Wind
 
-This dataset contains model-level wind fields on ERA5's native grid, as spherical harmonic coefficients.
+This dataset contains model-level wind fields on ERA5's native grid, as spherical harmonic coefficients. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/arco-era5/blob/main/docs/1-Model-Levels-Walkthrough.ipynb)
 
 ```python
 import xarray
