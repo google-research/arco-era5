@@ -326,10 +326,10 @@ ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_
 |vertical_integral_of_divergence_of_geopotential_flux           |vigd          |W m**-2              |https://codes.ecmwf.int/grib/param-db/162085     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_divergence_of_kinetic_energy_flux         |viked         |W m**-2              |https://codes.ecmwf.int/grib/param-db/162082     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_divergence_of_mass_flux                   |vimad         |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162081     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|vertical_integral_of_divergence_of_moisture_flux               |vimdf         |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162084     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
+|vertical_integral_of_divergence_of_moisture_flux               |viwvd         |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162084     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_divergence_of_ozone_flux                  |viozd         |kg m**-2 s**-1       |https://apps.ecmwf.int/codes/grib/param-db/162087|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_divergence_of_thermal_energy_flux         |vithed        |W m**-2              |https://apps.ecmwf.int/codes/grib/param-db/162083|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|vertical_integral_of_divergence_of_total_energy_flux           |vited         |W m**-2              |https://apps.ecmwf.int/codes/grib/param-db/162086|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
+|vertical_integral_of_divergence_of_total_energy_flux           |vitoed         |W m**-2              |https://apps.ecmwf.int/codes/grib/param-db/162086|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_eastward_cloud_frozen_water_flux          |viiwe         |kg m**-1 s**-1       |https://apps.ecmwf.int/codes/grib/param-db/162090|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_eastward_cloud_liquid_water_flux          |vilwe         |kg m**-1 s**-1       |https://apps.ecmwf.int/codes/grib/param-db/162088|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_eastward_geopotential_flux                |vige          |W m**-1              |https://apps.ecmwf.int/codes/grib/param-db/162073|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
@@ -337,7 +337,7 @@ ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_
 |vertical_integral_of_eastward_kinetic_energy_flux              |vikee         |W m**-1              |https://codes.ecmwf.int/grib/param-db/162067     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_eastward_mass_flux                        |vimae         |kg m**-1 s**-1       |https://codes.ecmwf.int/grib/param-db/162065     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_eastward_ozone_flux                       |vioze         |kg m**-1 s**-1       |https://codes.ecmwf.int/grib/param-db/162077     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|vertical_integral_of_eastward_total_energy_flux                |vitee         |W m**-1              |https://codes.ecmwf.int/grib/param-db/162075     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
+|vertical_integral_of_eastward_total_energy_flux                |vitoee         |W m**-1              |https://codes.ecmwf.int/grib/param-db/162075     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_eastward_water_vapour_flux                |viwve         |kg m**-1 s**-1       |https://codes.ecmwf.int/grib/param-db/162071     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_energy_conversion                         |viec          |W m**-2              |https://codes.ecmwf.int/grib/param-db/162064     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_kinetic_energy                            |vike          |J m**-2              |https://apps.ecmwf.int/codes/grib/param-db/162059|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
@@ -347,10 +347,10 @@ ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_
 |vertical_integral_of_northward_cloud_liquid_water_flux         |vilwn         |kg m**-1 s**-1       |https://apps.ecmwf.int/codes/grib/param-db/162089|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_northward_geopotential_flux               |vign          |W m**-1              |https://apps.ecmwf.int/codes/grib/param-db/162074|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_northward_heat_flux                       |vithen        |W m**-1              |https://codes.ecmwf.int/grib/param-db/162070     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|vertical_integral_of_northward_kinetic_energy_flux             |vithen        |W m**-1              |https://codes.ecmwf.int/grib/param-db/162068     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
+|vertical_integral_of_northward_kinetic_energy_flux             |viken        |W m**-1              |https://codes.ecmwf.int/grib/param-db/162068     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_northward_mass_flux                       |viman         |kg m**-1 s**-1       |https://codes.ecmwf.int/grib/param-db/162066     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_northward_ozone_flux                      |viozn         |kg m**-1 s**-1       |https://codes.ecmwf.int/grib/param-db/162078     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|vertical_integral_of_northward_total_energy_flux               |viten         |W m**-1              |https://codes.ecmwf.int/grib/param-db/162076     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
+|vertical_integral_of_northward_total_energy_flux               |vitoen         |W m**-1              |https://codes.ecmwf.int/grib/param-db/162076     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_northward_water_vapour_flux               |viwvn         |kg m**-1 s**-1       |https://codes.ecmwf.int/grib/param-db/162072     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_potential_and_internal_energy             |vipie         |J m**-2              |https://apps.ecmwf.int/codes/grib/param-db/162061|[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_potential_internal_and_latent_energy      |vipile        |J m**-2              |https://codes.ecmwf.int/grib/param-db/162062     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
