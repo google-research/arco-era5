@@ -321,8 +321,8 @@ ar_full_37_1h = ds.sel(time=slice(ds.attrs['valid_time_start'], ds.attrs['valid_
 |uv_visible_albedo_for_direct_radiation                         |aluvp         |(0 - 1)              |https://codes.ecmwf.int/grib/param-db/15         |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |v_component_of_wind                                            |v             |m s**-1              |https://codes.ecmwf.int/grib/param-db/500030     |[era5_pl_hourly.cfg](raw/daily/era5_pl_hourly.cfg)|
 |v_component_stokes_drift                                       |vst           |m s**-1              |https://codes.ecmwf.int/grib/param-db/140216     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|vertical_integral_of_divergence_of_cloud_frozen_water_flux     |viiw          |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162057     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
-|vertical_integral_of_divergence_of_cloud_liquid_water_flux     |vilw          |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162056     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
+|vertical_integral_of_divergence_of_cloud_frozen_water_flux     |viiwd         |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162057     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
+|vertical_integral_of_divergence_of_cloud_liquid_water_flux     |vilwd         |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162056     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_divergence_of_geopotential_flux           |vigd          |W m**-2              |https://codes.ecmwf.int/grib/param-db/162085     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_divergence_of_kinetic_energy_flux         |viked         |W m**-2              |https://codes.ecmwf.int/grib/param-db/162082     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
 |vertical_integral_of_divergence_of_mass_flux                   |vimad         |kg m**-2 s**-1       |https://codes.ecmwf.int/grib/param-db/162081     |[era5_sl_hourly.cfg](raw/daily/era5_sl_hourly.cfg)|
