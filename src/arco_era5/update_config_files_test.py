@@ -87,7 +87,7 @@ class TestFetchFunctions(unittest.TestCase):
 
     def test_get_previous_month_dates(self):
         # Test get_previous_month_dates function
-        prev_month_data = get_previous_month_dates()
+        prev_month_data = get_previous_month_dates("era5")
         self.assertIn("first_day", prev_month_data)
         self.assertIn("last_day", prev_month_data)
         self.assertIn("sl_year", prev_month_data)
@@ -96,9 +96,9 @@ class TestFetchFunctions(unittest.TestCase):
     def test_update_config_files(self):
         # Test update_config_files function
         update_config_file(
-            self.temp_dir.name, "date", self.additional_content)
+            self.temp_dir.name, "date", "era5", self.additional_content)
 
-    @patch("update_config_files.secretmanager.SecretManagerServiceClient")
+    @patch("arco_era5.update_config_files.secretmanager.SecretManagerServiceClient")
     def test_get_secret_success(self, mock_secretmanager):
         secret_data = {
             "api_url": "https://example.com/api",
@@ -113,7 +113,7 @@ class TestFetchFunctions(unittest.TestCase):
         result = get_secret(secret_key)
         self.assertEqual(result, secret_data)
 
-    @patch("update_config_files.secretmanager.SecretManagerServiceClient")
+    @patch("arco_era5.update_config_files.secretmanager.SecretManagerServiceClient")
     def test_get_secret_failure(self, mock_secretmanager):
         mock_secretmanager.return_value.access_secret_version.side_effect = (
             Exception("Error retrieving secret"))
