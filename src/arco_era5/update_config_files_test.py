@@ -93,6 +93,15 @@ class TestFetchFunctions(unittest.TestCase):
         self.assertIn("sl_year", prev_month_data)
         self.assertIn("sl_month", prev_month_data)
 
+    def test_era5_uses_three_month_lag(self):
+        prev_month_data = get_previous_month_dates("era5")
+
+        today = datetime.date.today()
+        three_months_ago = today - datetime.timedelta(days=3*366/12)
+        _, expected_last = get_month_range(three_months_ago)
+
+        self.assertEqual(prev_month_data['last_day'], expected_last)
+
     def test_update_config_files(self):
         # Test update_config_files function
         update_config_file(
