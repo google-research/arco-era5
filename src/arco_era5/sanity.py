@@ -83,9 +83,8 @@ def add_sanity_files(path: str, data_changed: bool):
 
 def replace_and_remove_file(path1: str, path2: str, data_changed: bool):
     """Replace root with latest era5 file and remove temp file"""
-    if data_changed:
-        logger.info(f"Replacing {path1} with {path2}.")
-        copy(path2, path1)
+    logger.info(f"Replacing {path1} with {path2}.")
+    copy(path2, path1)
     logger.info(f"Creating sentinel files.")
     add_sanity_files(path1, data_changed)
     logger.info(f"Removing temporary file {path2}.")
