@@ -37,6 +37,7 @@ PROJECT = os.environ.get("PROJECT")
 REGION = os.environ.get("REGION")
 BUCKET = os.environ.get("BUCKET")
 SANITY_JOB_ID = os.environ.get("SANITY_JOB_ID")
+ARCO_ERA5_SDK_CONTAINER_IMAGE = os.environ.get("ARCO_ERA5_SDK_CONTAINER_IMAGE")
 
 SANITY_JOB_FILE = "/arco-era5/src/era5-sanity.py"
 
@@ -82,8 +83,9 @@ def add_sanity_files(path: str, data_changed: bool):
 
 def replace_and_remove_file(path1: str, path2: str, data_changed: bool):
     """Replace root with latest era5 file and remove temp file"""
-    logger.info(f"Replacing {path1} with {path2}.")
-    copy(path2, path1)
+    if data_changed:
+        logger.info(f"Replacing {path1} with {path2}.")
+        copy(path2, path1)
     logger.info(f"Creating sentinel files.")
     add_sanity_files(path1, data_changed)
     logger.info(f"Removing temporary file {path2}.")
@@ -212,6 +214,8 @@ def run_sanity_job(target_path: str, temp_path: str, init_date: str):
     override_args = generate_override_args(
         SANITY_JOB_FILE, target_path, temp_path, init_date, BUCKET, PROJECT, REGION, job_name
     )
+
+    override_args.extend(['--sdk_container_image', ARCO_ERA5_SDK_CONTAINER_IMAGE,'--save_main_session'])
 
     if target_name in HARNESS_THREADS:
         override_args.extend(['--number_of_worker_harness_threads', str(HARNESS_THREADS[target_name])])
