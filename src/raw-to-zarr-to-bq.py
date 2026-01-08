@@ -78,7 +78,7 @@ def start_data_ingestion(zarr_files_to_process: t.List[str], first_day: datetime
     with ThreadPoolExecutor(max_workers=8) as tp:
         for z_file in zarr_files_to_process:
             if parsed_args.mode == ExecTypes.ERA5.value:
-                tp.submit(run_sanity_job, z_file, TEMP_PATH_FOR_RAW_DATA, parsed_args.init_date)
+                tp.submit(run_sanity_job, z_file, TEMP_PATH_FOR_RAW_DATA, parsed_args.init_date, first_day, last_day)
             else:
                 tp.submit(perform_data_operations, z_file, first_day, last_day, init_date, mode)
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
         logger.info("Config file updation started.")
         temp_path = TEMP_PATH_FOR_RAW_DATA if parsed_args.mode == ExecTypes.ERA5.value else None
-        update_config_file(DIRECTORY, FIELD_NAME, parsed_args.mode, temp_path)
+        update_config_file(DIRECTORY, FIELD_NAME, dates_data, parsed_args.mode, temp_path)
         logger.info("Config file updation completed.")
 
         root_path = TEMP_PATH_FOR_RAW_DATA if parsed_args.mode == ExecTypes.ERA5.value else ROOT_PATH

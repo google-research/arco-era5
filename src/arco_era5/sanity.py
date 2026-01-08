@@ -204,7 +204,7 @@ def generate_override_args(
     ]
     return args
 
-def run_sanity_job(target_path: str, temp_path: str, init_date: str):
+def run_sanity_job(target_path: str, temp_path: str, init_date: str, start_date: str, end_date: str):
     """Trigger job for era5 data sanity."""
 
     target_name = target_path.split('/')[-1].split('.')[0]
@@ -215,6 +215,8 @@ def run_sanity_job(target_path: str, temp_path: str, init_date: str):
     )
 
     override_args.extend(['--sdk_container_image', ARCO_ERA5_SDK_CONTAINER_IMAGE,'--save_main_session'])
+
+    override_args.extend(['--start_date', start_date, '--end_date', end_date])
 
     if target_name in HARNESS_THREADS:
         override_args.extend(['--number_of_worker_harness_threads', str(HARNESS_THREADS[target_name])])

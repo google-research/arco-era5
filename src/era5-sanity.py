@@ -39,6 +39,10 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace,
                         help='Start date, iso format string.')
     parser.add_argument('--timestamps_per_day', type=int, default=24,
                         help='Timestamps Per Day.')
+    parser.add_argument('--start_date', type=str, required=True,
+                        help='Start Date')
+    parser.add_argument('--end_date', type=str, required=True,
+                        help='End Date')
 
     return parser.parse_known_args()
 
@@ -50,13 +54,11 @@ if __name__ == "__main__":
     is_single_level = "single-level" in parsed_args.target_path
     is_analysis_ready = "/ar/" in parsed_args.target_path
 
-    dates = get_previous_month_dates("era5")
-
     original_paths = generate_raw_paths(
-        dates['first_day'], dates['last_day'], parsed_args.target_path, is_single_level, is_analysis_ready
+        parsed_args.start_date, parsed_args.end_date, parsed_args.target_path, is_single_level, is_analysis_ready
     )
     temp_paths = generate_raw_paths(
-        dates['first_day'], dates['last_day'], parsed_args.target_path, is_single_level, is_analysis_ready, parsed_args.temp_path
+        parsed_args.start_date, parsed_args.end_date, parsed_args.target_path, is_single_level, is_analysis_ready, parsed_args.temp_path
     )
 
     input_paths = [(original_path, temp_path) for original_path, temp_path in zip(original_paths, temp_paths)]
@@ -75,6 +77,6 @@ if __name__ == "__main__":
             ))
         )
     
-    update_zarr_metadata(parsed_args.target_path, dates['last_day'], mode=ExecTypes.ERA5.value)
+    update_zarr_metadata(parsed_args.target_path, parsed_args.end_date, mode=ExecTypes.ERA5.value)
 
-    update_splittable_files(dates['first_day'].strftime("%Y/%m"), parsed_args.temp_path, target_path=parsed_args.target_path)
+    update_splittable_files(parsed_args.start_date.rsplit('-', 1)[0], parsed_args.temp_path, target_path=parsed_args.target_path)

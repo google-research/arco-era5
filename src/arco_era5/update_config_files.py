@@ -190,7 +190,7 @@ def generate_additional_content() -> str:
     return additional_content
 
 
-def update_config_file(directory: str, field_name: str,
+def update_config_file(directory: str, field_name: str, dates_data: MonthDates,
                        mode: str, temp_path: str = None) -> None:
     """Update the configuration files in the specified directory.
 
@@ -200,7 +200,6 @@ def update_config_file(directory: str, field_name: str,
         additional_content (str): The additional content to be added under the
                     '[selection]' section.
     """
-    dates_data = get_previous_month_dates(mode)
     config_args = {
         "first_day": dates_data['first_day'],
         "last_day": dates_data['last_day'],
