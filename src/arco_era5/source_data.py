@@ -389,6 +389,7 @@ def _read_nc_dataset(gpath_file):
         # and: https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation#ERA5:datadocumentation-Dataupdatefrequency  # pylint: disable=line-too-long
         # for further details.
 
+        logging.info(f"Found expver in the dataarray for filepath: {path}")
         all_dims_except_time_and_expver = tuple(set(dataarray.dims) - {"time", "expver"})
         # Should have only trailing nans.
         a = dataarray.sel(expver=1).isnull().any(dim=all_dims_except_time_and_expver)
