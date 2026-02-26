@@ -149,7 +149,7 @@ def resize_zarr_target(target_store: str, end_date: datetime, init_date: str,
         logger.info(f"Data is already resized for {target_store}.")
 
 
-def update_zarr_metadata(url: str, time_end: datetime.date, mode: str, metadata_key: str = '.zmetadata') -> None:
+def update_zarr_metadata(url: str, time_end: str, mode: str, metadata_key: str = '.zmetadata') -> None:
     try:
         attrs = {
             "valid_time_start": "1940-01-01",
