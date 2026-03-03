@@ -134,7 +134,7 @@ def copy(src: str, dst: str) -> None:
         src (str): The cloud storage path to the grib file.
         dst (str): A temp location to copy the file.
     """
-    cmd = 'gsutil -m cp'
+    cmd = 'gcloud storage cp'
     try:
         subprocess.run(cmd.split() + [src, dst], check=True, capture_output=True,
                        text=True, input="n/n")
@@ -161,7 +161,7 @@ def opener(fname: str) -> t.Any:
 
 def remove_file(url: str):
     """Remove file from remote location."""
-    cmd = 'gsutil rm -rf'
+    cmd = 'gcloud storage rm --recursive --continue-on-error'
     try:
         subprocess.run(cmd.split() + [url], check=True, capture_output=True,
                        text=True, input="n/n")
