@@ -291,6 +291,7 @@ def hourly_dates(start_date: str, end_date: str):
         tuple: A tuple containing the year, month, day, and hour for each hour in the range.
 
     """
-    date_range = pd.date_range(start=start_date, end=end_date, freq='H', inclusive='left')
+    end_date_updated = pd.to_datetime(end_date) + pd.Timedelta(days=1)
+    date_range = pd.date_range(start=start_date, end=end_date_updated, freq='H', inclusive='left')
     date_tuples = [(date.year, date.month, date.day, date.hour) for date in date_range]
     return date_tuples
