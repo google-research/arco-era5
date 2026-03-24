@@ -22,9 +22,12 @@ from arco_era5 import (
     LoadTemporalDataForDateDoFn,
     GCP_DIRECTORY,
     ARUpdateSlice,
+    ExecTypes,
+    update_zarr_metadata
 )
 
-logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
@@ -42,18 +45,26 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help="Group label for the set of pressure levels to use.")
     parser.add_argument("--init_date", type=str, default='1900-01-01',
                         help="Date to initialize the zarr store.")
+    parser.add_argument("--update_metadata", action='store_true',
+                        help="To update the dataset attributes.")
 
     return parser.parse_known_args()
 
 
-known_args, pipeline_args = parse_arguments("Update Data Slice")
+if __name__ == "__main__":
 
-with beam.Pipeline(argv=pipeline_args) as p:
-    path = (
-        p
-        | "CreateDayIterator" >> beam.Create(daily_date_iterator(known_args.start_date, known_args.end_date))
-        | "LoadDataForDay" >> beam.ParDo(LoadTemporalDataForDateDoFn(
-            data_path=known_args.root_path, start_date=known_args.init_date,
-            pressure_levels_group=known_args.pressure_levels_group))
-        | "UpdateSlice" >> ARUpdateSlice(target=known_args.output_path, init_date=known_args.init_date)
-    )
+    known_args, pipeline_args = parse_arguments("Update Data Slice")
+
+    with beam.Pipeline(argv=pipeline_args) as p:
+        path = (
+            p
+            | "CreateDayIterator" >> beam.Create(daily_date_iterator(known_args.start_date, known_args.end_date))
+            | "LoadDataForDay" >> beam.ParDo(LoadTemporalDataForDateDoFn(
+                data_path=known_args.root_path, start_date=known_args.init_date,
+                pressure_levels_group=known_args.pressure_levels_group))
+            | "UpdateSlice" >> ARUpdateSlice(target=known_args.output_path, init_date=known_args.init_date)
+        )
+    
+    if known_args.update_metadata:
+        update_zarr_metadata(known_args.output_path, known_args.end_date, ExecTypes.ERA5T_DAILY)
+        logger.info(f"Update metadata for zarr file: {known_args.output_path} completed.")

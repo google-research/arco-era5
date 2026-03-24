@@ -82,6 +82,7 @@ def generate_override_args(
         "--setup_file", "/arco-era5/setup.py",
         "--job_name", job_name,
         "--number_of_worker_harness_threads", "1"
+        "--update_metadata"
     ]
     return args
 
@@ -139,10 +140,6 @@ def perform_data_operations(z_file: str, start_date: str,
         ingest_data_in_zarr_dataflow_job(z_file, REGION, start_date, end_date, ROOT_PATH, init_date,
                                          PROJECT, BUCKET, INGESTION_JOB_ID, mode)
         logger.info(f"Data ingesting for {z_file} is completed.")
-        logger.info(f"update metadata for zarr file: {z_file} started.")
-
-        update_zarr_metadata(z_file, end_date, mode)
-        logger.info(f"update metadata for zarr file: {z_file} completed.")
     except Exception as e:
         logger.error(
             f"An error occurred in process_zarr for {z_file}: {str(e)}")

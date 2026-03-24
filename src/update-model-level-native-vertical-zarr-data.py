@@ -20,10 +20,13 @@ import typing as t
 from arco_era5 import (
     hourly_dates,
     LoadDataForDayDoFn,
-    UpdateModelLevelNativeVerticalDataSlice
+    UpdateModelLevelNativeVerticalDataSlice,
+    ExecTypes,
+    update_zarr_metadata
 )
 
-logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
@@ -37,16 +40,24 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='End date, iso format string.')
     parser.add_argument("--init_date", type=str, default='1900-01-01',
                         help="Date to initialize the zarr store.")
+    parser.add_argument("--update_metadata", action='store_true',
+                        help="To update the dataset attributes.")
 
     return parser.parse_known_args()
 
-known_args, pipeline_args = parse_arguments('')
-dates = hourly_dates(known_args.start_date, known_args.end_date)
+if __name__ ==  "__main__":
+    
+    known_args, pipeline_args = parse_arguments('')
+    dates = hourly_dates(known_args.start_date, known_args.end_date)
 
-with beam.Pipeline(argv=pipeline_args) as p:
-    path = (
-        p
-        | "CreateDayIterator" >> beam.Create(dates)
-        | "LoadDataForDay" >> beam.ParDo(LoadDataForDayDoFn(start_date=known_args.init_date))
-        | "UpdateDataSlice" >> UpdateModelLevelNativeVerticalDataSlice(target=known_args.output_path, init_date=known_args.init_date)
-    )
+    with beam.Pipeline(argv=pipeline_args) as p:
+        path = (
+            p
+            | "CreateDayIterator" >> beam.Create(dates)
+            | "LoadDataForDay" >> beam.ParDo(LoadDataForDayDoFn(start_date=known_args.init_date))
+            | "UpdateDataSlice" >> UpdateModelLevelNativeVerticalDataSlice(target=known_args.output_path, init_date=known_args.init_date)
+        )
+    
+    if known_args.update_metadata:
+        update_zarr_metadata(known_args.output_path, known_args.end_date, ExecTypes.ERA5)
+        logger.info(f"Update metadata for zarr file: {known_args.output_path} completed.")

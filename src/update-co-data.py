@@ -15,7 +15,14 @@ import logging
 import argparse
 from typing import List, Tuple
 import apache_beam as beam
-from arco_era5 import GenerateOffset, COUpdateSlice, GCP_DIRECTORY, generate_input_paths
+from arco_era5 import (
+    GenerateOffset,
+    COUpdateSlice,
+    GCP_DIRECTORY,
+    generate_input_paths,
+    ExecTypes,
+    update_zarr_metadata
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -58,6 +65,8 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
                         help='Chunks of variables to merge together.')
     parser.add_argument('--time_per_day', type=int, default=24,
                         help='Timestamps Per Day.')
+    parser.add_argument("--update_metadata", action='store_true',
+                        help="To update the dataset attributes.")
 
     return parser.parse_known_args()
 
@@ -84,3 +93,7 @@ if __name__ == '__main__':
             | "Reshuffle" >> beam.Reshuffle()
             | "UpdateSlice" >> COUpdateSlice(target=known_args.output_path)
         )
+
+    if known_args.update_metadata:
+        update_zarr_metadata(known_args.output_path, known_args.end_date, ExecTypes.ERA5T_DAILY)
+        logger.info(f"Update metadata for zarr file: {known_args.output_path} completed.")
