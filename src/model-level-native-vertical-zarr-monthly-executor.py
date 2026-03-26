@@ -60,7 +60,8 @@ def generate_args(
         "--job_name", job_name,
         "--number_of_worker_harness_threads", "1",
         "--sdk_container_image", ARCO_ERA5_SDK_CONTAINER_IMAGE,
-        "--max_num_workers", "100"
+        "--max_num_workers", "100",
+        "--update_metadata"
     ]
 
 
