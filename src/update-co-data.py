@@ -65,8 +65,8 @@ def parse_args(desc: str) -> Tuple[argparse.Namespace, List[str]]:
                         help='Chunks of variables to merge together.')
     parser.add_argument('--time_per_day', type=int, default=24,
                         help='Timestamps Per Day.')
-    parser.add_argument("--update_metadata", action='store_true',
-                        help="To update the dataset attributes.")
+    parser.add_argument("--disable_metadata_update", action='store_true',
+                        help="For not updating the dataset attributes.")
 
     return parser.parse_known_args()
 
@@ -94,6 +94,6 @@ if __name__ == '__main__':
             | "UpdateSlice" >> COUpdateSlice(target=known_args.output_path)
         )
 
-    if known_args.update_metadata:
+    if not known_args.disable_metadata_update:
         update_zarr_metadata(known_args.output_path, known_args.end_date, ExecTypes.ERA5T_DAILY)
         logger.info(f"Update metadata for zarr file: {known_args.output_path} completed.")

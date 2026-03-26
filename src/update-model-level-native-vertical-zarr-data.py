@@ -40,8 +40,8 @@ def parse_arguments(desc: str) -> t.Tuple[argparse.Namespace, t.List[str]]:
                         help='End date, iso format string.')
     parser.add_argument("--init_date", type=str, default='1900-01-01',
                         help="Date to initialize the zarr store.")
-    parser.add_argument("--update_metadata", action='store_true',
-                        help="To update the dataset attributes.")
+    parser.add_argument("--disable_metadata_update", action='store_true',
+                        help="For not updating the dataset attributes.")
 
     return parser.parse_known_args()
 
@@ -58,6 +58,6 @@ if __name__ ==  "__main__":
             | "UpdateDataSlice" >> UpdateModelLevelNativeVerticalDataSlice(target=known_args.output_path, init_date=known_args.init_date)
         )
     
-    if known_args.update_metadata:
+    if not known_args.disable_metadata_update:
         update_zarr_metadata(known_args.output_path, known_args.end_date, ExecTypes.ERA5)
         logger.info(f"Update metadata for zarr file: {known_args.output_path} completed.")

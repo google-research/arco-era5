@@ -82,7 +82,6 @@ def generate_override_args(
         "--setup_file", "/arco-era5/setup.py",
         "--job_name", job_name,
         "--number_of_worker_harness_threads", "1"
-        "--update_metadata"
     ]
     return args
 
