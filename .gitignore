@@ -3,3 +3,4 @@ docs/.ipynb_checkpoints/
 *.egg-info
 env/
 venv/
+.vscode
