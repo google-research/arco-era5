@@ -11,6 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import fsspec.asyn
+# Initialize the fsspec event loop on the main thread to avoid signal handling issues
+# when fsspec is used within worker threads (e.g. in Apache Beam / Dataflow).
+try:
+    fsspec.asyn.get_loop()
+except Exception:
+    pass
+
 from .constant import ARCO_ERA5_ZARR_FILES, variables_full_names, zarr_files
 from .data_availability import check_data_availability
 from .download import raw_data_download_dataflow_job, data_splitting_dataflow_job

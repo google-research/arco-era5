@@ -21,7 +21,7 @@ import typing as t
 import xarray as xr
 
 from dataclasses import dataclass
-from gcsfs import GCSFileSystem
+from apache_beam.io.filesystems import FileSystems
 
 from .data_availability import generate_input_paths_ar
 from .download import SPLITTING_DATASETS
@@ -46,8 +46,6 @@ HARNESS_THREADS = {
     'model-level-wind': 4
 }
 
-fs = GCSFileSystem()
-
 
 def generate_raw_paths(start_date: str, end_date: str, target_path: str, is_single_level: bool, is_analysis_ready: bool, root_path: str = GCP_DIRECTORY):
     """Generate raw input paths."""
@@ -65,6 +63,8 @@ def parse_ar_url(url: str, init_date: str):
     time_offset_start = offset_along_time_axis(init_date, int(year), int(month), int(day))
     time_offset_end = time_offset_start + HOURS_PER_DAY
     if file_name == "surface.nc":
+        if variable == "geopotential":
+            variable = "geopotential_at_surface"
         return (slice(time_offset_start, time_offset_end),), variable
     else:
         level = int(file_name.split(".")[0])
@@ -75,16 +75,17 @@ def add_sanity_files(path: str, data_changed: bool):
     dir_path, file_name = path.rsplit("/", 1)
 
     success_file = f"{dir_path}/{file_name.rsplit('.', 1)[0]}_ratified"
-    fs = GCSFileSystem()
-    fs.write_text(success_file, '')
+    with FileSystems.create(success_file) as f:
+        f.write(b'')
     if data_changed:
         data_change_file = f"{dir_path}/{file_name.rsplit('.', 1)[0]}_data_changed"
-        fs.write_text(data_change_file, '')
+        with FileSystems.create(data_change_file) as f:
+            f.write(b'')
 
 def replace_and_remove_file(path1: str, path2: str, data_changed: bool):
     """Replace root with latest era5 file and remove temp file"""
     logger.info(f"Replacing {path1} with {path2}.")
-    copy(path2, path1)
+    copy(path2, path1, to_local=False)
     logger.info(f"Creating sentinel files.")
     add_sanity_files(path1, data_changed)
     logger.info(f"Removing temporary file {path2}.")
@@ -98,7 +99,13 @@ def combine_expver(ds: xr.Dataset):
 
 def open_dataset(path: str):
     """Open xarray dataset."""
-    ds = xr.open_dataset(path, engine="scipy" if ".nc" in path else "cfgrib").load()
+    try:
+        ds = xr.open_dataset(path, engine="h5netcdf" if ".nc" in path else "cfgrib").load()
+    except Exception as e:
+        ds = xr.open_dataset(path, engine="scipy").load()
+    ds = ds.squeeze().drop(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
+    if "valid_time" in ds.dims:
+        ds = ds.rename({ 'valid_time': 'time' })
     return ds
 
 class OpenLocal(beam.DoFn):
@@ -108,7 +115,7 @@ class OpenLocal(beam.DoFn):
 
         path1, path2 = paths
 
-        temp_file_check = fs.exists(path2)
+        temp_file_check = FileSystems.exists(path2)
 
         if temp_file_check:
             with opener(path1) as file1:

@@ -16,6 +16,7 @@ import datetime
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -26,6 +27,7 @@ import typing as t
 from enum import Enum
 from contextlib import contextmanager
 from google.cloud import run_v2
+from apache_beam.io.filesystems import FileSystems
 
 logger = logging.getLogger(__name__)
 
@@ -127,21 +129,19 @@ def parse_arguments_raw_to_zarr_to_bq(desc: str) -> t.Tuple[argparse.Namespace,
     return parser.parse_known_args()
 
 
-def copy(src: str, dst: str) -> None:
-    """A method to copy remote file to local path.
-
-    Args:
-        src (str): The cloud storage path to the grib file.
-        dst (str): A temp location to copy the file.
-    """
-    cmd = 'gcloud storage cp'
+def copy(src: str, dst: str, to_local = True) -> None:
+    """A method to copy file from src to dst (supports GCS and local)."""
     try:
-        subprocess.run(cmd.split() + [src, dst], check=True, capture_output=True,
-                       text=True, input="n/n")
-        return
-    except subprocess.CalledProcessError as e:
-        msg = f"Failed to copy file {src!r} to {dst!r} Error {e}"
+        if to_local:
+            # Cross-filesystem copy: read from src, write to dst
+            with FileSystems.open(src) as f_in, FileSystems.create(dst) as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        else:
+            FileSystems.copy([src], [dst])
+    except Exception as e:
+        msg = f"Failed to copy file {src!r} to {dst!r}. Error: {e}"
         logger.error(msg)
+        raise
 
 
 @contextmanager
@@ -160,13 +160,10 @@ def opener(fname: str) -> t.Any:
 
 
 def remove_file(url: str):
-    """Remove file from remote location."""
-    cmd = 'gcloud storage rm --recursive --continue-on-error'
+    """Remove file from remote or local location."""
     try:
-        subprocess.run(cmd.split() + [url], check=True, capture_output=True,
-                       text=True, input="n/n")
-        return
-    except subprocess.CalledProcessError as e:
+        FileSystems.delete([url])
+    except Exception as e:
         msg = f"Failed to remove file {url!r} Error {e}"
         logger.error(msg)
 
