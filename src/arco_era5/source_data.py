@@ -374,7 +374,6 @@ def _read_nc_dataset(gpath_file):
     dataset = dataset.squeeze().drop(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
     if "valid_time" in dataset.dims:
         dataset = dataset.rename({ 'valid_time': 'time' })
-    logging.info(f"Total Vars: {path} {len(dataset)}")
     assert len(dataset) == 1
     dataarray = next(iter(dataset.values()))
     if "expver" in dataarray.coords:
