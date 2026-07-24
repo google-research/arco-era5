@@ -63,6 +63,9 @@ def parse_ar_url(url: str, init_date: str):
     time_offset_start = offset_along_time_axis(init_date, int(year), int(month), int(day))
     time_offset_end = time_offset_start + HOURS_PER_DAY
     if file_name == "surface.nc":
+        # ERA5 uses "geopotential" for file names for both the static "geopotential"
+        # feature at surface, and the dynamic multilevel "geopotential". To avoid this
+        # clash, we will always rename the static one to "geopotential_at_surface".
         if variable == "geopotential":
             variable = "geopotential_at_surface"
         return (slice(time_offset_start, time_offset_end),), variable
@@ -85,7 +88,7 @@ def add_sanity_files(path: str, data_changed: bool):
 def replace_and_remove_file(path1: str, path2: str, data_changed: bool):
     """Replace root with latest era5 file and remove temp file"""
     logger.info(f"Replacing {path1} with {path2}.")
-    copy(path2, path1, to_local=False)
+    copy(path2, path1)
     logger.info(f"Creating sentinel files.")
     add_sanity_files(path1, data_changed)
     logger.info(f"Removing temporary file {path2}.")
@@ -100,13 +103,13 @@ def combine_expver(ds: xr.Dataset):
 def open_dataset(path: str):
     """Open xarray dataset."""
     try:
-        ds = xr.open_dataset(path, engine="h5netcdf" if ".nc" in path else "cfgrib").load()
+        ds = xr.open_dataset(path, engine="h5netcdf" if ".nc" in path else "cfgrib")
     except Exception as e:
-        ds = xr.open_dataset(path, engine="scipy").load()
-    ds = ds.squeeze().drop(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
+        ds = xr.open_dataset(path, engine="scipy")
+    ds = ds.squeeze().drop_vars(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
     if "valid_time" in ds.dims:
         ds = ds.rename({ 'valid_time': 'time' })
-    return ds
+    return ds.load()
 
 class OpenLocal(beam.DoFn):
     """class to open raw files and compare the data."""

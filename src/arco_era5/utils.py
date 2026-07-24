@@ -129,15 +129,16 @@ def parse_arguments_raw_to_zarr_to_bq(desc: str) -> t.Tuple[argparse.Namespace,
     return parser.parse_known_args()
 
 
-def copy(src: str, dst: str, to_local = True) -> None:
+def copy(src: str, dst: str) -> None:
     """A method to copy file from src to dst (supports GCS and local)."""
+    is_same_fs = src.startswith("gs://") and dst.startswith("gs://")
     try:
-        if to_local:
+        if is_same_fs:
+            FileSystems.copy([src], [dst])
+        else:
             # Cross-filesystem copy: read from src, write to dst
             with FileSystems.open(src) as f_in, FileSystems.create(dst) as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        else:
-            FileSystems.copy([src], [dst])
+                shutil.copyfileobj(f_in, f_out, 1024 * 1024)
     except Exception as e:
         msg = f"Failed to copy file {src!r} to {dst!r}. Error: {e}"
         logger.error(msg)
