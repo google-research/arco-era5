@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import re
+import time
 import typing as t
 
 from google.cloud import secretmanager
@@ -105,6 +106,8 @@ def new_config_file(config_file: str, field_name: str, additional_content: str,
     else:
         config.set("selection", field_name,
                    f"{first_day}/to/{last_day}")
+    
+    config.set("selection", "nocache", str(int(time.time())))
 
     sections_list = additional_content.split("\n\n")
     for section in sections_list[:-1]:

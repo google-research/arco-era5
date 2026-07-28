@@ -369,8 +369,12 @@ def _read_nc_dataset(gpath_file):
     """
     path = str(gpath_file).replace('gs:/', 'gs://')
     with fsspec.open(path, mode="rb") as fid:
-        dataset = xr.open_dataset(fid, engine="scipy", cache=False)
+        dataset = xr.open_dataset(fid, engine="h5netcdf", cache=False)
     # All dataset have a single data array in them, so we just return the array.
+    dataset = dataset.squeeze().drop(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
+    if "valid_time" in dataset.dims:
+        dataset = dataset.rename({ 'valid_time': 'time' })
+    dataset = dataset.load()
     assert len(dataset) == 1
     dataarray = next(iter(dataset.values()))
     if "expver" in dataarray.coords:
@@ -651,10 +655,6 @@ class LoadTemporalDataForDateDoFn(beam.DoFn):
             # if something goes wrong. Note "from e" will also raise the details of the
             # original exception.
             raise RuntimeError(f"Error loading {year}-{month}-{day}") from e
-
-        # It is crucial to actually "load" as otherwise we get a pickle error.
-        single_level_vars = single_level_vars.load()
-        multilevel_vars = multilevel_vars.load()
 
         dataset = xr.merge([single_level_vars, multilevel_vars])
         dataset = align_coordinates(dataset)
