@@ -369,12 +369,12 @@ def _read_nc_dataset(gpath_file):
     """
     path = str(gpath_file).replace('gs:/', 'gs://')
     with fsspec.open(path, mode="rb") as fid:
-        dataset = xr.open_dataset(fid, engine="h5netcdf", cache=False)
-    # All dataset have a single data array in them, so we just return the array.
-    dataset = dataset.squeeze().drop(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
-    if "valid_time" in dataset.dims:
-        dataset = dataset.rename({ 'valid_time': 'time' })
-    dataset = dataset.load()
+        dataset = xr.open_dataset(fid, engine="h5netcdf", cache=False)  
+        # All dataset have a single data array in them, so we just return the array.
+        dataset = dataset.squeeze().drop(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
+        if "valid_time" in dataset.dims:
+            dataset = dataset.rename({ 'valid_time': 'time' })
+        dataset = dataset.load()
     assert len(dataset) == 1
     dataarray = next(iter(dataset.values()))
     if "expver" in dataarray.coords:
