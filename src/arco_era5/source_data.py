@@ -371,13 +371,16 @@ def _read_nc_dataset(gpath_file):
     with fsspec.open(path, mode="rb") as fid:
         dataset = xr.open_dataset(fid, engine="h5netcdf", cache=False)  
         # All dataset have a single data array in them, so we just return the array.
-        dataset = dataset.squeeze().drop(['number', 'step', 'pressure_level', 'surface', 'expver'], errors="ignore")
+        dataset = dataset.squeeze().drop(['number', 'step', 'pressure_level', 'surface'], errors="ignore")
+        # Keep experiment labels until the ERA5 and ERA5T slices are combined.
+        if "expver" not in dataset.dims:
+            dataset = dataset.drop_vars("expver", errors="ignore")
         if "valid_time" in dataset.dims:
             dataset = dataset.rename({ 'valid_time': 'time' })
         dataset = dataset.load()
     assert len(dataset) == 1
     dataarray = next(iter(dataset.values()))
-    if "expver" in dataarray.coords:
+    if "expver" in dataarray.dims:
         # Recent ERA5 downloads (within 2-3 months old) can include data from ERA5T,
         # which is the temporary release of ERA5, which has not been validated.
         # For such recent data, all instantaneous variables are from ERA5T, while
@@ -402,7 +405,8 @@ def _read_nc_dataset(gpath_file):
         disjoint_nans = bool((a ^ b).all().variable.values)
         if not disjoint_nans:
             logging.warning("The nans are not disjoint in expver=1 vs 5")
-        dataarray = dataarray.sel(expver=1).combine_first(dataarray.sel(expver=5))
+        dataarray = dataarray.sel(expver=1, drop=True).combine_first(
+            dataarray.sel(expver=5, drop=True))
     return dataarray
 
 
