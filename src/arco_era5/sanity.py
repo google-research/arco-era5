@@ -159,7 +159,7 @@ class UpdateZarr(beam.DoFn):
                 variables = [variable]
             else:
                 start, end, _ = generate_offsets_from_url(path1, self.init_date, self.timestamps_per_file, self.is_single_level)
-                region = (slice(start, end))
+                region = tuple([slice(start, end)])
             var_iter = iter(ds.values())
             for vname in variables:
                 zv = zf[vname]
