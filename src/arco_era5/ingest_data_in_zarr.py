@@ -79,9 +79,10 @@ def generate_override_args(
         "--region", region,
         "--experiments", "use_runner_v2",
         "--disk_size_gb", "250",
-        "--setup_file", "/arco-era5/setup.py",
         "--job_name", job_name,
-        "--number_of_worker_harness_threads", "1"
+        "--number_of_worker_harness_threads", "1",
+        "--sdk_container_image", ARCO_ERA5_SDK_CONTAINER_IMAGE,
+        "--save_main_session"
     ]
     return args
 
@@ -122,7 +123,6 @@ def ingest_data_in_zarr_dataflow_job(target_path: str, region: str, start_date: 
         override_args.extend([
             "--time_per_day", str(time_per_day),
             "--machine_type", "n2-highmem-8",
-            "--sdk_container_image", ARCO_ERA5_SDK_CONTAINER_IMAGE,
             "--c"
         ])
         override_args.extend(chunks)
