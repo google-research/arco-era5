@@ -156,9 +156,15 @@ def get_previous_month_dates(mode: str) -> MonthDates:
         third_prev_month = today
         first_day, last_day = get_month_range(third_prev_month)
     else:
-        # Calculate the correct previous third month considering months from 1 to 12
-        third_prev_month = today - datetime.timedelta(days=2*366/12)
-        first_day, last_day = get_month_range(third_prev_month)
+        # ERA5 is published with a longer lag: process the complete calendar
+        # month three months before the current one. Avoid approximating months
+        # with a fixed number of days because that crosses the wrong boundary
+        # around short/long months and year transitions.
+        first_day = today.replace(day=1)
+        for _ in range(3):
+            first_day = (first_day - datetime.timedelta(days=1)).replace(day=1)
+        next_month = first_day.replace(day=28) + datetime.timedelta(days=4)
+        last_day = next_month.replace(day=1) - datetime.timedelta(days=1)
     sl_year, sl_month = str(first_day)[:4], str(first_day)[5:7]
 
     return {
