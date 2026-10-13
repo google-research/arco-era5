@@ -129,7 +129,7 @@ setup(
         'immutabledict',
         'xarray-beam',
         'scipy',
-        'fsspec==2023.4.0',
+        'fsspec==2026.6.0',
         'google-cloud-run'
     ],
     tests_require=['pytest'],
